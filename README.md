@@ -1,4 +1,4 @@
-# vez
+# Vez
 
 A social media to create and enjoy real life events.
 
