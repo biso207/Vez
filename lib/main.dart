@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vez/screens/loading_page.dart';
+import 'package:vez/screens/loading_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,14 +20,19 @@ class MyApp extends StatelessWidget {
 
           // defining the colors scheme
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,  // color for the buttons
+            seedColor: Colors.redAccent,  // color for the buttons
             brightness: Brightness.dark,   // dark theme
             surface: Colors.black,         // bg color for scaffolds and cards
           ),
 
-          // global config for the texts
+          // style for all the texts in the app
+          inputDecorationTheme: const InputDecorationTheme(
+            labelStyle: TextStyle(fontWeight: FontWeight.bold),
+          ),
+
+          // global config for the digitated texts
           textTheme: const TextTheme(
-            bodyLarge: TextStyle(color: Colors.white),
+            bodyLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
             bodyMedium: TextStyle(color: Colors.white),
             displayLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),

@@ -1,3 +1,7 @@
+// Developed and Designed by Outly • © 2026
+// Screen to manage the app's loading process
+
+// libraries
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 
@@ -24,7 +28,7 @@ class _LoadingPageState extends State<LoadingPage> {
       context,
       MaterialPageRoute(
         builder: (_) => const LoginPage(),
-      ), // sostituisce la pagina corrente con la login
+      ), // next page is login page
     );
   }
 

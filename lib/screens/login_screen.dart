@@ -1,3 +1,7 @@
+// Developed and Designed by Outly • © 2026
+// Screen to manage the login process
+
+// libraries
 import 'package:flutter/material.dart';
 import 'package:vez/screens/signup_screen.dart';
 
@@ -74,7 +78,7 @@ class _LoginPageState extends State<LoginPage> {
     String email = emailController.text;
     String password = passwordController.text;
 
-    // qui si possono richiamare le funzioni di autenticazione esterne alla classe LoginPage
+    // todo: create the logic to get the user from the db and check the credentials
     debugPrint(email);
     debugPrint(password);
   }

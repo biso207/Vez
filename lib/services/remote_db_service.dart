@@ -1,3 +1,7 @@
+// Developed and Designed by Outly • © 2026
+// Screen to manage the manage the signup and login algorithms and the remote db
+
+// libraries
 import 'dart:convert';
 import 'dart:io'; // library to manage files
 import 'package:http/http.dart' as http; // http packet (standard in Dart/Flutter).
@@ -77,7 +81,6 @@ class RemoteDbService {
     }
   }
 
-  // todo: check this method 'cause the profile photo is not sent and set as EMPTY on the db
   // method to upload a file (profile photo)
   Future<String?> uploadProfilePhoto(File imageFile, String username) async {
     try {
@@ -107,6 +110,4 @@ class RemoteDbService {
       return null;
     }
   }
-
-  void setState(String Function() param0) {}
 }

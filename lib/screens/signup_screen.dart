@@ -1,7 +1,13 @@
+// Developed and Designed by Outly • © 2026
+// Screen to manage the signup process
+
+// libraries
 import 'package:flutter/material.dart';
 import '../services/remote_db_service.dart';
 import 'dart:io'; // library to manage files
-import 'package:image_picker/image_picker.dart'; // selector for the photos
+import 'package:image_picker/image_picker.dart';
+
+import 'home_screen.dart'; // selector for the photos
 
 
 class SignupPage extends StatefulWidget {
@@ -59,24 +65,30 @@ class _SignupPageState extends State<SignupPage> {
               decoration: const InputDecoration(labelText: "Username"),
             ),
             const SizedBox(height: 10),
-            // --- email and password text fields --- //
+
+            // --- email field --- //
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: "Email"),
             ),
             const SizedBox(height: 10),
+
+            // --- password field --- //
             TextField(
               controller: passwordController,
               obscureText: true,
               decoration: const InputDecoration(labelText: "Password"),
             ),
             const SizedBox(height: 10),
-            // --- name and surname fields --- //
+
+            // --- name field --- //
             TextField(
               controller: nameController,
               decoration: const InputDecoration(labelText: "Name"),
             ),
             const SizedBox(height: 10),
+
+            // --- surname field --- //
             TextField(
               controller: surnameController,
               decoration: const InputDecoration(labelText: "Surname"),
@@ -178,6 +190,12 @@ class _SignupPageState extends State<SignupPage> {
       );
 
       // next step -> navigate home
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HomePage(),
+        ), // next page is the home page
+      );
     }
     else if (response == 409) {
       setState(() => errorMessage = "Username already in use");
