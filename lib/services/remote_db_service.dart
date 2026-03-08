@@ -10,7 +10,7 @@ class RemoteDbService {
   String? errorMessage;
 
   /// Registers a new user in the remote database
-  Future<bool> signup({
+  Future<int> signup({
     required String email,
     required String password,
     required String username,
@@ -69,23 +69,11 @@ class RemoteDbService {
         body: jsonEncode(userData),
       );
 
-      // 4. verification (status can be 200 and 201)
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Registrazione completata con successo!');
-        return true; // success
-      }
-      else if (response.statusCode == 409) {
-        setState(() => errorMessage = "Username already exists.");
-        return false; // success
-      }
-      else {
-        print('Errore del server: ${response.statusCode} - ${response.body}');
-        return false; // fail
-      }
-
+      // 4. return of the response
+      return response.statusCode;
     } catch (e) {
       print('Signup error: $e');
-      return false;
+      return 0;
     }
   }
 

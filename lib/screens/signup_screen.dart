@@ -157,7 +157,7 @@ class _SignupPageState extends State<SignupPage> {
     setState(() => isLoading = true);
 
     // POST request to the db => creation of a new user
-    bool success = await _dbService.signup(
+    int response = await _dbService.signup(
       email: email,
       password: password,
       username: username,
@@ -165,20 +165,25 @@ class _SignupPageState extends State<SignupPage> {
       surname: surname,
       dateOfBirth: selectedDate!,
       city: city,
+      profileImage: _profileImage,
     );
 
     if (!mounted) return;
     setState(() => isLoading = false);
 
     // data correctly sent to the db
-    if (success) {
+    if (response == 200 || response == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Signup Successful!")),
       );
 
       // next step -> navigate home
-    } else {
-      setState(() => errorMessage = "Signup failed. Try again.");
+    }
+    else if (response == 409) {
+      setState(() => errorMessage = "Username already in use");
+    }
+    else {
+      setState(() => errorMessage = "Signup failed");
     }
   }
 
