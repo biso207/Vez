@@ -9,8 +9,9 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  final RemoteDbService _dbService = RemoteDbService();
+  final RemoteDbService _dbService = RemoteDbService(); // instance of RemoteDbService
 
+  // Controller for text fields
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
@@ -22,31 +23,7 @@ class _SignupPageState extends State<SignupPage> {
   String? errorMessage;
   bool isLoading = false;
 
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    usernameController.dispose();
-    nameController.dispose();
-    surnameController.dispose();
-    cityController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
-  }
-
+  // UI of the page //
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,6 +94,7 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
+  // method to do the signup process //
   void signup() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
@@ -127,16 +105,18 @@ class _SignupPageState extends State<SignupPage> {
 
     setState(() => errorMessage = null);
 
+    // check if all fields are filled
     if (username.isEmpty || name.isEmpty || surname.isEmpty || city.isEmpty || selectedDate == null) {
       setState(() => errorMessage = "Please fill all fields");
       return;
     }
 
+    // email validation
     if (!_isValidEmail(email)) {
       setState(() => errorMessage = "Invalid email");
       return;
     }
-
+    // password validation
     String? passwordError = _validatePassword(password);
     if (passwordError != null) {
       setState(() => errorMessage = passwordError);
@@ -145,6 +125,7 @@ class _SignupPageState extends State<SignupPage> {
 
     setState(() => isLoading = true);
 
+    // POST request to the db => creation of a new user
     bool success = await _dbService.signup(
       email: email,
       password: password,
@@ -158,20 +139,23 @@ class _SignupPageState extends State<SignupPage> {
     if (!mounted) return;
     setState(() => isLoading = false);
 
+    // data correctly sent to the db
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Signup Successful!")),
       );
-      // Navigate to login or home
+
+      // next step -> navigate home
     } else {
       setState(() => errorMessage = "Signup failed. Try again.");
     }
   }
 
+  // regex to check  and validate the email
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
-
+  // regex to check and validate the psw
   String? _validatePassword(String password) {
     if (password.length < 8) return "At least 8 characters";
     if (!RegExp(r'[A-Z]').hasMatch(password)) return "At least 1 uppercase letter";
@@ -179,5 +163,31 @@ class _SignupPageState extends State<SignupPage> {
     if (!RegExp(r'[0-9]').hasMatch(password)) return "At least 1 number";
     if (!RegExp(r'[!@#\$&*~]').hasMatch(password)) return "At least 1 special char";
     return null;
+  }
+
+  // release resources
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    usernameController.dispose();
+    nameController.dispose();
+    surnameController.dispose();
+    cityController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
   }
 }
