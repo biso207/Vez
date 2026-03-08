@@ -94,11 +94,14 @@ class RemoteDbService {
         body: await imageFile.readAsBytes(),
       );
 
-      if (response.statusCode == 200) {
-        // Costruisci l'URL pubblico (controlla le impostazioni del tuo bucket)
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return '$_baseUrl/storage/v1/object/public/avatars/$fileName';
       }
-      return null;
+      else {
+        // This will tell you if the file was too large (413 Payload Too Large)
+        print('Upload failed: ${response.statusCode} - ${response.body}');
+        return null;
+      }
     } catch (e) {
       print('Errore upload: $e');
       return null;

@@ -10,6 +10,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // here to set the global style of the application //
     return MaterialApp(
         title: 'Vez',
         theme: ThemeData(
@@ -24,7 +25,6 @@ class MyApp extends StatelessWidget {
             surface: Colors.black,         // bg color for scaffolds and cards
           ),
 
-
           // global config for the texts
           textTheme: const TextTheme(
             bodyLarge: TextStyle(color: Colors.white),
@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
         ),
 
         debugShowCheckedModeBanner: false,
-        home: LoadingPage(),
+        home: LoadingPage(), // first page to launch
     );
   }
 }
