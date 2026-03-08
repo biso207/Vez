@@ -1,12 +1,13 @@
 import 'dart:convert';
+import 'dart:io'; // library to manage files
 import 'package:http/http.dart' as http; // http packet (standard in Dart/Flutter).
 import 'package:crypto/crypto.dart'; // library for the hashing of the psw
-
 import 'api_keys.dart'; // private key to connect to the remote db
 
 class RemoteDbService {
   final String _apiKey = ApiKeys.remoteDbKey;
   final String _baseUrl = ApiKeys.baseUrl;
+  String? errorMessage;
 
   /// Registers a new user in the remote database
   Future<bool> signup({
@@ -17,8 +18,13 @@ class RemoteDbService {
     required String surname,
     required DateTime dateOfBirth,
     required String city,
+    File? profileImage,
+
   }) async {
     try {
+      String photoUrl = "";
+      if (profileImage != null) photoUrl = await uploadProfilePhoto(profileImage, username) ?? "";
+
       // STEP HASHING PSW //
       // password to byte with salt
       var salt = "biso207_and_lasagnezio_the_best";
@@ -35,15 +41,20 @@ class RemoteDbService {
       // 1. define the endpoint (table 'user' in 'Vez' DB)
       final url = Uri.parse('$_baseUrl/rest/v1/user');
 
-      // 2. body of the request
+      // 2. body of the request => the name on the right are the fields in the table
       final Map<String, dynamic> userData = {
-        'email': email,
-        'password': hashedPassword, // hashed psw
         'username': username,
+        'email': email,
+        'hash_psw': hashedPassword, // hashed psw
         'name': name,
         'surname': surname,
-        'dateOfBirth': dateOfBirth.toIso8601String(), // Converte DateTime in Stringa
+        'date_of_birth': dateOfBirth.toIso8601String(), // DateTime to String
         'city': city,
+        'profile_photo': photoUrl,
+        'bio': "",
+        'account_state': 'active',
+        'num_created_events': 0,
+        'num_participated_events': 0,
       };
 
       // 3. POST request
@@ -62,7 +73,12 @@ class RemoteDbService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         print('Registrazione completata con successo!');
         return true; // success
-      } else {
+      }
+      else if (response.statusCode == 409) {
+        setState(() => errorMessage = "Username already exists.");
+        return false; // success
+      }
+      else {
         print('Errore del server: ${response.statusCode} - ${response.body}');
         return false; // fail
       }
@@ -72,4 +88,34 @@ class RemoteDbService {
       return false;
     }
   }
+
+  // todo: check this method 'cause the profile photo is not sent and set as EMPTY on the db
+  // method to upload a file (profile photo)
+  Future<String?> uploadProfilePhoto(File imageFile, String username) async {
+    try {
+      final fileName = '$username-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final url = Uri.parse('$_baseUrl/storage/v1/object/avatars/$fileName');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'apikey': _apiKey,
+          'Content-Type': 'image/jpeg',
+        },
+        body: await imageFile.readAsBytes(),
+      );
+
+      if (response.statusCode == 200) {
+        // Costruisci l'URL pubblico (controlla le impostazioni del tuo bucket)
+        return '$_baseUrl/storage/v1/object/public/avatars/$fileName';
+      }
+      return null;
+    } catch (e) {
+      print('Errore upload: $e');
+      return null;
+    }
+  }
+
+  void setState(String Function() param0) {}
 }

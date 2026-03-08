@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/remote_db_service.dart';
+import 'dart:io'; // library to manage files
+import 'package:image_picker/image_picker.dart'; // selector for the photos
+
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -23,6 +26,9 @@ class _SignupPageState extends State<SignupPage> {
   String? errorMessage;
   bool isLoading = false;
 
+  File? _profileImage; // Variabile per memorizzare la foto scelta
+  final ImagePicker _picker = ImagePicker();
+
   // UI of the page //
   @override
   Widget build(BuildContext context) {
@@ -33,11 +39,27 @@ class _SignupPageState extends State<SignupPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+
+            // --- profile photo selector --- //
+            GestureDetector(
+              onTap: _pickImage,
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.grey[300],
+                backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
+                child: _profileImage == null
+                    ? const Icon(Icons.camera_alt, size: 40, color: Colors.white)
+                    : null,
+              ),
+            ),
+
+            // --- username text field --- //
             TextField(
               controller: usernameController,
               decoration: const InputDecoration(labelText: "Username"),
             ),
             const SizedBox(height: 10),
+            // --- email and password text fields --- //
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: "Email"),
@@ -49,6 +71,7 @@ class _SignupPageState extends State<SignupPage> {
               decoration: const InputDecoration(labelText: "Password"),
             ),
             const SizedBox(height: 10),
+            // --- name and surname fields --- //
             TextField(
               controller: nameController,
               decoration: const InputDecoration(labelText: "Name"),
@@ -59,6 +82,8 @@ class _SignupPageState extends State<SignupPage> {
               decoration: const InputDecoration(labelText: "Surname"),
             ),
             const SizedBox(height: 10),
+
+            // --- date of birth field --- //
             ListTile(
               title: Text(selectedDate == null
                   ? "Select Date of Birth"
@@ -67,17 +92,23 @@ class _SignupPageState extends State<SignupPage> {
               onTap: () => _selectDate(context),
             ),
             const SizedBox(height: 10),
+
+            // --- city field --- //
             TextField(
               controller: cityController,
               decoration: const InputDecoration(labelText: "City"),
             ),
             const SizedBox(height: 20),
+
+            // --- error message --- //
             if (errorMessage != null)
               Text(
                 errorMessage!,
                 style: const TextStyle(color: Colors.red),
               ),
             const SizedBox(height: 20),
+
+            // --- signup button --- //
             isLoading
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
@@ -177,6 +208,7 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
+  // method to select the date of birth
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -187,6 +219,22 @@ class _SignupPageState extends State<SignupPage> {
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
+      });
+    }
+  }
+
+  // method to pick the profile photo
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery, // O ImageSource.camera
+      maxWidth: 512, // resizing to 512x512 (in the db is lighter)
+      maxHeight: 512,
+      imageQuality: 75,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
       });
     }
   }
