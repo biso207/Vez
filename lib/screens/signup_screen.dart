@@ -1,6 +1,7 @@
-// developed and designed by outly • © 2026
-// signup screen with 3-step navigation based on design mocks
+// Developed and Designed by Outly • © 2026
+// Signup screen with 3-step navigation based on design mocks
 
+// libraries
 import 'package:flutter/material.dart';
 import '../models/custom_widget.dart';
 import '../services/remote_db_service.dart';
@@ -265,14 +266,89 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  // --- signup logic and utilities ---
+  // method to do the signup process //
   void signup() async {
-    // existing db logic implementation
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    final username = usernameController.text.trim();
+    final name = nameController.text.trim();
+    final surname = surnameController.text.trim();
+    final city = cityController.text.trim();
+
+    setState(() => errorMessage = null);
+
+    // check if all fields are filled
+    if (username.isEmpty || name.isEmpty || surname.isEmpty || city.isEmpty || selectedDate == null) {
+      setState(() => errorMessage = "Please fill all fields");
+      return;
+    }
+
+    // email validation
+    if (!_isValidEmail(email)) {
+      setState(() => errorMessage = "Invalid email");
+      return;
+    }
+    // password validation
+    String? passwordError = _validatePassword(password);
+    if (passwordError != null) {
+      setState(() => errorMessage = passwordError);
+      return;
+    }
+
     setState(() => isLoading = true);
-    // ... validation and send logic ...
+
+    // POST request to the db => creation of a new user
+    int response = await _dbService.signup(
+      email: email,
+      password: password,
+      username: username,
+      name: name,
+      surname: surname,
+      dateOfBirth: selectedDate!,
+      city: city,
+      profileImage: _profileImage,
+    );
+
+    if (!mounted) return;
     setState(() => isLoading = false);
+
+    // data correctly sent to the db
+    if (response == 200 || response == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Signup Successful!")),
+      );
+
+      // next step -> navigate home
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HomePage(),
+        ), // next page is the home page
+      );
+    }
+    else if (response == 409) {
+      setState(() => errorMessage = "Username already in use");
+    }
+    else {
+      setState(() => errorMessage = "Signup failed");
+    }
   }
 
+  // regex to check  and validate the email
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+  // regex to check and validate the psw
+  String? _validatePassword(String password) {
+    if (password.length < 8) return "At least 8 characters";
+    if (!RegExp(r'[A-Z]').hasMatch(password)) return "At least 1 uppercase letter";
+    if (!RegExp(r'[a-z]').hasMatch(password)) return "At least 1 lowercase letter";
+    if (!RegExp(r'[0-9]').hasMatch(password)) return "At least 1 number";
+    if (!RegExp(r'[!@#\$&*~]').hasMatch(password)) return "At least 1 special char";
+    return null;
+  }
+
+  // method to select the date of birth
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -282,7 +358,7 @@ class _SignupPageState extends State<SignupPage> {
     );
     if (picked != null) setState(() => selectedDate = picked);
   }
-
+  // method to select the profile photo
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 512, maxHeight: 512, imageQuality: 75);
     if (pickedFile != null) setState(() => _profileImage = File(pickedFile.path));
