@@ -13,6 +13,7 @@ dependencies:
   http: ^1.6.0
   crypto: ^3.0.7
   image_picker: ^1.2.1
+  liquid_glass_easy: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -37,6 +38,7 @@ flutter:
   # RICORDATI DI AGGIUNGERE GLI ASSETS QUI PER L'ICONA E LE FOTO
   assets:
     - assets/app_icon/app_icon.png
+    - assets/images/bg/
 
   fonts:
     - family: InstagramSans

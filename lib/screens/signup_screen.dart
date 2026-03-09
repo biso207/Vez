@@ -3,6 +3,7 @@
 
 // libraries
 import 'package:flutter/material.dart';
+import '../models/custom_widget.dart';
 import '../services/remote_db_service.dart';
 import 'dart:io'; // library to manage files
 import 'package:image_picker/image_picker.dart';
@@ -19,6 +20,8 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final RemoteDbService _dbService = RemoteDbService(); // instance of RemoteDbService
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
 
   // Controller for text fields
   final TextEditingController emailController = TextEditingController();
@@ -39,100 +42,127 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Signup")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-
-            // --- profile photo selector --- //
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.grey[300],
-                backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-                child: _profileImage == null
-                    ? const Icon(Icons.camera_alt, size: 40, color: Colors.white)
-                    : null,
+      backgroundColor: Colors.black, // Fondo nero per il blend
+      body: Stack(
+        children: [
+          // 1. Immagine di sfondo con sfumatura verso il nero
+          Positioned(
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.6,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/bg/bg_signup.jpg'),
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-
-            // --- username text field --- //
-            TextField(
-              controller: usernameController,
-              decoration: const InputDecoration(labelText: "Username"),
-            ),
-            const SizedBox(height: 10),
-
-            // --- email field --- //
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: "Email"),
-            ),
-            const SizedBox(height: 10),
-
-            // --- password field --- //
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Password"),
-            ),
-            const SizedBox(height: 10),
-
-            // --- name field --- //
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: "Name"),
-            ),
-            const SizedBox(height: 10),
-
-            // --- surname field --- //
-            TextField(
-              controller: surnameController,
-              decoration: const InputDecoration(labelText: "Surname"),
-            ),
-            const SizedBox(height: 10),
-
-            // --- date of birth field --- //
-            ListTile(
-              title: Text(selectedDate == null
-                  ? "Select Date of Birth"
-                  : "DOB: ${selectedDate!.toLocal()}".split(' ')[0]),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectDate(context),
-            ),
-            const SizedBox(height: 10),
-
-            // --- city field --- //
-            TextField(
-              controller: cityController,
-              decoration: const InputDecoration(labelText: "City"),
-            ),
-            const SizedBox(height: 20),
-
-            // --- error message --- //
-            if (errorMessage != null)
-              Text(
-                errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
-            const SizedBox(height: 20),
-
-            // --- signup button --- //
-            isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: signup,
-                    child: const Text("Signup"),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.0),
+                      Colors.black.withOpacity(0.5),
+                      Colors.black,
+                    ],
                   ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Already have an account? Login"),
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+
+          // 2. Contenuto della pagina
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Signup",
+                    style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Selettore Foto Profilo (modernizzato)
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white24, width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white10,
+                        backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
+                        child: _profileImage == null
+                            ? const Icon(Icons.camera_alt_outlined, size: 35, color: Colors.white)
+                            : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Campi di input usando il model personalizzato
+                  VezTextField(controller: usernameController, label: "Username"),
+                  const SizedBox(height: 15),
+                  VezTextField(controller: passwordController, label: "Password", obscureText: true),
+                  const SizedBox(height: 15),
+                  VezTextField(controller: emailController, label: "Email"),
+                  const SizedBox(height: 15),
+                  VezTextField(controller: nameController, label: "Name"),
+                  const SizedBox(height: 15),
+                  VezTextField(controller: surnameController, label: "Surname"),
+
+                  const SizedBox(height: 15),
+                  // Data di Nascita stilizzata come i campi
+                  InkWell(
+                    onTap: () => _selectDate(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white24))),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            selectedDate == null ? "Date of Birth" : "${selectedDate!.toLocal()}".split(' ')[0],
+                            style: TextStyle(color: selectedDate == null ? Colors.white70 : Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                          const Icon(Icons.calendar_today, color: Colors.white70, size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+                  VezTextField(controller: cityController, label: "City"),
+                  const SizedBox(height: 40),
+
+                  if (errorMessage != null) ...[
+                    Text(errorMessage!, style: const TextStyle(color: Colors.redAccent)),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Pulsante Signup Liquid Glass
+                  GlassButton(
+                    text: "Enter",
+                    isLoading: isLoading,
+                    onPressed: signup,
+                  ),
+
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Already have an account? Login", style: TextStyle(color: Colors.white70)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
