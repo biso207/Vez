@@ -12,6 +12,7 @@ class RemoteDbService {
   final String _apiKey = ApiKeys.remoteDbKey;
   final String _baseUrl = ApiKeys.baseUrl;
   String? errorMessage;
+  final salt = "biso207_and_lasagnezio_the_best";
 
   /// Registers a new user in the remote database
   Future<int> signup({
@@ -24,14 +25,14 @@ class RemoteDbService {
     required String city,
     File? profileImage,
 
-  }) async {
+  })
+  async {
     try {
       String photoUrl = "";
       if (profileImage != null) photoUrl = await uploadProfilePhoto(profileImage, username) ?? "";
 
       // STEP HASHING PSW //
       // password to byte with salt
-      var salt = "biso207_and_lasagnezio_the_best";
       var bytes = utf8.encode(password+salt);
       // hash 256
       var digest = sha256.convert(bytes);
@@ -80,6 +81,43 @@ class RemoteDbService {
       return 0;
     }
   }
+  
+  /// Login a user in the remote database
+  Future<int> login({
+    required String username,
+    required String password,
+  })
+  async {
+    try {
+      // 1. Hashing the password (must match the salt used in signup)
+      var bytes = utf8.encode(password + salt);
+      var digest = sha256.convert(bytes);
+      String hashedPassword = digest.toString();
+
+      // 2. Querying the user with matching username and hashed password
+      // PostgresSQL REST syntax for filtering: ?column=eq.value
+      final url = Uri.parse('$_baseUrl/rest/v1/user?username=eq.$username&hash_psw=eq.$hashedPassword&select=*');
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'apikey': _apiKey,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        
+        if (data.isNotEmpty) { return 200; } // Success
+        else { return 401; } // Unauthorized
+      }
+      else { return response.statusCode; }
+    } catch (e) {
+      return 0;
+    }
+  }
+  
 
   // method to upload a file (profile photo)
   Future<String?> uploadProfilePhoto(File imageFile, String username) async {

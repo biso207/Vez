@@ -9,6 +9,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'home_screen.dart';
 
+// todo: check the UI ad improve it, then check the bug related to 'fill al fields' when are all filled
+
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
 
