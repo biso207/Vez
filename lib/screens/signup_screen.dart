@@ -9,7 +9,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'home_screen.dart';
 
-// todo: check the UI ad improve it, then check the bug related to 'fill al fields' when are all filled
+// todo: improve the UI
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -26,8 +26,6 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController surnameController = TextEditingController();
   final TextEditingController cityController = TextEditingController();
   DateTime? selectedDate;
 
@@ -187,8 +185,6 @@ class _SignupPageState extends State<SignupPage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        VezTextField(controller: nameController, label: "Name & Surname"),
-        const SizedBox(height: 20),
         InkWell(
           onTap: () => _selectDate(context),
           child: Container(
@@ -206,6 +202,7 @@ class _SignupPageState extends State<SignupPage> {
             ),
           ),
         ),
+
         const SizedBox(height: 20),
         VezTextField(controller: cityController, label: "City"),
       ],
@@ -273,14 +270,12 @@ class _SignupPageState extends State<SignupPage> {
     final email = emailController.text.trim();
     final password = passwordController.text;
     final username = usernameController.text.trim();
-    final name = nameController.text.trim();
-    final surname = surnameController.text.trim();
     final city = cityController.text.trim();
 
     setState(() => errorMessage = null);
 
     // check if all fields are filled
-    if (username.isEmpty || name.isEmpty || surname.isEmpty || city.isEmpty || selectedDate == null) {
+    if (username.isEmpty || city.isEmpty || selectedDate == null) {
       setState(() => errorMessage = "Please fill all fields");
       return;
     }
@@ -304,8 +299,8 @@ class _SignupPageState extends State<SignupPage> {
       email: email,
       password: password,
       username: username,
-      name: name,
-      surname: surname,
+      name: "",
+      surname: "",
       dateOfBirth: selectedDate!,
       city: city,
       profileImage: _profileImage,
@@ -371,8 +366,6 @@ class _SignupPageState extends State<SignupPage> {
     emailController.dispose();
     passwordController.dispose();
     usernameController.dispose();
-    nameController.dispose();
-    surnameController.dispose();
     cityController.dispose();
     super.dispose();
   }
