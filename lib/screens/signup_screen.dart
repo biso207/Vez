@@ -50,7 +50,7 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.black,
       body: Stack(
         children: [
@@ -64,11 +64,12 @@ class _SignupPageState extends State<SignupPage> {
             right: 0,
             bottom: 100, // Portiamola un po' più giù (prima era 150) per dare margine al gradiente
             child: ColorFiltered(
+              // this matrix fix the brightness of the image (1 is original, >1 is brighter, <1 is darker)
               colorFilter: const ColorFilter.matrix(<double>[
-                1.1, 0, 0, 0, 0,
-                0, 1.1, 0, 0, 0,
-                0, 0, 1.1, 0, 0,
-                0, 0, 0, 1, 0,
+                1.2, 0, 0, 0, 0,
+                0, 1.2, 0, 0, 0,
+                0, 0, 1.2, 0, 0,
+                0, 0, 0, 1.2, 0,
               ]),
               child: Image.asset(
                 "assets/images/bg/bg_signup.jpg",
@@ -102,12 +103,15 @@ class _SignupPageState extends State<SignupPage> {
           /// ================= CONTENT =================
           SafeArea(
             child: SingleChildScrollView(
+              // Rimuoviamo il padding bottom manuale perché useremo un'altezza dinamica
               child: SizedBox(
-                height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top,
+                // se la tastiera è aperta, l'altezza deve essere
+                // quella dello schermo + l'altezza della tastiera per permettere lo scroll.
+                height: (MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top) +
+                    (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
                 child: Column(
                   children: [
-                    // 1. Spazio superiore per abbassare Header e Bottone
-                    const SizedBox(height: 60), // Regola questo valore per abbassarli di più o di meno
+                    const SizedBox(height: 60),
 
                     /// HEADER
                     Padding(
@@ -123,7 +127,7 @@ class _SignupPageState extends State<SignupPage> {
                           const Expanded(
                             child: Center(
                               child: Text(
-                                "Signup",
+                                "Welcome",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 30,
@@ -137,7 +141,7 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                     ),
 
-                    const Spacer(), // Questo spinge il contenuto centrale nel mezzo esatto
+                    const Spacer(),
 
                     /// ================= SLIDES (IL CENTRO) =================
                     SizedBox(
@@ -153,13 +157,16 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                     ),
 
-                    const Spacer(), // Questo bilancia lo spazio sotto
+                    const Spacer(),
 
                     /// NAVIGATION & FOOTER
                     navigation(),
 
-                    // 2. Spazio inferiore uguale a quello superiore per simmetria
                     const SizedBox(height: 60),
+
+                    // AGGIUNGI QUESTO:
+                    // Un piccolo spazio extra che appare solo quando la tastiera è fuori
+                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
                   ],
                 ),
               ),
@@ -321,7 +328,10 @@ class _SignupPageState extends State<SignupPage> {
           assetIcon: page == 2
               ? "assets/images/icons/icon_save.png"
               : "assets/images/icons/icon_next.png",
-          onTap: next,
+          onTap: () {
+            if (page == 2) { signup(); } // signup process
+            else { next(); } // next page
+          },
         ),
       ],
     );
@@ -329,15 +339,15 @@ class _SignupPageState extends State<SignupPage> {
 
   // method to do the signup process //
   void signup() async {
+    final username = usernameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text;
-    final username = usernameController.text.trim();
     final city = cityController.text.trim();
 
     setState(() => errorMessage = null);
 
     // check if all fields are filled
-    if (username.isEmpty || city.isEmpty || selectedDate == null) {
+    if (username.isEmpty || password.isEmpty || email.isEmpty || city.isEmpty || selectedDate == null) {
       setState(() => errorMessage = "Please fill all fields");
       return;
     }

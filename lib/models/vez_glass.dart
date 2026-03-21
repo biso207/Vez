@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 class VezGlass {
 
   /// default blur used everywhere
-  static const double blur = 20;
+  static const double blur = 10;
 
   /// border style (1px white 50%)
   static Border border = Border.all(
@@ -35,7 +35,7 @@ class VezGlass {
           decoration: BoxDecoration(
             borderRadius: radius,
             border: border,
-            color: Colors.white.withOpacity(.05),
+            color: Colors.black.withOpacity(.2),
           ),
           child: child,
         ),
@@ -64,7 +64,7 @@ class VezGlass {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: border,
-              color: Colors.white.withOpacity(.05),
+              color: Colors.black.withOpacity(.2),
             ),
             child: Center(
               child: Transform.rotate(

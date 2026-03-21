@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:vez/screens/loading_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  // we ensure widgets are initialized
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // orientation lock (vertical)
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((_) {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {
