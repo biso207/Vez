@@ -9,14 +9,14 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'home_screen.dart';
 
-// todo: improve the UI
-
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
 
   @override
   State<SignupPage> createState() => _SignupPageState();
 }
+
+// todo: add to the 'save' button the command to do the signup process
 
 class _SignupPageState extends State<SignupPage> {
   final RemoteDbService _dbService = RemoteDbService();
@@ -50,30 +50,50 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.black,
       body: Stack(
         children: [
 
           /// ================= BACKGROUND =================
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/bg/bg_signup.jpg",
-              fit: BoxFit.cover,
+
+          // 1. L'IMMAGINE (Nitida)
+          Positioned(
+            top: -80,
+            left: 0,
+            right: 0,
+            bottom: 100, // Portiamola un po' più giù (prima era 150) per dare margine al gradiente
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix(<double>[
+                1.1, 0, 0, 0, 0,
+                0, 1.1, 0, 0, 0,
+                0, 0, 1.1, 0, 0,
+                0, 0, 0, 1, 0,
+              ]),
+              child: Image.asset(
+                "assets/images/bg/bg_signup.jpg",
+                fit: BoxFit.cover,
+              ),
             ),
           ),
 
-          /// gradient fade (unchanged as requested)
+          // 2. IL GRADIENTE (La "sfumatura dolce")
           Positioned.fill(
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.transparent,
-                    Colors.black54,
-                    Colors.black,
+                    Colors.black.withOpacity(0.3), // Scurisce il cielo per far leggere meglio i tasti in alto
+                    Colors.transparent,            // Area di massima nitidezza (palazzi)
+                    Colors.black.withOpacity(0.1), // Inizio impercettibile della sfumatura
+                    Colors.black.withOpacity(0.6), // Sfumatura media
+                    Colors.black.withOpacity(0.9), // Quasi nero dove l'immagine finisce
+                    Colors.black,                  // Nero pece finale
                   ],
+                  // Regoliamo gli stops: la magia avviene tra 0.4 e 0.8
+                  stops: const [0.0, 0.2, 0.45, 0.65, 0.85, 1.0],
                 ),
               ),
             ),
@@ -81,67 +101,68 @@ class _SignupPageState extends State<SignupPage> {
 
           /// ================= CONTENT =================
           SafeArea(
-            child: Column(
-              children: [
+            child: SingleChildScrollView(
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top,
+                child: Column(
+                  children: [
+                    // 1. Spazio superiore per abbassare Header e Bottone
+                    const SizedBox(height: 60), // Regola questo valore per abbassarli di più o di meno
 
-                const SizedBox(height: 20),
-
-                /// HEADER
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-
-                      /// back to login
-                      VezGlass.circleButton(
-                        assetIcon:
-                        "assets/images/icons/icon_login.png",
-                        onTap: () => Navigator.pop(context),
-                        size: 50,
-                        iconSize: 30,
-                      ),
-
-                      const Expanded(
-                        child: Center(
-                          child: Text(
-                            "Signup",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 30,
-                              fontWeight: FontWeight.w600,
+                    /// HEADER
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          VezGlass.circleButton(
+                            assetIcon: "assets/images/icons/icon_login.png",
+                            onTap: () => Navigator.pop(context),
+                            size: 50,
+                            iconSize: 30,
+                          ),
+                          const Expanded(
+                            child: Center(
+                              child: Text(
+                                "Signup",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 48), // Bilanciamento per il cerchio a sx
+                        ],
                       ),
+                    ),
 
-                      const SizedBox(width: 48),
-                    ],
-                  ),
+                    const Spacer(), // Questo spinge il contenuto centrale nel mezzo esatto
+
+                    /// ================= SLIDES (IL CENTRO) =================
+                    SizedBox(
+                      height: 440,
+                      child: PageView(
+                        controller: controller,
+                        onPageChanged: (i) => setState(() => page = i),
+                        children: [
+                          stepOne(),
+                          stepTwo(),
+                          stepThree(),
+                        ],
+                      ),
+                    ),
+
+                    const Spacer(), // Questo bilancia lo spazio sotto
+
+                    /// NAVIGATION & FOOTER
+                    navigation(),
+
+                    // 2. Spazio inferiore uguale a quello superiore per simmetria
+                    const SizedBox(height: 60),
+                  ],
                 ),
-
-                const Spacer(),
-
-                /// ================= SLIDES =================
-                SizedBox(
-                  height: 440,
-                  child: PageView(
-                    controller: controller,
-                    onPageChanged: (i) =>
-                        setState(() => page = i),
-                    children: [
-                      stepOne(),
-                      stepTwo(),
-                      stepThree(),
-                    ],
-                  ),
-                ),
-
-                const Spacer(),
-
-                navigation(),
-
-                const SizedBox(height: 70),
-              ],
+              ),
             ),
           )
         ],
@@ -305,10 +326,6 @@ class _SignupPageState extends State<SignupPage> {
       ],
     );
   }
-
-
-
-
 
   // method to do the signup process //
   void signup() async {

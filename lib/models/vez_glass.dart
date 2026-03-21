@@ -85,20 +85,23 @@ class VezGlass {
   /// ---------------------------------------------------
   /// Glass text field
   /// ---------------------------------------------------
-  static Widget textField({
-    required TextEditingController controller,
-    required String hint,
-    bool obscure = false,
+  static Widget textField(
+      {
+        required TextEditingController controller,
+        required String hint,
+        bool obscure = false,
 
-    double? width,
-    double height = 48,
+        double? width,
+        double height = 48,
+        BorderRadius? radius,
 
-    /// NEW
-    BorderRadius? radius,
+        double fontSize = 20, // font size
+        FontWeight fontWeight = FontWeight.bold, // font style
 
-    EdgeInsets padding =
-    const EdgeInsets.symmetric(horizontal: 18),
-    })
+        EdgeInsets padding =
+        const EdgeInsets.symmetric(horizontal: 18),
+      }
+    )
   {
     final BorderRadius finalRadius =
         radius ?? BorderRadius.circular(height / 2);
@@ -113,13 +116,21 @@ class VezGlass {
           child: TextField(
             controller: controller,
             obscureText: obscure,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: fontWeight
+            ),
             decoration: InputDecoration(
               isCollapsed: true,
               border: InputBorder.none,
               hintText: hint,
               hintStyle:
-              const TextStyle(color: Colors.white70),
+              TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: fontWeight
+              ),
             ),
           ),
         ),
