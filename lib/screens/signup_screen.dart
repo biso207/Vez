@@ -3,7 +3,7 @@
 
 // libraries
 import 'package:flutter/material.dart';
-import '../models/custom_widget.dart';
+import '../models/vez_glass.dart';
 import '../services/remote_db_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -20,7 +20,6 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final RemoteDbService _dbService = RemoteDbService();
-  int _currentPage = 0; // current step handler
 
   // controllers for text fields
   final TextEditingController emailController = TextEditingController();
@@ -34,236 +33,282 @@ class _SignupPageState extends State<SignupPage> {
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
 
+
+  final PageController controller = PageController();
+  int page = 0;
+
+  void next() => controller.nextPage(
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeOut,
+  );
+
+  void back() => controller.previousPage(
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeOut,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 1. static background and gradient
+
+          /// ================= BACKGROUND =================
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/bg/bg_signup.jpg",
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          /// gradient fade (unchanged as requested)
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/bg/bg_signup.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.1),
-                      Colors.black.withOpacity(0.4),
-                      Colors.black,
-                    ],
-                    stops: const [0.0, 0.5, 0.9],
-                  ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black54,
+                    Colors.black,
+                  ],
                 ),
               ),
             ),
           ),
 
-          // 2. page content
+          /// ================= CONTENT =================
           SafeArea(
             child: Column(
               children: [
-                // spacer to push the header down from the very top
-                const SizedBox(height: 30),
 
-                // fixed header with login button and title
+                const SizedBox(height: 20),
+
+                /// HEADER
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.login_outlined, color: Colors.white, size: 28),
-                        onPressed: () => Navigator.pop(context),
+
+                      /// back to login
+                      VezGlass.circleButton(
+                        assetIcon:
+                        "assets/images/icons/icon_login.png",
+                        onTap: () => Navigator.pop(context),
+                        size: 50,
+                        iconSize: 30,
                       ),
+
                       const Expanded(
                         child: Center(
                           child: Text(
                             "Signup",
                             style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold
+                              color: Colors.white,
+                              fontSize: 30,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 48), // balance for the back icon
+
+                      const SizedBox(width: 48),
                     ],
                   ),
                 ),
 
-                // spacers and dynamic content aligned to center height
-                const Spacer(flex: 2),
+                const Spacer(),
 
-                // dynamic area for the steps
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: _buildCurrentStep(),
+                /// ================= SLIDES =================
+                SizedBox(
+                  height: 440,
+                  child: PageView(
+                    controller: controller,
+                    onPageChanged: (i) =>
+                        setState(() => page = i),
+                    children: [
+                      stepOne(),
+                      stepTwo(),
+                      stepThree(),
+                    ],
+                  ),
                 ),
 
-                const Spacer(flex: 3),
+                const Spacer(),
 
-                if (errorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Text(errorMessage!, style: const TextStyle(color: Colors.redAccent)),
-                  ),
+                navigation(),
 
-                // 3. navigation footer pushed up from the bottom
-                _buildNavigationFooter(),
-
-                // bottom spacing to lift buttons as per mockups
-                const SizedBox(height: 80),
+                const SizedBox(height: 70),
               ],
             ),
+          )
+        ],
+      ),
+    );
+  }
+
+  /// ---------------- STEP 1 ----------------
+  Widget stepOne() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: _pickImage,
+            child: ClipOval(
+              child: Container(
+                width: 110,
+                height: 110,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+
+                    /// GLASS BUTTON BACKGROUND
+                    VezGlass.circleButton(
+                      assetIcon: "assets/images/icons/icon_camera.png",
+                      onTap: _pickImage,
+                      size: 60,
+                      iconSize: 40,
+                    ),
+
+                    /// CONTENT
+                    _profileImage != null
+                        ? ClipOval(
+                      child: Image.file(
+                        _profileImage!,
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                        : Image.asset(
+                      "assets/images/icons/icon_camera.png",
+                      width: 40,
+                      height: 40,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 40),
+
+          VezGlass.textField(
+            controller: usernameController,
+            hint: "Username",
+            width: MediaQuery.of(context).size.width * 0.75,
+            height: 44,
+            radius: BorderRadius.circular(20),
           ),
         ],
       ),
     );
   }
 
-  // widgets switcher for each step
-  Widget _buildCurrentStep() {
-    switch (_currentPage) {
-      case 0: return _stepOne();
-      case 1: return _stepTwo();
-      case 2: return _stepThree();
-      default: return _stepOne();
-    }
-  }
-
-  // --- step 1: photo and username ---
-  Widget _stepOne() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: _pickImage,
-          child: Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white70)
-            ),
-            child: CircleAvatar(
-              radius: 55,
-              backgroundColor: Colors.white10,
-              backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-              child: _profileImage == null
-                  ? const Icon(Icons.camera_alt, size: 35, color: Colors.white)
-                  : null,
-            ),
+  /// ---------------- STEP 2 ----------------
+  Widget stepTwo() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          VezGlass.textField(
+            controller: emailController,
+            hint: "Email",
+            width: MediaQuery.of(context).size.width * 0.75,
+            height: 44,
+            radius: BorderRadius.circular(20),
           ),
-        ),
-        const SizedBox(height: 40),
-        VezTextField(controller: usernameController, label: "Username"),
-      ],
+
+          const SizedBox(height: 20),
+
+          VezGlass.textField(
+            controller: passwordController,
+            hint: "Password",
+            obscure: true,
+            width: MediaQuery.of(context).size.width * 0.75,
+            height: 44,
+            radius: BorderRadius.circular(20),
+          ),
+        ],
+      ),
     );
   }
 
-  // --- step 2: email and password ---
-  Widget _stepTwo() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        VezTextField(controller: emailController, label: "Email"),
-        const SizedBox(height: 25),
-        VezTextField(controller: passwordController, label: "Password", obscureText: true),
-      ],
-    );
-  }
-
-  // --- step 3: personal data ---
-  Widget _stepThree() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InkWell(
-          onTap: () => _selectDate(context),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white24))),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  selectedDate == null ? "Date Of Birth" : "${selectedDate!.toLocal()}".split(' ')[0],
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+  /// ---------------- STEP 3 ----------------
+  Widget stepThree() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InkWell(
+            onTap: () => _selectDate(context),
+            child: AbsorbPointer( // Impedisce al TextField interno di prendere il focus
+              child: VezGlass.textField(
+                // Usiamo il controller per mostrare la data selezionata
+                controller: TextEditingController(
+                  text: selectedDate == null
+                      ? ""
+                      : "${selectedDate!.toLocal()}".split(' ')[0],
                 ),
-                const Icon(Icons.calendar_today, color: Colors.white70, size: 20),
-              ],
+                hint: "Date Of Birth",
+                width: MediaQuery.of(context).size.width * 0.75,
+                height: 44,
+                radius: BorderRadius.circular(20),
+                // Se VezGlass lo supporta, aggiungi l'icona qui
+                // suffixIcon: const Icon(Icons.calendar_today, color: Colors.white70, size: 20),
+              ),
             ),
           ),
-        ),
 
-        const SizedBox(height: 20),
-        VezTextField(controller: cityController, label: "City"),
-      ],
+          const SizedBox(height: 20),
+
+          VezGlass.textField(
+            controller: cityController,
+            hint: "City",
+            width: MediaQuery.of(context).size.width * 0.75,
+            height: 44,
+            radius: BorderRadius.circular(20),
+          ),
+        ],
+      ),
     );
   }
 
-  // --- footer with aligned circular buttons ---
-  Widget _buildNavigationFooter() {
+  /// ---------------- NAVIGATION ----------------
+  Widget navigation() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // back button
-        if (_currentPage > 0)
-          _navButton(
-              icon: Icons.arrow_back,
-              label: "Back",
-              onTap: () => setState(() => _currentPage--)
+
+        if (page > 0)
+          VezGlass.circleButton(
+            assetIcon:
+            "assets/images/icons/icon_next.png",
+            rotation: 3.1416,
+            onTap: back,
           ),
 
-        // spacing between buttons
-        if (_currentPage > 0) const SizedBox(width: 40),
+        if (page > 0) const SizedBox(width: 40),
 
-        // next or save button
-        if (_currentPage < 2)
-          _navButton(
-              icon: Icons.arrow_forward,
-              label: "Next",
-              onTap: () => setState(() => _currentPage++)
-          )
-        else
-          _navButton(
-              icon: Icons.save,
-              label: "Save",
-              onTap: signup,
-              isPrimary: true
-          ),
-      ],
-    );
-  }
-
-  Widget _navButton({required IconData icon, required String label, required VoidCallback onTap, bool isPrimary = false}) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1.5),
-              color: isPrimary ? Colors.white.withOpacity(0.1) : Colors.transparent,
-            ),
-            child: Icon(icon, color: Colors.white, size: 28),
-          ),
+        VezGlass.circleButton(
+          assetIcon: page == 2
+              ? "assets/images/icons/icon_save.png"
+              : "assets/images/icons/icon_next.png",
+          onTap: next,
         ),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
       ],
     );
   }
+
+
+
+
 
   // method to do the signup process //
   void signup() async {

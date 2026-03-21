@@ -39,6 +39,7 @@ flutter:
   assets:
     - assets/app_icon/app_icon.png
     - assets/images/bg/
+    - assets/images/icons/
 
   fonts:
     - family: InstagramSans
