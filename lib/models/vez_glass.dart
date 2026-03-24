@@ -95,11 +95,12 @@ class VezGlass {
         double height = 48,
         BorderRadius? radius,
 
-        double fontSize = 20, // font size
-        FontWeight fontWeight = FontWeight.bold, // font style
+        double fontSize = 20,
+        FontWeight fontWeight = FontWeight.bold,
 
-        EdgeInsets padding =
-        const EdgeInsets.symmetric(horizontal: 18),
+        EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 18),
+
+        Widget? suffixIcon, // optional trailing widget (e.g. eye toggle)
       }
     )
   {
@@ -125,13 +126,66 @@ class VezGlass {
               isCollapsed: true,
               border: InputBorder.none,
               hintText: hint,
-              hintStyle:
-              TextStyle(
+              hintStyle: TextStyle(
                   color: Colors.white,
                   fontSize: fontSize,
                   fontWeight: fontWeight
               ),
+              suffixIcon: suffixIcon,
+              suffixIconConstraints: const BoxConstraints(),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Shared UI Widgets ───────────────────────────────────────────────────────
+
+/// Glassy inline error banner with a leading error icon.
+/// Wrap in [AnimatedSize] for smooth height transitions.
+class VezErrorBanner extends StatelessWidget {
+  final String message;
+  const VezErrorBanner({super.key, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return VezGlass.container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      radius: BorderRadius.circular(20),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Full-screen semi-transparent loading overlay with a white spinner.
+class VezLoadingOverlay extends StatelessWidget {
+  const VezLoadingOverlay({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withOpacity(0.45),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2,
           ),
         ),
       ),

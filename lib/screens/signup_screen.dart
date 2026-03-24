@@ -1,13 +1,13 @@
 // Developed and Designed by Outly • © 2026
 // Signup screen with 3-step navigation based on design mocks
 
-// libraries
 import 'package:flutter/material.dart';
 import '../models/vez_glass.dart';
 import '../services/remote_db_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'home_screen.dart';
+
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -16,35 +16,66 @@ class SignupPage extends StatefulWidget {
   State<SignupPage> createState() => _SignupPageState();
 }
 
-// todo: add to the 'save' button the command to do the signup process
-
-class _SignupPageState extends State<SignupPage> {
+class _SignupPageState extends State<SignupPage>
+    with SingleTickerProviderStateMixin {
   final RemoteDbService _dbService = RemoteDbService();
 
-  // controllers for text fields
-  final TextEditingController emailController = TextEditingController();
+  // controllers
+  final TextEditingController emailController    = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController cityController = TextEditingController();
+  final TextEditingController cityController     = TextEditingController();
   DateTime? selectedDate;
 
   String? errorMessage;
   bool isLoading = false;
+  bool _showPassword = true;
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
 
-
-  final PageController controller = PageController();
+  // page navigation
+  final PageController _pageController = PageController();
   int page = 0;
 
-  void next() => controller.nextPage(
-    duration: const Duration(milliseconds: 300),
-    curve: Curves.easeOut,
+  // ── entrance animation ──────────────────────────────────────────────────────
+  late final AnimationController _entranceCtrl;
+  late final Animation<double>   _fadeAnim;
+  late final Animation<Offset>   _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _entranceCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _fadeAnim  = CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut));
+    _entranceCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _entranceCtrl.dispose();
+    _pageController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    usernameController.dispose();
+    cityController.dispose();
+    super.dispose();
+  }
+
+  void next() => _pageController.nextPage(
+    duration: const Duration(milliseconds: 350),
+    curve: Curves.easeInOut,
   );
 
-  void back() => controller.previousPage(
-    duration: const Duration(milliseconds: 300),
-    curve: Curves.easeOut,
+  void back() => _pageController.previousPage(
+    duration: const Duration(milliseconds: 350),
+    curve: Curves.easeInOut,
   );
 
   @override
@@ -57,14 +88,12 @@ class _SignupPageState extends State<SignupPage> {
 
           /// ================= BACKGROUND =================
 
-          // 1. L'IMMAGINE (Nitida)
           Positioned(
             top: -80,
             left: 0,
             right: 0,
-            bottom: 100, // Portiamola un po' più giù (prima era 150) per dare margine al gradiente
+            bottom: 100,
             child: ColorFiltered(
-              // this matrix fix the brightness of the image (1 is original, >1 is brighter, <1 is darker)
               colorFilter: const ColorFilter.matrix(<double>[
                 1.2, 0, 0, 0, 0,
                 0, 1.2, 0, 0, 0,
@@ -78,7 +107,6 @@ class _SignupPageState extends State<SignupPage> {
             ),
           ),
 
-          // 2. IL GRADIENTE (La "sfumatura dolce")
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -86,146 +114,166 @@ class _SignupPageState extends State<SignupPage> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.3), // Scurisce il cielo per far leggere meglio i tasti in alto
-                    Colors.transparent,            // Area di massima nitidezza (palazzi)
-                    Colors.black.withOpacity(0.1), // Inizio impercettibile della sfumatura
-                    Colors.black.withOpacity(0.6), // Sfumatura media
-                    Colors.black.withOpacity(0.9), // Quasi nero dove l'immagine finisce
-                    Colors.black,                  // Nero pece finale
+                    Colors.black.withOpacity(0.3),
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.1),
+                    Colors.black.withOpacity(0.6),
+                    Colors.black.withOpacity(0.9),
+                    Colors.black,
                   ],
-                  // Regoliamo gli stops: la magia avviene tra 0.4 e 0.8
                   stops: const [0.0, 0.2, 0.45, 0.65, 0.85, 1.0],
                 ),
               ),
             ),
           ),
 
-          /// ================= CONTENT =================
-          SafeArea(
-            child: SingleChildScrollView(
-              // Rimuoviamo il padding bottom manuale perché useremo un'altezza dinamica
-              child: SizedBox(
-                // se la tastiera è aperta, l'altezza deve essere
-                // quella dello schermo + l'altezza della tastiera per permettere lo scroll.
-                height: (MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top) +
-                    (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 60),
+          /// ================= ANIMATED CONTENT =================
+          FadeTransition(
+            opacity: _fadeAnim,
+            child: SlideTransition(
+              position: _slideAnim,
+              child: SafeArea(
+                child: SizedBox(
+                  height: (MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.top) +
+                      (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 60),
 
-                    /// HEADER
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          VezGlass.circleButton(
-                            assetIcon: "assets/images/icons/icon_login.png",
-                            onTap: () => Navigator.pop(context),
-                            size: 50,
-                            iconSize: 30,
-                          ),
-                          const Expanded(
-                            child: Center(
-                              child: Text(
-                                "Welcome",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.w600,
+                      /// HEADER
+                      Padding(
+                        padding:
+                        const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          children: [
+                            VezGlass.circleButton(
+                              assetIcon:
+                              "assets/images/icons/icon_login.png",
+                              onTap: () => Navigator.pop(context),
+                              size: 50,
+                              iconSize: 30,
+                            ),
+                            const Expanded(
+                              child: Center(
+                                child: Text(
+                                  "Welcome",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 48), // Bilanciamento per il cerchio a sx
-                        ],
+                            const SizedBox(width: 48),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    const Spacer(),
+                      const Spacer(),
 
-                    /// ================= SLIDES (IL CENTRO) =================
-                    SizedBox(
-                      height: 440,
-                      child: PageView(
-                        controller: controller,
-                        onPageChanged: (i) => setState(() => page = i),
-                        children: [
-                          stepOne(),
-                          stepTwo(),
-                          stepThree(),
-                        ],
+                      /// ================= SLIDES =================
+                      SizedBox(
+                        height: 380,
+                        child: PageView(
+                          controller: _pageController,
+                          physics: const NeverScrollableScrollPhysics(),
+                          onPageChanged: (i) {
+                            setState(() {
+                              page = i;
+                              errorMessage = null; // clear errors on step change
+                            });
+                          },
+                          children: [
+                            _stepOne(),
+                            _stepTwo(),
+                            _stepThree(),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    const Spacer(),
+                      const Spacer(),
 
-                    /// NAVIGATION & FOOTER
-                    navigation(),
+                      /// STEP DOTS
+                      _StepDots(currentPage: page, total: 3),
 
-                    const SizedBox(height: 60),
+                      const Spacer(),
 
-                    // AGGIUNGI QUESTO:
-                    // Un piccolo spazio extra che appare solo quando la tastiera è fuori
-                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
-                  ],
-                ),
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
+                      /// NAVIGATION BUTTONS
+                      _navigation(),
 
-  /// ---------------- STEP 1 ----------------
-  Widget stepOne() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: _pickImage,
-            child: ClipOval(
-              child: Container(
-                width: 110,
-                height: 110,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-
-                    /// GLASS BUTTON BACKGROUND
-                    VezGlass.circleButton(
-                      assetIcon: "assets/images/icons/icon_camera.png",
-                      onTap: _pickImage,
-                      size: 60,
-                      iconSize: 40,
-                    ),
-
-                    /// CONTENT
-                    _profileImage != null
-                        ? ClipOval(
-                      child: Image.file(
-                        _profileImage!,
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                        : Image.asset(
-                      "assets/images/icons/icon_camera.png",
-                      width: 40,
-                      height: 40,
-                    ),
-                  ],
+                      const SizedBox(height: 60),
+                      SizedBox(
+                          height: MediaQuery.of(context).viewInsets.bottom),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
 
-          const SizedBox(height: 40),
+          /// ================= ERROR BANNER (floating, no layout shift) =================
+          Positioned(
+            bottom: 120,
+            left: 0,
+            right: 0,
+            child: AnimatedOpacity(
+              opacity: errorMessage != null ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              child: errorMessage != null
+                  ? Center(child: VezErrorBanner(message: errorMessage!))
+                  : const SizedBox.shrink(),
+            ),
+          ),
+
+          /// ================= LOADING OVERLAY =================
+          if (isLoading) const VezLoadingOverlay(),
+        ],
+      ),
+    );
+  }
+
+  // ── Step widgets ────────────────────────────────────────────────────────────
+  // first page
+  Widget _stepOne() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          /// Avatar picker
+          GestureDetector(
+            onTap: _pickImage,
+            child: SizedBox(
+              width: 110,
+              height: 110,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Glass circle background
+                  VezGlass.circleButton(
+                    assetIcon: "assets/images/icons/icon_camera.png",
+                    onTap: _pickImage,
+                    size: 70,
+                    iconSize: 40,
+                  ),
+                  // Profile photo on top when selected
+                  if (_profileImage != null)
+                    ClipOval(
+                      child: Image.file(
+                        _profileImage!,
+                        width: 110,
+                        height: 110,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
 
           VezGlass.textField(
             controller: usernameController,
@@ -239,8 +287,8 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  /// ---------------- STEP 2 ----------------
-  Widget stepTwo() {
+  // second page
+  Widget _stepTwo() {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -258,27 +306,41 @@ class _SignupPageState extends State<SignupPage> {
           VezGlass.textField(
             controller: passwordController,
             hint: "Password",
-            obscure: true,
-            width: MediaQuery.of(context).size.width * 0.75,
+            obscure: !_showPassword,
+            width:
+            MediaQuery.of(context).size.width * 0.75,
             height: 44,
             radius: BorderRadius.circular(20),
+            suffixIcon: GestureDetector(
+              onTap: () => setState(
+                      () => _showPassword = !_showPassword),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Icon(
+                  _showPassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: Colors.white70,
+                  size: 20,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  /// ---------------- STEP 3 ----------------
-  Widget stepThree() {
+  // third page
+  Widget _stepThree() {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           InkWell(
             onTap: () => _selectDate(context),
-            child: AbsorbPointer( // Impedisce al TextField interno di prendere il focus
+            child: AbsorbPointer(
               child: VezGlass.textField(
-                // Usiamo il controller per mostrare la data selezionata
                 controller: TextEditingController(
                   text: selectedDate == null
                       ? ""
@@ -288,14 +350,10 @@ class _SignupPageState extends State<SignupPage> {
                 width: MediaQuery.of(context).size.width * 0.75,
                 height: 44,
                 radius: BorderRadius.circular(20),
-                // Se VezGlass lo supporta, aggiungi l'icona qui
-                // suffixIcon: const Icon(Icons.calendar_today, color: Colors.white70, size: 20),
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
           VezGlass.textField(
             controller: cityController,
             hint: "City",
@@ -308,57 +366,60 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  /// ---------------- NAVIGATION ----------------
-  Widget navigation() {
+  // buttons to navigate thru the pages
+  Widget _navigation() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-
         if (page > 0)
           VezGlass.circleButton(
-            assetIcon:
-            "assets/images/icons/icon_next.png",
+            assetIcon: "assets/images/icons/icon_next.png",
             rotation: 3.1416,
             onTap: back,
           ),
-
         if (page > 0) const SizedBox(width: 40),
-
         VezGlass.circleButton(
           assetIcon: page == 2
               ? "assets/images/icons/icon_save.png"
               : "assets/images/icons/icon_next.png",
           onTap: () {
-            if (page == 2) { signup(); } // signup process
-            else { next(); } // next page
+            if (page == 2) {
+              signup();
+            } else {
+              next();
+            }
           },
         ),
       ],
     );
   }
 
-  // method to do the signup process //
+  // ── Logic ───────────────────────────────────────────────────────────────────
+
   void signup() async {
     final username = usernameController.text.trim();
-    final email = emailController.text.trim();
+    final email    = emailController.text.trim();
     final password = passwordController.text;
-    final city = cityController.text.trim();
+    final city     = cityController.text.trim();
 
     setState(() => errorMessage = null);
 
-    // check if all fields are filled
-    if (username.isEmpty || password.isEmpty || email.isEmpty || city.isEmpty || selectedDate == null) {
+    if (username.isEmpty ||
+        password.isEmpty ||
+        email.isEmpty ||
+        city.isEmpty ||
+        selectedDate == null ||
+        _profileImage == null) {
       setState(() => errorMessage = "Please fill all fields");
       return;
     }
 
-    // email validation
     if (!_isValidEmail(email)) {
       setState(() => errorMessage = "Invalid email");
       return;
     }
-    // password validation
-    String? passwordError = _validatePassword(password);
+
+    final String? passwordError = _validatePassword(password);
     if (passwordError != null) {
       setState(() => errorMessage = passwordError);
       return;
@@ -366,8 +427,7 @@ class _SignupPageState extends State<SignupPage> {
 
     setState(() => isLoading = true);
 
-    // POST request to the db => creation of a new user
-    int response = await _dbService.signup(
+    final int response = await _dbService.signup(
       email: email,
       password: password,
       username: username,
@@ -381,43 +441,48 @@ class _SignupPageState extends State<SignupPage> {
     if (!mounted) return;
     setState(() => isLoading = false);
 
-    // data correctly sent to the db
     if (response == 200 || response == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Signup Successful!")),
       );
-
-      // next step -> navigate home
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const HomePage(),
-        ), // next page is the home page
+        MaterialPageRoute(builder: (_) => const HomePage()),
       );
-    }
-    else if (response == 409) {
+    } else if (response == 409) {
       setState(() => errorMessage = "Username already in use");
-    }
-    else {
+    } else {
       setState(() => errorMessage = "Signup failed");
     }
   }
 
-  // regex to check  and validate the email
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  }
-  // regex to check and validate the psw
+  // password error message
   String? _validatePassword(String password) {
-    if (password.length < 8) return "At least 8 characters";
-    if (!RegExp(r'[A-Z]').hasMatch(password)) return "At least 1 uppercase letter";
-    if (!RegExp(r'[a-z]').hasMatch(password)) return "At least 1 lowercase letter";
-    if (!RegExp(r'[0-9]').hasMatch(password)) return "At least 1 number";
-    if (!RegExp(r'[!@#\$&*~]').hasMatch(password)) return "At least 1 special char";
+    if (!_isValidPsw(password)) {
+      return "Password: At least 8 characters\n"
+          "1 uppercase letter\n"
+          "1 lowercase letter\n"
+          "1 number\n"
+          "1 special character"; }
     return null;
   }
 
-  // method to select the date of birth
+  // password validator
+  bool _isValidPsw(String password) {
+    if (password.length < 8 ||
+        !RegExp(r'[A-Z]').hasMatch(password) ||
+        !RegExp(r'[a-z]').hasMatch(password) ||
+        !RegExp(r'[0-9]').hasMatch(password) ||
+        !RegExp(r'[!@#\$&*~]').hasMatch(password)
+    ) { return false; }
+    return true;
+  }
+
+  // email validator
+  bool _isValidEmail(String email) =>
+      RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+
+  // date selector
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -427,18 +492,48 @@ class _SignupPageState extends State<SignupPage> {
     );
     if (picked != null) setState(() => selectedDate = picked);
   }
-  // method to select the profile photo
+
+  // image picker
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 512, maxHeight: 512, imageQuality: 75);
-    if (pickedFile != null) setState(() => _profileImage = File(pickedFile.path));
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 75,
+    );
+    if (pickedFile != null) {
+      setState(() => _profileImage = File(pickedFile.path));
+    }
   }
+}
+
+// ── Step dots indicator ──────────────────────────────────────────────────────
+
+class _StepDots extends StatelessWidget {
+  final int currentPage;
+  final int total;
+  const _StepDots({required this.currentPage, required this.total});
 
   @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    usernameController.dispose();
-    cityController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(total, (i) {
+        final bool active = i == currentPage;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          width: active ? 22 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: active
+                ? Colors.white
+                : Colors.white.withOpacity(0.35),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
+    );
   }
 }

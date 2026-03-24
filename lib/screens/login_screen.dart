@@ -1,7 +1,6 @@
 // Developed and Designed by Outly • © 2026
 // Screen to manage the login process
 
-// libraries
 import 'package:flutter/material.dart';
 import 'package:vez/screens/signup_screen.dart';
 import '../models/vez_glass.dart';
@@ -15,13 +14,44 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   final RemoteDbService _dbService = RemoteDbService();
   String? errorMessage;
   bool isLoading = false;
+  bool _showPassword = true;
+
+  // ── entrance animation ──────────────────────────────────────────────────────
+  late final AnimationController _entranceCtrl;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _entranceCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _fadeAnim = CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut));
+
+    _entranceCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _entranceCtrl.dispose();
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +63,12 @@ class _LoginPageState extends State<LoginPage> {
 
           /// ================= BACKGROUND =================
 
-          // 1. L'IMMAGINE (Nitida)
           Positioned(
             top: -80,
             left: 0,
             right: 0,
-            bottom: 100, // Portiamola un po' più giù (prima era 150) per dare margine al gradiente
+            bottom: 100,
             child: ColorFiltered(
-              // this matrix fix the brightness of the image (1 is original, >1 is brighter, <1 is darker)
               colorFilter: const ColorFilter.matrix(<double>[
                 1.2, 0, 0, 0, 0,
                 0, 1.2, 0, 0, 0,
@@ -54,7 +82,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // 2. IL GRADIENTE (La "sfumatura dolce")
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -62,126 +89,159 @@ class _LoginPageState extends State<LoginPage> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.3), // Scurisce il cielo per far leggere meglio i tasti in alto
-                    Colors.transparent,            // Area di massima nitidezza (palazzi)
-                    Colors.black.withOpacity(0.1), // Inizio impercettibile della sfumatura
-                    Colors.black.withOpacity(0.6), // Sfumatura media
-                    Colors.black.withOpacity(0.9), // Quasi nero dove l'immagine finisce
-                    Colors.black,                  // Nero pece finale
+                    Colors.black.withOpacity(0.3),
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.1),
+                    Colors.black.withOpacity(0.6),
+                    Colors.black.withOpacity(0.9),
+                    Colors.black,
                   ],
-                  // Regoliamo gli stops: la magia avviene tra 0.4 e 0.8
                   stops: const [0.0, 0.2, 0.45, 0.65, 0.85, 1.0],
                 ),
               ),
             ),
           ),
 
-          /// ================= CONTENT =================
-          SafeArea(
-            child: SingleChildScrollView(
-              // Rimuoviamo il padding bottom manuale perché useremo un'altezza dinamica
-              child: SizedBox(
-                // se la tastiera è aperta, l'altezza deve essere
-                // quella dello schermo + l'altezza della tastiera per permettere lo scroll.
-                height: (MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top) +
-                    (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 60),
+          /// ================= ANIMATED CONTENT =================
+          FadeTransition(
+            opacity: _fadeAnim,
+            child: SlideTransition(
+              position: _slideAnim,
+              child: SafeArea(
+                child: SizedBox(
+                  height: (MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.top) +
+                      (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 60),
 
-                    /// HEADER
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          VezGlass.circleButton(
-                            assetIcon: "assets/images/icons/icon_signup.png",
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const SignupPage()),
+                      /// HEADER
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          children: [
+                            VezGlass.circleButton(
+                              assetIcon:
+                              "assets/images/icons/icon_signup.png",
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const SignupPage()),
+                              ),
+                              size: 50,
+                              iconSize: 30,
                             ),
-                            size: 50,
-                            iconSize: 30,
-                          ),
-                          const Expanded(
-                            child: Center(
-                              child: Text(
-                                "Hey!",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.w600,
+                            const Expanded(
+                              child: Center(
+                                child: Text(
+                                  "Hey!",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 48), // Bilanciamento per il cerchio a sx
-                        ],
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    /// CENTER
-                    Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          VezGlass.textField(
-                            controller: usernameController,
-                            hint: "Username",
-                            width: MediaQuery.of(context).size.width * 0.75,
-                            height: 44,
-                            radius: BorderRadius.circular(20),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          VezGlass.textField(
-                            controller: passwordController,
-                            hint: "Password",
-                            obscure: true,
-                            width: MediaQuery.of(context).size.width * 0.75,
-                            height: 44,
-                            radius: BorderRadius.circular(20),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    /// NAVIGATION & FOOTER
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-
-                        VezGlass.circleButton(
-                          assetIcon:
-                          "assets/images/icons/icon_login.png",
-                          iconSize: 30,
-                          onTap: () {login();},
+                            const SizedBox(width: 48),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
 
-                    const SizedBox(height: 60),
+                      const Spacer(),
 
-                    // AGGIUNGI QUESTO:
-                    // Un piccolo spazio extra che appare solo quando la tastiera è fuori
-                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
-                  ],
+                      /// FIELDS
+                      Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            VezGlass.textField(
+                              controller: usernameController,
+                              hint: "Username",
+                              width:
+                              MediaQuery.of(context).size.width * 0.75,
+                              height: 44,
+                              radius: BorderRadius.circular(20),
+                            ),
+                            const SizedBox(height: 20),
+                            VezGlass.textField(
+                              controller: passwordController,
+                              hint: "Password",
+                              obscure: !_showPassword,
+                              width:
+                              MediaQuery.of(context).size.width * 0.75,
+                              height: 44,
+                              radius: BorderRadius.circular(20),
+                              suffixIcon: GestureDetector(
+                                onTap: () => setState(
+                                    () => _showPassword = !_showPassword),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: Icon(
+                                    _showPassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: Colors.white70,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          ],
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      /// LOGIN BUTTON
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          VezGlass.circleButton(
+                            assetIcon:
+                            "assets/images/icons/icon_login.png",
+                            iconSize: 30,
+                            onTap: login,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 60),
+                      SizedBox(
+                          height: MediaQuery.of(context).viewInsets.bottom),
+                    ],
+                  ),
                 ),
               ),
             ),
-          )
+          ),
+
+          /// ================= ERROR BANNER (floating, no layout shift) =================
+          Positioned(
+            bottom: 120,
+            left: 0,
+            right: 0,
+            child: AnimatedOpacity(
+              opacity: errorMessage != null ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              child: errorMessage != null
+                  ? Center(child: VezErrorBanner(message: errorMessage!))
+                  : const SizedBox.shrink(),
+            ),
+          ),
+
+          /// ================= LOADING OVERLAY =================
+          if (isLoading) const VezLoadingOverlay(),
         ],
       ),
     );
   }
 
-  // todo: check the method, is not working
-  // method to do the login process //
+  // ── logic ──────────────────────────────────────────────────────────────────
+
   void login() async {
     final username = usernameController.text.trim();
     final password = passwordController.text;
@@ -196,7 +256,7 @@ class _LoginPageState extends State<LoginPage> {
       isLoading = true;
     });
 
-    int response = await _dbService.login(
+    final int response = await _dbService.login(
       username: username,
       password: password,
     );
@@ -209,16 +269,8 @@ class _LoginPageState extends State<LoginPage> {
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
       );
-    }
-    else {
+    } else {
       setState(() => errorMessage = "Invalid credentials");
     }
-  }
-
-  @override
-  void dispose() {
-    usernameController.dispose();
-    passwordController.dispose();
-    super.dispose();
   }
 }
