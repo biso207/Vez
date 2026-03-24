@@ -89,9 +89,17 @@ class _SignupPageState extends State<SignupPage>
           /// ================= BACKGROUND =================
 
           Positioned.fill(
-            child: Image.asset(
-              "assets/images/bg/bg_signup.jpg",
-              fit: BoxFit.cover,
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix(<double>[
+                1.2, 0, 0, 0, 0,
+                0, 1.2, 0, 0, 0,
+                0, 0, 1.2, 0, 0,
+                0, 0, 0, 1.2, 0,
+              ]),
+              child: Image.asset(
+                "assets/images/bg/bg_signup.jpg",
+                fit: BoxFit.cover,
+              ),
             ),
           ),
 
@@ -107,43 +115,23 @@ class _SignupPageState extends State<SignupPage>
                       (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
                   child: Column(
                     children: [
-                      const SizedBox(height: 60),
-
-                      /// HEADER
-                      Padding(
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            VezGlass.circleButton(
-                              assetIcon:
-                              "assets/images/icons/icon_login.png",
-                              onTap: () => Navigator.pop(context),
-                              size: 50,
-                              iconSize: 30,
-                            ),
-                            const Expanded(
-                              child: Center(
-                                child: Text(
-                                  "Welcome",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 48),
-                          ],
+                      /// ====== 1) TOP: TITLE ======
+                      const Spacer(),
+                      const Center(
+                        child: Text(
+                          "Welcome",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
 
+                      /// ====== 2) CENTRE: FORM ======
                       const Spacer(),
-
-                      /// ================= SLIDES =================
                       SizedBox(
-                        height: 380,
+                        height: 300,
                         child: PageView(
                           controller: _pageController,
                           physics: const NeverScrollableScrollPhysics(),
@@ -161,16 +149,22 @@ class _SignupPageState extends State<SignupPage>
                         ),
                       ),
 
+                      /// ====== 3) BOTTOM: ACTIONS ======
                       const Spacer(),
-
-                      /// STEP DOTS
-                      _StepDots(currentPage: page, total: 3),
-
-                      const Spacer(),
-
-                      /// NAVIGATION BUTTONS
-                      _navigation(),
-
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _StepDots(currentPage: page, total: 3),
+                          const SizedBox(height: 24),
+                          _navigation(),
+                          const SizedBox(height: 24),
+                          VezGlass.pillButton(
+                            text: "Login",
+                            color: Colors.white.withOpacity(0.5),
+                            onTap: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 60),
                       SizedBox(
                           height: MediaQuery.of(context).viewInsets.bottom),
@@ -224,7 +218,7 @@ class _SignupPageState extends State<SignupPage>
                     assetIcon: "assets/images/icons/icon_camera.png",
                     onTap: _pickImage,
                     size: 70,
-                    iconSize: 40,
+                    iconSize: 60,
                   ),
                   // Profile photo on top when selected
                   if (_profileImage != null)
@@ -247,8 +241,6 @@ class _SignupPageState extends State<SignupPage>
             controller: usernameController,
             hint: "Username",
             width: MediaQuery.of(context).size.width * 0.75,
-            height: 44,
-            radius: BorderRadius.circular(20),
           ),
         ],
       ),
@@ -265,8 +257,6 @@ class _SignupPageState extends State<SignupPage>
             controller: emailController,
             hint: "Email",
             width: MediaQuery.of(context).size.width * 0.75,
-            height: 44,
-            radius: BorderRadius.circular(20),
           ),
 
           const SizedBox(height: 20),
@@ -277,8 +267,6 @@ class _SignupPageState extends State<SignupPage>
             obscure: !_showPassword,
             width:
             MediaQuery.of(context).size.width * 0.75,
-            height: 44,
-            radius: BorderRadius.circular(20),
             suffixIcon: GestureDetector(
               onTap: () => setState(
                       () => _showPassword = !_showPassword),
@@ -316,8 +304,6 @@ class _SignupPageState extends State<SignupPage>
                 ),
                 hint: "Date Of Birth",
                 width: MediaQuery.of(context).size.width * 0.75,
-                height: 44,
-                radius: BorderRadius.circular(20),
               ),
             ),
           ),
@@ -326,8 +312,6 @@ class _SignupPageState extends State<SignupPage>
             controller: cityController,
             hint: "City",
             width: MediaQuery.of(context).size.width * 0.75,
-            height: 44,
-            radius: BorderRadius.circular(20),
           ),
         ],
       ),

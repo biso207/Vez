@@ -64,9 +64,17 @@ class _LoginPageState extends State<LoginPage>
           /// ================= BACKGROUND =================
 
           Positioned.fill(
-            child: Image.asset(
-              "assets/images/bg/bg_login.jpg",
-              fit: BoxFit.cover,
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix(<double>[
+                1.2, 0, 0, 0, 0,
+                0, 1.2, 0, 0, 0,
+                0, 0, 1.2, 0, 0,
+                0, 0, 0, 1.2, 0,
+              ]),
+              child: Image.asset(
+                "assets/images/bg/bg_login.jpg",
+                fit: BoxFit.cover,
+              ),
             ),
           ),
 
@@ -82,44 +90,21 @@ class _LoginPageState extends State<LoginPage>
                       (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
                   child: Column(
                     children: [
-                      const SizedBox(height: 60),
-
-                      /// HEADER
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            VezGlass.circleButton(
-                              assetIcon:
-                              "assets/images/icons/icon_signup.png",
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const SignupPage()),
-                              ),
-                              size: 50,
-                              iconSize: 30,
-                            ),
-                            const Expanded(
-                              child: Center(
-                                child: Text(
-                                  "Hey!",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 48),
-                          ],
+                      /// ====== 1) TOP: TITLE ======
+                      const Spacer(),
+                      const Center(
+                        child: Text(
+                          "Hey!",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
 
+                      /// ====== 2) CENTRE: FORM ======
                       const Spacer(),
-
-                      /// FIELDS
                       Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -127,20 +112,14 @@ class _LoginPageState extends State<LoginPage>
                             VezGlass.textField(
                               controller: usernameController,
                               hint: "Username",
-                              width:
-                              MediaQuery.of(context).size.width * 0.75,
-                              height: 44,
-                              radius: BorderRadius.circular(20),
+                              width: MediaQuery.of(context).size.width * 0.75,
                             ),
                             const SizedBox(height: 20),
                             VezGlass.textField(
                               controller: passwordController,
                               hint: "Password",
                               obscure: !_showPassword,
-                              width:
-                              MediaQuery.of(context).size.width * 0.75,
-                              height: 44,
-                              radius: BorderRadius.circular(20),
+                              width: MediaQuery.of(context).size.width * 0.75,
                               suffixIcon: GestureDetector(
                                 onTap: () => setState(
                                     () => _showPassword = !_showPassword),
@@ -156,26 +135,32 @@ class _LoginPageState extends State<LoginPage>
                                 ),
                               ),
                             ),
-
                           ],
                         ),
                       ),
 
+                      /// ====== 3) BOTTOM: ACTIONS ======
                       const Spacer(),
-
-                      /// LOGIN BUTTON
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           VezGlass.circleButton(
-                            assetIcon:
-                            "assets/images/icons/icon_login.png",
+                            assetIcon: "assets/images/icons/icon_login.png",
                             iconSize: 30,
                             onTap: login,
                           ),
+                          const SizedBox(height: 24),
+                          VezGlass.pillButton(
+                            text: "Signup",
+                            color: Colors.white.withOpacity(0.5),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SignupPage()),
+                            ),
+                          ),
                         ],
                       ),
-
                       const SizedBox(height: 60),
                       SizedBox(
                           height: MediaQuery.of(context).viewInsets.bottom),

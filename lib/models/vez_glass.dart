@@ -9,12 +9,12 @@ import 'package:flutter/material.dart';
 class VezGlass {
 
   /// default blur used everywhere
-  static const double blur = 10;
+  static const double blur = 5;
 
-  /// border style (1px white 50%)
+  /// border style (2px white 50%)
   static Border border = Border.all(
     color: Colors.white.withOpacity(.5),
-    width: 1,
+    width: 2,
   );
 
   /// ---------------------------------------------------
@@ -25,6 +25,7 @@ class VezGlass {
     BorderRadius radius = const BorderRadius.all(Radius.circular(30)),
     EdgeInsets padding = const EdgeInsets.symmetric(
         horizontal: 18, vertical: 14),
+    Color? color,
   }) {
     return ClipRRect(
       borderRadius: radius,
@@ -35,7 +36,7 @@ class VezGlass {
           decoration: BoxDecoration(
             borderRadius: radius,
             border: border,
-            color: Colors.black.withOpacity(.2),
+            color: color ?? Colors.black.withOpacity(.5),
           ),
           child: child,
         ),
@@ -49,9 +50,10 @@ class VezGlass {
   static Widget circleButton({
     required String assetIcon,
     required VoidCallback onTap,
-    double size = 48,
-    double iconSize = 22,
+    double size = 50,
+    double iconSize = 30,
     double rotation = 0,
+    Color? color,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -64,7 +66,7 @@ class VezGlass {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: border,
-              color: Colors.black.withOpacity(.2),
+              color: color ?? Colors.black.withOpacity(.5),
             ),
             child: Center(
               child: Transform.rotate(
@@ -83,6 +85,39 @@ class VezGlass {
   }
 
   /// ---------------------------------------------------
+  /// Glass pill button for page switching
+  /// ---------------------------------------------------
+  static Widget pillButton({
+    required String text,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 100,
+        height: 30,
+        child: container(
+          color: color ?? Colors.black.withOpacity(.5),
+          padding: EdgeInsets.zero,
+          radius: BorderRadius.circular(15),
+          child: Center(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// ---------------------------------------------------
   /// Glass text field
   /// ---------------------------------------------------
   static Widget textField(
@@ -92,7 +127,7 @@ class VezGlass {
         bool obscure = false,
 
         double? width,
-        double height = 48,
+        double height = 44,
         BorderRadius? radius,
 
         double fontSize = 20,
