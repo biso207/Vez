@@ -29,7 +29,7 @@ class _SignupPageState extends State<SignupPage>
 
   String? errorMessage;
   bool isLoading = false;
-  bool _showPassword = true;
+  bool _showPassword = false;
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
 
@@ -88,42 +88,10 @@ class _SignupPageState extends State<SignupPage>
 
           /// ================= BACKGROUND =================
 
-          Positioned(
-            top: -80,
-            left: 0,
-            right: 0,
-            bottom: 100,
-            child: ColorFiltered(
-              colorFilter: const ColorFilter.matrix(<double>[
-                1.2, 0, 0, 0, 0,
-                0, 1.2, 0, 0, 0,
-                0, 0, 1.2, 0, 0,
-                0, 0, 0, 1.2, 0,
-              ]),
-              child: Image.asset(
-                "assets/images/bg/bg_signup.jpg",
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-
           Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.3),
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.1),
-                    Colors.black.withOpacity(0.6),
-                    Colors.black.withOpacity(0.9),
-                    Colors.black,
-                  ],
-                  stops: const [0.0, 0.2, 0.45, 0.65, 0.85, 1.0],
-                ),
-              ),
+            child: Image.asset(
+              "assets/images/bg/bg_signup.jpg",
+              fit: BoxFit.cover,
             ),
           ),
 
@@ -317,7 +285,7 @@ class _SignupPageState extends State<SignupPage>
               child: Padding(
                 padding: const EdgeInsets.only(right: 6),
                 child: Icon(
-                  _showPassword
+                  !_showPassword
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
                   color: Colors.white70,
@@ -450,7 +418,7 @@ class _SignupPageState extends State<SignupPage>
         MaterialPageRoute(builder: (_) => const HomePage()),
       );
     } else if (response == 409) {
-      setState(() => errorMessage = "Username already in use");
+      setState(() => errorMessage = "User already exists");
     } else {
       setState(() => errorMessage = "Signup failed");
     }
@@ -459,11 +427,12 @@ class _SignupPageState extends State<SignupPage>
   // password error message
   String? _validatePassword(String password) {
     if (!_isValidPsw(password)) {
-      return "Password: At least 8 characters\n"
-          "1 uppercase letter\n"
-          "1 lowercase letter\n"
-          "1 number\n"
-          "1 special character"; }
+      return "Invalid Password - At least:\n"
+          "• 8 characters\n"
+          "• 1 uppercase letter\n"
+          "• 1 lowercase letter\n"
+          "• 1 number\n"
+          "• 1 special character"; }
     return null;
   }
 

@@ -22,7 +22,7 @@ class _LoginPageState extends State<LoginPage>
   final RemoteDbService _dbService = RemoteDbService();
   String? errorMessage;
   bool isLoading = false;
-  bool _showPassword = true;
+  bool _showPassword = false;
 
   // ── entrance animation ──────────────────────────────────────────────────────
   late final AnimationController _entranceCtrl;
@@ -63,42 +63,10 @@ class _LoginPageState extends State<LoginPage>
 
           /// ================= BACKGROUND =================
 
-          Positioned(
-            top: -80,
-            left: 0,
-            right: 0,
-            bottom: 100,
-            child: ColorFiltered(
-              colorFilter: const ColorFilter.matrix(<double>[
-                1.2, 0, 0, 0, 0,
-                0, 1.2, 0, 0, 0,
-                0, 0, 1.2, 0, 0,
-                0, 0, 0, 1.2, 0,
-              ]),
-              child: Image.asset(
-                "assets/images/bg/bg_signup.jpg",
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-
           Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.3),
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.1),
-                    Colors.black.withOpacity(0.6),
-                    Colors.black.withOpacity(0.9),
-                    Colors.black,
-                  ],
-                  stops: const [0.0, 0.2, 0.45, 0.65, 0.85, 1.0],
-                ),
-              ),
+            child: Image.asset(
+              "assets/images/bg/bg_login.jpg",
+              fit: BoxFit.cover,
             ),
           ),
 
@@ -179,7 +147,7 @@ class _LoginPageState extends State<LoginPage>
                                 child: Padding(
                                   padding: const EdgeInsets.only(right: 6),
                                   child: Icon(
-                                    _showPassword
+                                    !_showPassword
                                         ? Icons.visibility_off_outlined
                                         : Icons.visibility_outlined,
                                     color: Colors.white70,
