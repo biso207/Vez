@@ -177,7 +177,7 @@ class _SignupPageState extends State<SignupPage>
 
           /// ================= ERROR BANNER (floating, no layout shift) =================
           Positioned(
-            bottom: 120,
+            bottom: 220,
             left: 0,
             right: 0,
             child: AnimatedOpacity(

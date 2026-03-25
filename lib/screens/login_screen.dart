@@ -173,7 +173,7 @@ class _LoginPageState extends State<LoginPage>
 
           /// ================= ERROR BANNER (floating, no layout shift) =================
           Positioned(
-            bottom: 120,
+            bottom: 220,
             left: 0,
             right: 0,
             child: AnimatedOpacity(
