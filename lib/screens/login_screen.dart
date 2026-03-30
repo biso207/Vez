@@ -14,8 +14,7 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage>
-    with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage> { // Rimosso SingleTickerProviderStateMixin
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -24,30 +23,16 @@ class _LoginPageState extends State<LoginPage>
   bool isLoading = false;
   bool _showPassword = false;
 
-  // ── entrance animation ──────────────────────────────────────────────────────
-  late final AnimationController _entranceCtrl;
-  late final Animation<double> _fadeAnim;
-  late final Animation<Offset> _slideAnim;
+  // Animazioni rimosse!
 
   @override
   void initState() {
     super.initState();
-    _entranceCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _fadeAnim = CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut));
-
-    _entranceCtrl.forward();
+    // Non dobbiamo più inizializzare i controller dell'animazione
   }
 
   @override
   void dispose() {
-    _entranceCtrl.dispose();
     usernameController.dispose();
     passwordController.dispose();
     super.dispose();
@@ -79,94 +64,89 @@ class _LoginPageState extends State<LoginPage>
           ),
 
           /// ================= ANIMATED CONTENT =================
-          FadeTransition(
-            opacity: _fadeAnim,
-            child: SlideTransition(
-              position: _slideAnim,
-              child: SafeArea(
-                child: SizedBox(
-                  height: (MediaQuery.of(context).size.height -
-                      MediaQuery.of(context).padding.top) +
-                      (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
-                  child: Column(
-                    children: [
-                      /// ====== 1) TOP: TITLE ======
-                      const Spacer(),
-                      const Center(
-                        child: Text(
-                          "Hey!",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 34,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+          SafeArea(
+            child: SizedBox(
+              height:
+                  (MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top) +
+                  (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
+              child: Column(
+                children: [
+                  /// ====== 1) TOP: TITLE ======
+                  const Spacer(),
+                  const Center(
+                    child: Text(
+                      "Hey!",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 34,
+                        fontWeight: FontWeight.w700,
                       ),
+                    ),
+                  ),
 
-                      /// ====== 2) CENTRE: FORM ======
-                      const Spacer(),
-                      Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            VezGlass.textField(
-                              controller: usernameController,
-                              hint: "Username",
-                              width: MediaQuery.of(context).size.width * 0.75,
-                            ),
-                            const SizedBox(height: 20),
-                            VezGlass.textField(
-                              controller: passwordController,
-                              hint: "Password",
-                              obscure: !_showPassword,
-                              width: MediaQuery.of(context).size.width * 0.75,
-                              suffixIcon: GestureDetector(
-                                onTap: () => setState(
-                                    () => _showPassword = !_showPassword),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 6),
-                                  child: Icon(
-                                    !_showPassword
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                    color: Colors.white70,
-                                    size: 20,
-                                  ),
-                                ),
+                  /// ====== 2) CENTRE: FORM ======
+                  const Spacer(),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        VezGlass.textField(
+                          controller: usernameController,
+                          hint: "Username",
+                          width: MediaQuery.of(context).size.width * 0.75,
+                        ),
+                        const SizedBox(height: 20),
+                        VezGlass.textField(
+                          controller: passwordController,
+                          hint: "Password",
+                          obscure: !_showPassword,
+                          width: MediaQuery.of(context).size.width * 0.75,
+                          suffixIcon: GestureDetector(
+                            onTap: () => setState(
+                                () => _showPassword = !_showPassword),
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Icon(
+                                !_showPassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: Colors.white70,
+                                size: 20,
                               ),
                             ),
-                          ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  /// ====== 3) BOTTOM: ACTIONS ======
+                  const Spacer(),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      VezGlass.circleButton(
+                        assetIcon: "assets/images/icons/icon_login.png",
+                        iconSize: 30,
+                        onTap: login,
+                      ),
+                      const SizedBox(height: 24),
+                      VezGlass.pillButton(
+                        text: "Signup",
+                        color: Colors.white.withOpacity(0.5),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SignupPage()),
                         ),
                       ),
-
-                      /// ====== 3) BOTTOM: ACTIONS ======
-                      const Spacer(),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          VezGlass.circleButton(
-                            assetIcon: "assets/images/icons/icon_login.png",
-                            iconSize: 30,
-                            onTap: login,
-                          ),
-                          const SizedBox(height: 24),
-                          VezGlass.pillButton(
-                            text: "Signup",
-                            color: Colors.white.withOpacity(0.5),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const SignupPage()),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 60),
-                      SizedBox(
-                          height: MediaQuery.of(context).viewInsets.bottom),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 60),
+                  SizedBox(
+                      height: MediaQuery.of(context).viewInsets.bottom),
+                ],
               ),
             ),
           ),
