@@ -135,7 +135,7 @@ class VezGlass {
 
         EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 18),
 
-        Widget? suffixIcon, // optional trailing widget (e.g. eye toggle)
+        Widget? suffixIcon, required Color color, // optional trailing widget (e.g. eye toggle)
       }
     )
   {

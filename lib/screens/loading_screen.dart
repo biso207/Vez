@@ -89,12 +89,12 @@ class _LoadingPageState extends State<LoadingPage> {
                   ),
                 ),
 
-                // --- ANIMAZIONE DELLA SCRITTA "ez" ---
-                // ClipRect nasconde il testo finché la larghezza (widthFactor) è 0
+                // --- ANIMATION OF "ez" TEXT ---
+                // ClipRect hide the text until the width is 0
                 ClipRect(
                   child: AnimatedAlign(
                     duration: const Duration(milliseconds: 800),
-                    curve: Curves.easeOutQuart, // Curva di animazione molto moderna e fluida
+                    curve: Curves.easeOutQuart, // animation curve
                     alignment: Alignment.centerLeft,
                     widthFactor: _showEz ? 1.0 : 0.0,
                     child: const Text(
@@ -105,7 +105,7 @@ class _LoadingPageState extends State<LoadingPage> {
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
-                      softWrap: false, // Previene che il testo vada a capo mentre si rivela
+                      softWrap: false, // no new line
                     ),
                   ),
                 ),

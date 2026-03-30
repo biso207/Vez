@@ -14,7 +14,7 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> { // Rimosso SingleTickerProviderStateMixin
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -23,12 +23,10 @@ class _LoginPageState extends State<LoginPage> { // Rimosso SingleTickerProvider
   bool isLoading = false;
   bool _showPassword = false;
 
-  // Animazioni rimosse!
-
   @override
   void initState() {
     super.initState();
-    // Non dobbiamo più inizializzare i controller dell'animazione
+    setState(() => errorMessage = null);
   }
 
   @override
@@ -47,23 +45,14 @@ class _LoginPageState extends State<LoginPage> { // Rimosso SingleTickerProvider
         children: [
 
           /// ================= BACKGROUND =================
-
           Positioned.fill(
-            child: ColorFiltered(
-              colorFilter: const ColorFilter.matrix(<double>[
-                1.2, 0, 0, 0, 0,
-                0, 1.2, 0, 0, 0,
-                0, 0, 1.2, 0, 0,
-                0, 0, 0, 1.2, 0,
-              ]),
-              child: Image.asset(
-                "assets/images/bg/bg_login.jpg",
-                fit: BoxFit.cover,
-              ),
+            child: Image.asset(
+              "assets/images/bg/bg_login.jpg",
+              fit: BoxFit.cover,
             ),
           ),
 
-          /// ================= ANIMATED CONTENT =================
+          /// ================= STATIC CONTENT =================
           SafeArea(
             child: SizedBox(
               height:
@@ -95,13 +84,17 @@ class _LoginPageState extends State<LoginPage> { // Rimosso SingleTickerProvider
                           controller: usernameController,
                           hint: "Username",
                           width: MediaQuery.of(context).size.width * 0.75,
+                          color: Colors.white70,
                         ),
                         const SizedBox(height: 20),
                         VezGlass.textField(
                           controller: passwordController,
                           hint: "Password",
-                          obscure: !_showPassword,
+                          obscure: !_showPassword, // icon show/not show psw
                           width: MediaQuery.of(context).size.width * 0.75,
+                          color: Colors.white70,
+
+                          // detector of the click on the eye icon
                           suffixIcon: GestureDetector(
                             onTap: () => setState(
                                 () => _showPassword = !_showPassword),

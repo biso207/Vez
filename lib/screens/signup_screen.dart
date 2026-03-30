@@ -16,8 +16,7 @@ class SignupPage extends StatefulWidget {
   State<SignupPage> createState() => _SignupPageState();
 }
 
-class _SignupPageState extends State<SignupPage>
-    with SingleTickerProviderStateMixin {
+class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProviderStateMixin
   final RemoteDbService _dbService = RemoteDbService();
 
   // controllers
@@ -37,29 +36,15 @@ class _SignupPageState extends State<SignupPage>
   final PageController _pageController = PageController();
   int page = 0;
 
-  // ── entrance animation ──────────────────────────────────────────────────────
-  late final AnimationController _entranceCtrl;
-  late final Animation<double>   _fadeAnim;
-  late final Animation<Offset>   _slideAnim;
+  // Animazioni rimosse!
 
   @override
   void initState() {
     super.initState();
-    _entranceCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _fadeAnim  = CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _entranceCtrl, curve: Curves.easeOut));
-    _entranceCtrl.forward();
   }
 
   @override
   void dispose() {
-    _entranceCtrl.dispose();
     _pageController.dispose();
     emailController.dispose();
     passwordController.dispose();
@@ -87,97 +72,83 @@ class _SignupPageState extends State<SignupPage>
         children: [
 
           /// ================= BACKGROUND =================
-
           Positioned.fill(
-            child: ColorFiltered(
-              colorFilter: const ColorFilter.matrix(<double>[
-                1.2, 0, 0, 0, 0,
-                0, 1.2, 0, 0, 0,
-                0, 0, 1.2, 0, 0,
-                0, 0, 0, 1.2, 0,
-              ]),
-              child: Image.asset(
-                "assets/images/bg/bg_signup.jpg",
-                fit: BoxFit.cover,
-              ),
+            child: Image.asset(
+              "assets/images/bg/bg_signup.jpg",
+              fit: BoxFit.cover,
             ),
           ),
 
-          /// ================= ANIMATED CONTENT =================
-          FadeTransition(
-            opacity: _fadeAnim,
-            child: SlideTransition(
-              position: _slideAnim,
-              child: SafeArea(
-                child: SizedBox(
-                  height: (MediaQuery.of(context).size.height -
-                      MediaQuery.of(context).padding.top) +
-                      (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
-                  child: Column(
+          /// ================= STATIC CONTENT (Animazioni rimosse) =================
+          SafeArea(
+            child: SizedBox(
+              height:
+                (MediaQuery.of(context).size.height -
+                MediaQuery.of(context).padding.top) +
+                (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
+              child: Column(
+                children: [
+                  /// ====== 1) TOP: TITLE ======
+                  const Spacer(),
+                  const Center(
+                    child: Text(
+                      "Welcome",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 34,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+
+                  /// ====== 2) CENTRE: FORM ======
+                  const Spacer(),
+                  SizedBox(
+                    height: 300,
+                    child: PageView(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      onPageChanged: (i) {
+                        setState(() {
+                          page = i;
+                          errorMessage = null; // clear errors on step change
+                        });
+                      },
+                      children: [
+                        _stepOne(),
+                        _stepTwo(),
+                        _stepThree(),
+                      ],
+                    ),
+                  ),
+
+                  /// ====== 3) BOTTOM: ACTIONS ======
+                  const Spacer(),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      /// ====== 1) TOP: TITLE ======
-                      const Spacer(),
-                      const Center(
-                        child: Text(
-                          "Welcome",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 34,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                      _StepDots(currentPage: page, total: 3),
+                      const SizedBox(height: 24),
+                      _navigation(),
+                      const SizedBox(height: 24),
+                      VezGlass.pillButton(
+                        text: "Login",
+                        color: Colors.white.withOpacity(0.5),
+                        onTap: () => Navigator.pop(context),
                       ),
-
-                      /// ====== 2) CENTRE: FORM ======
-                      const Spacer(),
-                      SizedBox(
-                        height: 300,
-                        child: PageView(
-                          controller: _pageController,
-                          physics: const NeverScrollableScrollPhysics(),
-                          onPageChanged: (i) {
-                            setState(() {
-                              page = i;
-                              errorMessage = null; // clear errors on step change
-                            });
-                          },
-                          children: [
-                            _stepOne(),
-                            _stepTwo(),
-                            _stepThree(),
-                          ],
-                        ),
-                      ),
-
-                      /// ====== 3) BOTTOM: ACTIONS ======
-                      const Spacer(),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _StepDots(currentPage: page, total: 3),
-                          const SizedBox(height: 24),
-                          _navigation(),
-                          const SizedBox(height: 24),
-                          VezGlass.pillButton(
-                            text: "Login",
-                            color: Colors.white.withOpacity(0.5),
-                            onTap: () => Navigator.pop(context),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 60),
-                      SizedBox(
-                          height: MediaQuery.of(context).viewInsets.bottom),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 60),
+                  SizedBox(
+                      height: MediaQuery.of(context).viewInsets.bottom),
+                ],
               ),
             ),
           ),
 
           /// ================= ERROR BANNER (floating, no layout shift) =================
           Positioned(
-            bottom: 220,
+            bottom: 250,
             left: 0,
             right: 0,
             child: AnimatedOpacity(
@@ -241,6 +212,7 @@ class _SignupPageState extends State<SignupPage>
             controller: usernameController,
             hint: "Username",
             width: MediaQuery.of(context).size.width * 0.75,
+            color: Colors.white70,
           ),
         ],
       ),
@@ -257,6 +229,7 @@ class _SignupPageState extends State<SignupPage>
             controller: emailController,
             hint: "Email",
             width: MediaQuery.of(context).size.width * 0.75,
+            color: Colors.white70,
           ),
 
           const SizedBox(height: 20),
@@ -264,9 +237,11 @@ class _SignupPageState extends State<SignupPage>
           VezGlass.textField(
             controller: passwordController,
             hint: "Password",
-            obscure: !_showPassword,
-            width:
-            MediaQuery.of(context).size.width * 0.75,
+            obscure: !_showPassword, // icon show/not show psw
+            width: MediaQuery.of(context).size.width * 0.75,
+            color: Colors.white70,
+
+            // detector of the click on the eye icon
             suffixIcon: GestureDetector(
               onTap: () => setState(
                       () => _showPassword = !_showPassword),
@@ -304,6 +279,7 @@ class _SignupPageState extends State<SignupPage>
                 ),
                 hint: "Date Of Birth",
                 width: MediaQuery.of(context).size.width * 0.75,
+                color: Colors.white70,
               ),
             ),
           ),
@@ -312,13 +288,14 @@ class _SignupPageState extends State<SignupPage>
             controller: cityController,
             hint: "City",
             width: MediaQuery.of(context).size.width * 0.75,
+            color: Colors.white70,
           ),
         ],
       ),
     );
   }
 
-  // buttons to navigate thru the pages
+  // buttons to navigate through the pages
   Widget _navigation() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -335,10 +312,58 @@ class _SignupPageState extends State<SignupPage>
               ? "assets/images/icons/icon_save.png"
               : "assets/images/icons/icon_next.png",
           onTap: () {
-            if (page == 2) {
-              signup();
-            } else {
-              next();
+              // reset all errors
+              setState(() => errorMessage = null);
+
+              final username = usernameController.text.trim();
+              final email    = emailController.text.trim();
+              final password = passwordController.text;
+              final city     = cityController.text.trim();
+
+              switch (page) {
+                case 0:
+                  // one of the fields is empty
+                  if ((username.isEmpty || _profileImage == null)) {
+                    setState(() => errorMessage = "Please fill all fields");
+                    return;
+                  }
+                  next();
+                  break;
+
+                case 1:
+                  // one of the fields is empty
+                  if (page==1 && (password.isEmpty || email.isEmpty)) {
+                    setState(() => errorMessage = "Please fill all fields");
+                    return;
+                  }
+
+                  // invalid email
+                  if (!_isValidEmail(email)) {
+                    setState(() => errorMessage = "Invalid email");
+                    return;
+                  }
+
+                  // invalid password
+                  final String? passwordError = _validatePassword(password);
+                  if (passwordError != null) {
+                    setState(() => errorMessage = passwordError);
+                    return;
+                  }
+
+                  next();
+                  break;
+
+                case 2:
+                  // one of the fields is empty
+                  if (city.isEmpty || selectedDate == null) {
+                    setState(() => errorMessage = "Please fill all fields");
+                    return;
+                  }
+                  else {signup;}
+                  break;
+
+                default:
+                  setState(() => errorMessage = "Something went wrong");
             }
           },
         ),
@@ -353,29 +378,6 @@ class _SignupPageState extends State<SignupPage>
     final email    = emailController.text.trim();
     final password = passwordController.text;
     final city     = cityController.text.trim();
-
-    setState(() => errorMessage = null);
-
-    if (username.isEmpty ||
-        password.isEmpty ||
-        email.isEmpty ||
-        city.isEmpty ||
-        selectedDate == null ||
-        _profileImage == null) {
-      setState(() => errorMessage = "Please fill all fields");
-      return;
-    }
-
-    if (!_isValidEmail(email)) {
-      setState(() => errorMessage = "Invalid email");
-      return;
-    }
-
-    final String? passwordError = _validatePassword(password);
-    if (passwordError != null) {
-      setState(() => errorMessage = passwordError);
-      return;
-    }
 
     setState(() => isLoading = true);
 
@@ -426,7 +428,7 @@ class _SignupPageState extends State<SignupPage>
         !RegExp(r'[A-Z]').hasMatch(password) ||
         !RegExp(r'[a-z]').hasMatch(password) ||
         !RegExp(r'[0-9]').hasMatch(password) ||
-        !RegExp(r'[!@#\$&*~]').hasMatch(password)
+        !RegExp(r'[!@#\$&*~£€?§+]').hasMatch(password)
     ) { return false; }
     return true;
   }
