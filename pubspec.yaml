@@ -40,6 +40,9 @@ flutter:
     - assets/app_icon/app_icon.png
     - assets/images/bg/
     - assets/images/icons/
+    - assets/images/icons/auth/
+    - assets/images/icons/home_page/
+    - assets/images/icons/nav_bar/
 
   fonts:
     - family: InstagramSans

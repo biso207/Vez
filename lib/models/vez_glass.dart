@@ -1,3 +1,6 @@
+// Developed and Designed by Outly • © 2026
+// Graphic models to create the UI elements of the app
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 

@@ -120,7 +120,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       VezGlass.circleButton(
-                        assetIcon: "assets/images/icons/icon_login.png",
+                        assetIcon: "assets/images/icons/auth/icon_login.png",
                         iconSize: 30,
                         onTap: login,
                       ),

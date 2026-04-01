@@ -186,7 +186,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                 children: [
                   // Glass circle background
                   VezGlass.circleButton(
-                    assetIcon: "assets/images/icons/icon_camera.png",
+                    assetIcon: "assets/images/icons/auth/icon_camera.png",
                     onTap: _pickImage,
                     size: 70,
                     iconSize: 60,
@@ -302,15 +302,15 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
       children: [
         if (page > 0)
           VezGlass.circleButton(
-            assetIcon: "assets/images/icons/icon_next.png",
+            assetIcon: "assets/images/icons/auth/icon_next.png",
             rotation: 3.1416,
             onTap: back,
           ),
         if (page > 0) const SizedBox(width: 40),
         VezGlass.circleButton(
           assetIcon: page == 2
-              ? "assets/images/icons/icon_save.png"
-              : "assets/images/icons/icon_next.png",
+              ? "assets/images/icons/auth/icon_save.png"
+              : "assets/images/icons/auth/icon_next.png",
           onTap: () {
               // reset all errors
               setState(() => errorMessage = null);
