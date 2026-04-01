@@ -3,7 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../models/vez_glass.dart';
-import '../services/remote_db_service.dart';
+import '../services/auth_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'home_screen.dart';
@@ -212,7 +212,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
             controller: usernameController,
             hint: "Username",
             width: MediaQuery.of(context).size.width * 0.75,
-            color: Colors.white70,
+            color: Colors.white54,
           ),
         ],
       ),
@@ -229,7 +229,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
             controller: emailController,
             hint: "Email",
             width: MediaQuery.of(context).size.width * 0.75,
-            color: Colors.white70,
+            color: Colors.white54,
           ),
 
           const SizedBox(height: 20),
@@ -239,7 +239,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
             hint: "Password",
             obscure: !_showPassword, // icon show/not show psw
             width: MediaQuery.of(context).size.width * 0.75,
-            color: Colors.white70,
+            color: Colors.white54,
 
             // detector of the click on the eye icon
             suffixIcon: GestureDetector(
@@ -251,7 +251,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                   !_showPassword
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: Colors.white70,
+                  color: Colors.white54,
                   size: 20,
                 ),
               ),
@@ -279,7 +279,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                 ),
                 hint: "Date Of Birth",
                 width: MediaQuery.of(context).size.width * 0.75,
-                color: Colors.white70,
+                color: Colors.white54,
               ),
             ),
           ),
@@ -288,7 +288,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
             controller: cityController,
             hint: "City",
             width: MediaQuery.of(context).size.width * 0.75,
-            color: Colors.white70,
+            color: Colors.white54,
           ),
         ],
       ),
@@ -401,7 +401,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => HomePage(username: username)),
       );
     } else if (response == 409) {
       setState(() => errorMessage = "User already exists");

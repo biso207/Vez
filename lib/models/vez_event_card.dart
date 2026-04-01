@@ -19,7 +19,7 @@ class VezEventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        width: 320,
+        width: double.infinity, // adapting resizing based on the dimension of the screen
         height: 550,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(40),

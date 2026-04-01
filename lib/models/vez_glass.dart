@@ -16,7 +16,7 @@ class VezGlass {
 
   /// border style (2px white 50%)
   static Border border = Border.all(
-    color: Colors.white.withOpacity(.5),
+    color: Colors.white54,
     width: 2,
   );
 
@@ -27,7 +27,7 @@ class VezGlass {
     required Widget child,
     BorderRadius radius = const BorderRadius.all(Radius.circular(30)),
     EdgeInsets padding = const EdgeInsets.symmetric(
-        horizontal: 18, vertical: 14),
+        horizontal: 30, vertical: 7),
     Color? color,
   }) {
     return ClipRRect(
@@ -50,6 +50,7 @@ class VezGlass {
   /// ---------------------------------------------------
   /// Glass circular button
   /// ---------------------------------------------------
+  // Modifica all'interno di vez_glass.dart -> circleButton
   static Widget circleButton({
     required String assetIcon,
     required VoidCallback onTap,
@@ -57,7 +58,12 @@ class VezGlass {
     double iconSize = 30,
     double rotation = 0,
     Color? color,
+    // Rimuoviamo l'obbligo di isNetworkImage o lo rendiamo opzionale
   }) {
+    // LOGICA AUTOMATICA:
+    final bool isRemote = assetIcon.startsWith('http');
+    final bool isEmpty = assetIcon.isEmpty;
+
     return GestureDetector(
       onTap: onTap,
       child: ClipOval(
@@ -74,10 +80,21 @@ class VezGlass {
             child: Center(
               child: Transform.rotate(
                 angle: rotation,
-                child: Image.asset(
+                child: isRemote
+                    ? Image.network(
                   assetIcon,
+                  width: size, // Occupa tutto il cerchio per la foto profilo
+                  height: size,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.person, color: Colors.white),
+                )
+                    : Image.asset(
+                  isEmpty ? "assets/images/icons/home_page/profile_photo.png" : assetIcon,
                   width: iconSize,
-                  color: Colors.white,
+                  // Rimuoviamo color: Colors.white se è la foto profilo,
+                  // ma lo teniamo se è un'icona (logica opzionale)
+                  color: isEmpty ? null : Colors.white,
                 ),
               ),
             ),
@@ -156,7 +173,6 @@ class VezGlass {
             controller: controller,
             obscureText: obscure,
             style: TextStyle(
-                color: Colors.white,
                 fontSize: fontSize,
                 fontWeight: fontWeight
             ),
@@ -165,7 +181,6 @@ class VezGlass {
               border: InputBorder.none,
               hintText: hint,
               hintStyle: TextStyle(
-                  color: Colors.white,
                   fontSize: fontSize,
                   fontWeight: fontWeight
               ),

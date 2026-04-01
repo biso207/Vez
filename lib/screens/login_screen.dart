@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:vez/screens/signup_screen.dart';
 import '../models/vez_glass.dart';
-import '../services/remote_db_service.dart';
+import '../services/auth_service.dart';
 import 'home_screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                           controller: usernameController,
                           hint: "Username",
                           width: MediaQuery.of(context).size.width * 0.75,
-                          color: Colors.white70,
+                          color: Colors.white54,
                         ),
                         const SizedBox(height: 20),
                         VezGlass.textField(
@@ -92,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                           hint: "Password",
                           obscure: !_showPassword, // icon show/not show psw
                           width: MediaQuery.of(context).size.width * 0.75,
-                          color: Colors.white70,
+                          color: Colors.white54,
 
                           // detector of the click on the eye icon
                           suffixIcon: GestureDetector(
@@ -104,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                                 !_showPassword
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
-                                color: Colors.white70,
+                                color: Colors.white54,
                                 size: 20,
                               ),
                             ),
@@ -193,7 +193,7 @@ class _LoginPageState extends State<LoginPage> {
     if (response == 200 || response == 201) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => HomePage(username: username)),
       );
     } else {
       setState(() => errorMessage = "Invalid credentials");
