@@ -10,5 +10,5 @@ class UserSession {
   UserSession._internal();
 
   String username = "";
-  String profilePic = "assets/images/icons/home_page/icon_profile.png";
+  String profilePic = "assets/icons/home_page/icon_profile.png";
 }

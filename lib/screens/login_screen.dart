@@ -37,6 +37,7 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  // --- PAGE LAYOUT ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       VezGlass.circleButton(
-                        assetIcon: "assets/images/icons/auth/icon_login.png",
+                        assetIcon: "assets/icons/auth/icon_login.png",
                         iconSize: 30,
                         onTap: login,
                       ),

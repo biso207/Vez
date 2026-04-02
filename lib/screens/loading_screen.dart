@@ -58,6 +58,7 @@ class _LoadingPageState extends State<LoadingPage> {
     );
   }
 
+  // --- PAGE LAYOUT ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(

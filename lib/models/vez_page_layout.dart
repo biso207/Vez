@@ -31,9 +31,9 @@ class VezPageLayout extends StatelessWidget {
 
   // list of icons of the event types
   final List<Map<String, dynamic>> eventGroupsIcons = [
-    {"icon": "assets/images/icons/home_page/by_you_events.png", "type": EventType.byYou},
-    {"icon": "assets/images/icons/home_page/invited_events.png", "type": EventType.invited},
-    {"icon": "assets/images/icons/home_page/nearby_events.png", "type": EventType.nearby}
+    {"icon": "assets/icons/home_page/by_you_events.png", "type": EventType.byYou},
+    {"icon": "assets/icons/home_page/invited_events.png", "type": EventType.invited},
+    {"icon": "assets/icons/home_page/nearby_events.png", "type": EventType.nearby}
   ];
 
   @override

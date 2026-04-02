@@ -41,10 +41,11 @@ flutter:
   assets:
     - assets/app_icon/
     - assets/images/bg/
-    - assets/images/icons/
-    - assets/images/icons/auth/
-    - assets/images/icons/home_page/
-    - assets/images/icons/nav_bar/
+    - assets/icons/
+    - assets/icons/auth/
+    - assets/icons/home_page/
+    - assets/icons/nav_bar/
+    - assets/icons/profile_page/
     - assets/loading_screen/
 
 

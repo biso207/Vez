@@ -65,6 +65,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     curve: Curves.easeInOut,
   );
 
+  // --- PAGE LAYOUT ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -188,7 +189,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                 children: [
                   // Glass circle background
                   VezGlass.circleButton(
-                    assetIcon: "assets/images/icons/auth/icon_camera.png",
+                    assetIcon: "assets/icons/auth/icon_camera.png",
                     onTap: _pickImage,
                     size: 70,
                     iconSize: 60,
@@ -325,15 +326,15 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
       children: [
         if (page > 0)
           VezGlass.circleButton(
-            assetIcon: "assets/images/icons/auth/icon_next.png",
+            assetIcon: "assets/icons/auth/icon_next.png",
             rotation: 3.1416,
             onTap: back,
           ),
         if (page > 0) const SizedBox(width: 40),
         VezGlass.circleButton(
           assetIcon: page == 2
-              ? "assets/images/icons/auth/icon_save.png"
-              : "assets/images/icons/auth/icon_next.png",
+              ? "assets/icons/auth/icon_save.png"
+              : "assets/icons/auth/icon_next.png",
           onTap: () {
               // reset all errors
               setState(() => errorMessage = null);
@@ -350,6 +351,13 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                     setState(() => errorMessage = "Please fill all fields");
                     return;
                   }
+
+                  // username is too short
+                  if (username.length<=3) {
+                    setState(() => errorMessage = "Username is too short.\nMin. 4 characters");
+                    return;
+                  }
+
                   next();
                   break;
 

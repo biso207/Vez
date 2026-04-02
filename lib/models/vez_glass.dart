@@ -85,10 +85,10 @@ class VezGlass {
                   height: size,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) =>
-                      ImageIcon(const AssetImage("assets/images/icons/home_page/profile_photo.png"), color: Colors.white),
+                      ImageIcon(const AssetImage("assets/icons/home_page/profile_photo.png"), color: Colors.white),
                 )
                     : Image.asset(
-                  isEmpty ? "assets/images/icons/home_page/profile_photo.png" : assetIcon,
+                  isEmpty ? "assets/icons/home_page/profile_photo.png" : assetIcon,
                   width: iconSize,
                   color: (isEmpty || !assetIcon.contains('bg')) ? Colors.white : null,
                 ),

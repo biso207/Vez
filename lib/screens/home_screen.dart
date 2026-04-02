@@ -2,6 +2,7 @@
 // Screen to manage the home page of the app
 
 import 'package:flutter/material.dart';
+import 'package:vez/screens/profile_screen.dart';
 import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
 import '../models/vez_event_card.dart';
@@ -32,9 +33,9 @@ class _HomePageState extends State<HomePage> {
 
   // list of icons of the event types
   final List<Map<String, dynamic>> eventGroupsIcons = [
-    {"icon": "assets/images/icons/home_page/by_you_events.png", "type": EventType.byYou},
-    {"icon": "assets/images/icons/home_page/invited_events.png", "type": EventType.invited},
-    {"icon": "assets/images/icons/home_page/nearby_events.png", "type": EventType.nearby}
+    {"icon": "assets/icons/home_page/by_you_events.png", "type": EventType.byYou},
+    {"icon": "assets/icons/home_page/invited_events.png", "type": EventType.invited},
+    {"icon": "assets/icons/home_page/nearby_events.png", "type": EventType.nearby}
   ];
 
   // default event group index
@@ -53,6 +54,7 @@ class _HomePageState extends State<HomePage> {
     getUserProfilePhoto();
   }
 
+  // getter of the user profile photo
   void getUserProfilePhoto() async {
     // Recuperiamo il path dal servizio
     String photo = await _dbService.getProfilePhoto(UserSession().username);
@@ -71,6 +73,7 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  // --- PAGE LAYOUT ---
   @override
   Widget build(BuildContext context) {
     return VezPageLayout(
@@ -79,10 +82,12 @@ class _HomePageState extends State<HomePage> {
 
       // user profile photo
       profileIconPath: _profilePhoto,
-      // tapping on the profile photo
+      // tapping on the profile photo to open the user profile
       onProfileTap: () {
-        // TODO: go to the profile page
-        print("Profile tapped");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => ProfilePage()),
+        );
       },
       searchHint: "Search",
       filterIconPath: eventGroupsIcons[_indexEventGroup]["icon"],
@@ -101,17 +106,17 @@ class _HomePageState extends State<HomePage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: ImageIcon(const AssetImage("assets/images/icons/nav_bar/go_to_home_page.png"), color: Colors.white),
+              icon: ImageIcon(const AssetImage("assets/icons/nav_bar/go_to_home_page.png"), color: Colors.white),
               iconSize: 30,
               onPressed: () {},
             ),
             IconButton(
-              icon: ImageIcon(const AssetImage("assets/images/icons/nav_bar/create_event.png"), color: Colors.white),
+              icon: ImageIcon(const AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
               onPressed: () {},
             ),
             IconButton(
-              icon: ImageIcon(const AssetImage("assets/images/icons/nav_bar/notifications.png"), color: Colors.white),
+              icon: ImageIcon(const AssetImage("assets/icons/nav_bar/notifications.png"), color: Colors.white),
               iconSize: 30,
               onPressed: () {},
             ),
