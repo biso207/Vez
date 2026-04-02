@@ -197,6 +197,9 @@ class _LoginPageState extends State<LoginPage> {
       );
     } else {
       setState(() => errorMessage = "Invalid credentials");
+      // reset fields
+      usernameController.clear();
+      passwordController.clear();
     }
   }
 }
