@@ -29,6 +29,7 @@ class VezGlass {
     EdgeInsets padding = const EdgeInsets.symmetric(
         horizontal: 30, vertical: 7),
     Color? color,
+    
   }) {
     return ClipRRect(
       borderRadius: radius,

@@ -116,11 +116,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
+            const SizedBox(width: 20),
             IconButton(
               icon: ImageIcon(const AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
               onPressed: () {},
             ),
+            const SizedBox(width: 20),
             IconButton(
               icon: ImageIcon(const AssetImage("assets/icons/nav_bar/notifications.png"), color: Colors.white),
               iconSize: 30,
