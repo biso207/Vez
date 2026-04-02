@@ -27,6 +27,13 @@ class VezEventCard extends StatelessWidget {
             image: AssetImage(imagePath),
             fit: BoxFit.cover,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white54,
+              blurRadius: 5,
+              offset: const Offset(0, -1), // Centered glow/shadow effect as requested
+            ),
+          ],
         ),
         child: Stack(
           children: [

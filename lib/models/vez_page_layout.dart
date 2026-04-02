@@ -1,19 +1,40 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:vez/models/vez_event_card.dart';
+import 'package:vez/models/vez_glass.dart';
+import 'package:vez/models/vez_popup.dart';
+import 'package:vez/screens/home_screen.dart';
 
 class VezPageLayout extends StatelessWidget {
   final Widget body;
-  final Widget? topNavBar;
   final Widget? bottomNavBar;
-  final double horizontalMargin; // <-- Il parametro della griglia
+  final double horizontalMargin;
+  final TextEditingController searchController;
+  final String profileIconPath;
+  final VoidCallback? onProfileTap;
+  final String searchHint;
+  final String filterIconPath;
+  final ValueChanged<int>? onFilterSelected;
 
-  const VezPageLayout({
+  VezPageLayout({
     super.key,
     required this.body,
-    this.topNavBar,
     this.bottomNavBar,
-    this.horizontalMargin = 52, // <-- Margine standard di default (le tue linee blu)
+    required this.searchController, // Required
+    this.profileIconPath = "", // Optional
+    this.onProfileTap, // Optional
+    this.searchHint = "Search", // Optional
+    this.filterIconPath = "", // Optional
+    this.onFilterSelected, // Optional
+    this.horizontalMargin = 52.0,
   });
+
+  // list of icons of the event types
+  final List<Map<String, dynamic>> eventGroupsIcons = [
+    {"icon": "assets/images/icons/home_page/by_you_events.png", "type": EventType.byYou},
+    {"icon": "assets/images/icons/home_page/invited_events.png", "type": EventType.invited},
+    {"icon": "assets/images/icons/home_page/nearby_events.png", "type": EventType.nearby}
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -97,13 +118,12 @@ class VezPageLayout extends StatelessWidget {
           ),
 
           /// 5) Navbars
-          if (topNavBar != null)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 40,
-              left: horizontalMargin,  // <-- Allineata alla griglia sx
-              right: horizontalMargin, // <-- Allineata alla griglia dx
-              child: topNavBar!,
-            ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 40,
+            left: horizontalMargin,  // <-- Allineata alla griglia sx
+            right: horizontalMargin, // <-- Allineata alla griglia dx
+            child: _buildTopNavBar(context), // <--- Usa il nuovo layout
+          ),
 
           if (bottomNavBar != null)
             Positioned(
@@ -115,4 +135,112 @@ class VezPageLayout extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildTopNavBar(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        VezGlass.circleButton(
+          assetIcon: profileIconPath,
+          onTap: onProfileTap ?? () {},
+          size: 45,
+          iconSize: 24,
+        ),
+        const SizedBox(width: 20), // Spazio significativo
+        Expanded(
+          child: VezGlass.textField(
+            controller: searchController,
+            hint: searchHint,
+            prefixIcon: const Icon(Icons.search, color: Colors.white70), color: Colors.white,
+            // Regolerò l'altezza e il raggio di curvatura per abbinare le immagini
+            // L'altezza è di 44. Il raggio di curvatura del container glass
+          ),
+        ),
+        const SizedBox(width: 20), // Spazio significativo
+
+
+        // PULSANTE FILTRO MODIFICATO
+        VezGlass.circleButton(
+          assetIcon: filterIconPath,
+          onTap: () {
+            VezPopup.show(
+              context: context,
+              width: 250, // Più largo come richiesto
+              alignment: Alignment.center, // Centered on the page
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildPopupItem(
+                    icon: eventGroupsIcons[0]["icon"],
+                    label: "By You",
+                    onTap: () {
+                      onFilterSelected?.call(0);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _customDivider(),
+                  _buildPopupItem(
+                    icon: eventGroupsIcons[1]["icon"],
+                    label: "Invited",
+                    onTap: () {
+                      onFilterSelected?.call(1);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _customDivider(),
+                  _buildPopupItem(
+                    icon: eventGroupsIcons[2]["icon"],
+                    label: "Nearby",
+                    onTap: () {
+                      onFilterSelected?.call(2);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+          size: 44,
+          iconSize: 30,
+        ),
+      ],
+    );
+  }
+
+  // --- Helper Widgets per mantenere il codice pulito ---
+  Widget _buildPopupItem({required String icon, required String label, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque, // Rende cliccabile tutta l'area
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10), // I 10px di Figma
+        child: Row(
+          children: [
+            Image.asset(icon, width: 40, height: 40), // Icona dimensione 40
+            const SizedBox(width: 15),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _customDivider() {
+    return Center(
+      child: Container(
+        width: 200, // Divider più stretto del popup
+        height: 2,
+        color: Colors.white54,
+      ),
+    );
+  }
+
+  void setState(int Function() param0) {}
 }

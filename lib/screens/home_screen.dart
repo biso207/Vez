@@ -78,86 +78,31 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return VezPageLayout(
-      // --- TOP NAVBAR ---
-      topNavBar: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          VezGlass.circleButton(
-            // Se _profilePhoto è vuota, il widget userà il default asset definito in vez_glass
-            assetIcon: _profilePhoto,
-            onTap: () {
-              // futura apertura della pagina di profilo
-            },
-            size: 44,
-            iconSize: 24,
-          ),
+      // --- TOP NAVBAR (PARAMETERS) ---
+      searchController: searchController,
 
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: VezGlass.textField(
-                controller: searchController,
-                hint: "Search",
-                width: 100, height: 44,
-                color: Colors.white54,
-                suffixIcon: ImageIcon(const AssetImage("assets/images/icons/home_page/search.png"), size: 30, color: Colors.white)
-              ),
-            ),
-          ),
-
-          // PULSANTE FILTRO MODIFICATO
-          VezGlass.circleButton(
-            assetIcon: eventGroupsIcons[_indexEventGroup]["icon"],
-            onTap: () {
-              VezPopup.show(
-                context: context,
-                width: 250, // Più largo come richiesto
-                alignment: Alignment.center, // Centered on the page
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildPopupItem(
-                      icon: eventGroupsIcons[0]["icon"],
-                      label: "By You",
-                      onTap: () {
-                        setState(() => _indexEventGroup = 0);
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _customDivider(),
-                    _buildPopupItem(
-                      icon: eventGroupsIcons[1]["icon"],
-                      label: "Invited",
-                      onTap: () {
-                        setState(() => _indexEventGroup = 1);
-                        Navigator.pop(context);
-                      },
-                    ),
-                    _customDivider(),
-                    _buildPopupItem(
-                      icon: eventGroupsIcons[2]["icon"],
-                      label: "Nearby",
-                      onTap: () {
-                        setState(() => _indexEventGroup = 2);
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-            size: 44,
-            iconSize: 30,
-          ),
-        ],
-      ),
+      // user profile photo
+      profileIconPath: _profilePhoto,
+      // tapping on the profile photo
+      onProfileTap: () {
+        // TODO: go to the profile page
+        print("Profile tapped");
+      },
+      searchHint: "Search",
+      filterIconPath: eventGroupsIcons[_indexEventGroup]["icon"],
+      onFilterSelected: (index) {
+        setState(() {
+          _indexEventGroup = index;
+        });
+        // TODO: reload the events based on the group selected
+      },
 
       // --- BOTTOM NAVBAR ---
       bottomNavBar: VezGlass.container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0), // Padding ridotto
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
         radius: BorderRadius.circular(40),
         child: Row(
-          mainAxisSize: MainAxisSize.min, // adapt the width to the icons (the children)
+          mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
               icon: ImageIcon(const AssetImage("assets/images/icons/nav_bar/go_to_home_page.png"), color: Colors.white),
@@ -181,8 +126,8 @@ class _HomePageState extends State<HomePage> {
       // --- CENTRE (EVENTS CAROUSEL) ---
       body: PageView.builder(
         scrollDirection: Axis.vertical,
-        controller: PageController(viewportFraction: 0.75), // Fa sbordare il prossimo/precedente evento
-        itemCount: dummyEvents.length, // number of events to display
+        controller: PageController(viewportFraction: 0.75),
+        itemCount: dummyEvents.length,
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 1),
@@ -193,43 +138,6 @@ class _HomePageState extends State<HomePage> {
           );
         },
       ),
-
     );
   }
-}
-
-// --- Helper Widgets per mantenere il codice pulito ---
-
-Widget _buildPopupItem({required String icon, required String label, required VoidCallback onTap}) {
-  return GestureDetector(
-    onTap: onTap,
-    behavior: HitTestBehavior.opaque, // Rende cliccabile tutta l'area
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10), // I 10px di Figma
-      child: Row(
-        children: [
-          Image.asset(icon, width: 40, height: 40), // Icona dimensione 40
-          const SizedBox(width: 15),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _customDivider() {
-  return Center(
-    child: Container(
-      width: 200, // Divider più stretto del popup
-      height: 2,
-      color: Colors.white54,
-    ),
-  );
 }

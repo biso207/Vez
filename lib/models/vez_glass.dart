@@ -50,7 +50,6 @@ class VezGlass {
   /// ---------------------------------------------------
   /// Glass circular button
   /// ---------------------------------------------------
-  // Modifica all'interno di vez_glass.dart -> circleButton
   static Widget circleButton({
     required String assetIcon,
     required VoidCallback onTap,
@@ -58,9 +57,7 @@ class VezGlass {
     double iconSize = 30,
     double rotation = 0,
     Color? color,
-    // Rimuoviamo l'obbligo di isNetworkImage o lo rendiamo opzionale
   }) {
-    // LOGICA AUTOMATICA:
     final bool isRemote = assetIcon.startsWith('http');
     final bool isEmpty = assetIcon.isEmpty;
 
@@ -84,7 +81,7 @@ class VezGlass {
                 child: isRemote
                     ? Image.network(
                   assetIcon,
-                  width: size, // Occupa tutto il cerchio per la foto profilo
+                  width: size, 
                   height: size,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) =>
@@ -93,9 +90,7 @@ class VezGlass {
                     : Image.asset(
                   isEmpty ? "assets/images/icons/home_page/profile_photo.png" : assetIcon,
                   width: iconSize,
-                  // Rimuoviamo color: Colors.white se è la foto profilo,
-                  // ma lo teniamo se è un'icona (logica opzionale)
-                  color: isEmpty ? null : Colors.white,
+                  color: (isEmpty || !assetIcon.contains('bg')) ? Colors.white : null,
                 ),
               ),
             ),
@@ -156,6 +151,7 @@ class VezGlass {
 
         EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 18),
 
+        Widget? prefixIcon,
         Widget? suffixIcon, required Color color, // optional trailing widget (e.g. eye toggle)
       }
     )
@@ -175,7 +171,8 @@ class VezGlass {
             obscureText: obscure,
             style: TextStyle(
                 fontSize: fontSize,
-                fontWeight: fontWeight
+                fontWeight: fontWeight,
+                color: Colors.white
             ),
             decoration: InputDecoration(
               isCollapsed: true,
@@ -183,8 +180,11 @@ class VezGlass {
               hintText: hint,
               hintStyle: TextStyle(
                   fontSize: fontSize,
-                  fontWeight: fontWeight
+                  fontWeight: fontWeight,
+                  color: Colors.white60
               ),
+              prefixIcon: prefixIcon,
+              prefixIconConstraints: const BoxConstraints(),
               suffixIcon: suffixIcon,
               suffixIconConstraints: const BoxConstraints(),
             ),
