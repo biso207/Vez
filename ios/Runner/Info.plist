@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+    <string>Vez ha bisogno della tua posizione per trovare la tua città e mostrarti gli eventi vicini a te.</string>
+
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Vez ha bisogno della tua posizione per mostrarti gli eventi nelle vicinanze.</string>
 </dict>
 </plist>

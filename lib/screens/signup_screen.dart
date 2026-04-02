@@ -7,6 +7,8 @@ import '../services/auth_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'home_screen.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 
 class SignupPage extends StatefulWidget {
@@ -36,7 +38,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
   final PageController _pageController = PageController();
   int page = 0;
 
-  // Animazioni rimosse!
+  bool _isLocatingCity = false;
 
   @override
   void initState() {
@@ -284,12 +286,33 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
             ),
           ),
           const SizedBox(height: 20),
-          VezGlass.textField(
-            controller: cityController,
-            hint: "City",
-            width: MediaQuery.of(context).size.width * 0.75,
-            color: Colors.white54,
-          ),
+          GestureDetector(
+            onTap: _fetchUserCity, // Al click parte il GPS
+            child: AbsorbPointer(
+              // AbsorbPointer blocca i tap "interni", così la tastiera non si apre mai
+              child: Stack(
+                alignment: Alignment.centerRight,
+                children: [
+                  VezGlass.textField(
+                    controller: cityController,
+                    // Il testo cambia mentre cerca
+                    hint: _isLocatingCity ? "Locating your city..." : "Tap to set City",
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    color: Colors.white54,
+                  ),
+                  // Mostriamo una rotellina di caricamento dentro il campo se sta cercando
+                  if (_isLocatingCity)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 15.0),
+                      child: SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          )
         ],
       ),
     );
@@ -359,7 +382,8 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                     setState(() => errorMessage = "Please fill all fields");
                     return;
                   }
-                  else {signup;}
+
+                  signup();
                   break;
 
                 default:
@@ -428,14 +452,14 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
         !RegExp(r'[A-Z]').hasMatch(password) ||
         !RegExp(r'[a-z]').hasMatch(password) ||
         !RegExp(r'[0-9]').hasMatch(password) ||
-        !RegExp(r'[!@#\$&*~£€?§+]').hasMatch(password)
+        !RegExp(r'[!@#$&*~£€?§+]').hasMatch(password)
     ) { return false; }
     return true;
   }
 
   // email validator
   bool _isValidEmail(String email) =>
-      RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+      RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
 
   // date selector
   Future<void> _selectDate(BuildContext context) async {
@@ -458,6 +482,65 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     );
     if (pickedFile != null) {
       setState(() => _profileImage = File(pickedFile.path));
+    }
+  }
+
+  // city picker based on the gps
+  Future<void> _fetchUserCity() async {
+    // Mostriamo all'utente che stiamo cercando
+    setState(() {
+      _isLocatingCity = true;
+      errorMessage = null; // puliamo eventuali errori precedenti
+    });
+
+    try {
+      // 1. Controlla se il GPS del telefono è acceso
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw Exception("Please enable location services on your device.");
+      }
+
+      // 2. Controlla e chiedi i permessi all'utente
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw Exception("Location permissions are denied.");
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception("Location permissions are permanently denied. Change it in settings.");
+      }
+
+      // 3. Ottieni le coordinate precise
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high
+      );
+
+      // 4. Reverse Geocoding (da Lat/Lon a nome della città)
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+          position.latitude, position.longitude
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        // 'locality' di solito è la città principale. 'subAdministrativeArea' è la provincia.
+        String cityName = place.locality ?? place.subAdministrativeArea ?? "Unknown City";
+
+        setState(() {
+          cityController.text = cityName; // Inserisce il testo da solo!
+        });
+      }
+    } catch (e) {
+      // Se qualcosa va storto, mostriamo l'errore nel banner
+      setState(() {
+        errorMessage = e.toString().replaceAll("Exception: ", "");
+      });
+    } finally {
+      // Spegniamo il caricamento
+      setState(() {
+        _isLocatingCity = false;
+      });
     }
   }
 }

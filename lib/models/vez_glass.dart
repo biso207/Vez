@@ -77,6 +77,7 @@ class VezGlass {
               border: border,
               color: color ?? Colors.black.withOpacity(.5),
             ),
+
             child: Center(
               child: Transform.rotate(
                 angle: rotation,
@@ -87,7 +88,7 @@ class VezGlass {
                   height: size,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.person, color: Colors.white),
+                      ImageIcon(const AssetImage("assets/images/icons/home_page/profile_photo.png"), color: Colors.white),
                 )
                     : Image.asset(
                   isEmpty ? "assets/images/icons/home_page/profile_photo.png" : assetIcon,
