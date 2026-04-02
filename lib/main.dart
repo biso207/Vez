@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vez/screens/loading_screen.dart';
+import 'package:device_preview/device_preview.dart';
 
 void main() {
   // we ensure widgets are initialized
@@ -14,7 +14,11 @@ void main() {
   ]).then((_) {
 
     //debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-    runApp(const MyApp());
+    runApp(DevicePreview(
+      enabled: true, // Puoi disattivarlo per le build finali
+      builder: (context) => MyApp(),
+    ),
+    );
   });
 }
 
@@ -25,6 +29,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // here to set the global style of the application //
     return MaterialApp(
+
+        useInheritedMediaQuery: true, // Necessario per far funzionare la simulazione
+        locale: DevicePreview.locale(context),
+        builder: DevicePreview.appBuilder,
+
         title: 'Vez',
         theme: ThemeData(
           useMaterial3: true,
@@ -33,7 +42,7 @@ class MyApp extends StatelessWidget {
 
           // defining the colors scheme
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.redAccent,  // color for the buttons
+            seedColor: Colors.white,  // color for the buttons
             brightness: Brightness.dark,   // dark theme
             surface: Colors.black,         // bg color for scaffolds and cards
           ),
