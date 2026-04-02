@@ -5,20 +5,24 @@ import 'package:flutter/material.dart';
 import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
 import '../models/vez_event_card.dart';
-import '../services/user_session.dart';
+import '../models/vez_popup.dart';
 import '../services/getters_service.dart';
 
-class HomePage extends StatefulWidget {
+class ProfilePage extends StatefulWidget {
+  // attributes/variables for the class
+  final String username;
+
   // costruttore
-  const HomePage({
+  const ProfilePage({
     super.key,
+    required this.username,
   });
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController searchController = TextEditingController();
 
   // Lista fittizia per il carosello
@@ -55,7 +59,7 @@ class _HomePageState extends State<HomePage> {
 
   void getUserProfilePhoto() async {
     // Recuperiamo il path dal servizio
-    String photo = await _dbService.getProfilePhoto(UserSession().username);
+    String photo = await _dbService.getProfilePhoto(widget.username);
 
     // Aggiorniamo lo stato per far apparire la foto
     if (mounted) { // Controllo di sicurezza: l'utente potrebbe aver cambiato pagina nel frattempo

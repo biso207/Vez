@@ -6,6 +6,7 @@ import 'package:vez/screens/signup_screen.dart';
 import '../models/vez_glass.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
+import '../services/user_session.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -191,9 +192,10 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = false);
 
     if (response == 200 || response == 201) {
+      UserSession().username = username; // writing username to the sessione
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => HomePage(username: username)),
+        MaterialPageRoute(builder: (_) => HomePage()),
       );
     } else {
       setState(() => errorMessage = "Invalid credentials");

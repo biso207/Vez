@@ -9,7 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'home_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-
+import '../services/user_session.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -420,12 +420,14 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     setState(() => isLoading = false);
 
     if (response == 200 || response == 201) {
+      UserSession().username = username; // writing username to the sessione
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Signup Successful!")),
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => HomePage(username: username)),
+        MaterialPageRoute(builder: (_) => HomePage()),
       );
     } else if (response == 409) {
       setState(() => errorMessage = "User already exists");
