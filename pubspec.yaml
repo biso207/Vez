@@ -37,12 +37,14 @@ flutter:
 
   # RICORDATI DI AGGIUNGERE GLI ASSETS QUI PER L'ICONA E LE FOTO
   assets:
-    - assets/app_icon/app_icon.png
+    - assets/app_icon/
     - assets/images/bg/
     - assets/images/icons/
     - assets/images/icons/auth/
     - assets/images/icons/home_page/
     - assets/images/icons/nav_bar/
+    - assets/loading_screen/
+
 
   fonts:
     - family: InstagramSans

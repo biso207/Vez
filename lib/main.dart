@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vez/screens/loading_screen.dart';
@@ -11,6 +12,8 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]).then((_) {
+
+    //debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     runApp(const MyApp());
   });
 }
