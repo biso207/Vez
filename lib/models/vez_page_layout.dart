@@ -26,7 +26,7 @@ class VezPageLayout extends StatelessWidget {
     this.searchHint = "Search", // Optional
     this.filterIconPath = "", // Optional
     this.onFilterSelected, // Optional
-    this.horizontalMargin = 52.0,
+    this.horizontalMargin = 40.0,
   });
 
   // list of icons of the event types
@@ -122,12 +122,12 @@ class VezPageLayout extends StatelessWidget {
             top: MediaQuery.of(context).padding.top + 40,
             left: horizontalMargin,  // <-- Allineata alla griglia sx
             right: horizontalMargin, // <-- Allineata alla griglia dx
-            child: _buildTopNavBar(context), // <--- Usa il nuovo layout
+            child: _buildTopNavBar(context), // standard layout
           ),
 
           if (bottomNavBar != null)
             Positioned(
-              bottom: MediaQuery.of(context).padding.bottom + 20,
+              bottom: MediaQuery.of(context).padding.bottom + 40,
               left: 0, right: 0, // Lasciato a 0 per permettere al Center di centrarla perfettamente nello schermo
               child: Center(child: bottomNavBar!),
             ),
@@ -241,6 +241,4 @@ class VezPageLayout extends StatelessWidget {
       ),
     );
   }
-
-  void setState(int Function() param0) {}
 }
