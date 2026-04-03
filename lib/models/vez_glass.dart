@@ -14,10 +14,10 @@ class VezGlass {
   /// default blur used everywhere
   static const double blur = 5;
 
-  /// border style (2px white 50%)
+  /// border style (3px white 50%)
   static Border border = Border.all(
-    color: Colors.white54,
-    width: 2,
+    color: Colors.white.withOpacity(0.5),
+    width: 3,
   );
 
   /// ---------------------------------------------------
@@ -55,7 +55,7 @@ class VezGlass {
     required String assetIcon,
     required VoidCallback onTap,
     double size = 50,
-    double iconSize = 30,
+    double? iconSize = 90,
     double rotation = 0,
     Color? color,
   }) {
@@ -112,19 +112,19 @@ class VezGlass {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 100,
-        height: 30,
+        width: 140,
+        height: 50,
         child: container(
-          color: color ?? Colors.black.withOpacity(.5),
+          color: color ?? Colors.black.withOpacity(.3),
           padding: EdgeInsets.zero,
-          radius: BorderRadius.circular(15),
+          radius: BorderRadius.circular(40),
           child: Center(
             child: Text(
               text,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontSize: 26,
+                fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
             ),

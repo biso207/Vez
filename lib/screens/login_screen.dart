@@ -128,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 24),
                       VezGlass.pillButton(
-                        text: "Signup",
+                        text: "SIGNUP",
                         color: Colors.white.withOpacity(0.5),
                         onTap: () => Navigator.push(
                           context,

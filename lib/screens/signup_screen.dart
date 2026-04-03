@@ -137,8 +137,8 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                       _navigation(),
                       const SizedBox(height: 24),
                       VezGlass.pillButton(
-                        text: "Login",
-                        color: Colors.white.withOpacity(0.5),
+                        text: "LOGIN",
+                        color: Colors.white38,
                         onTap: () => Navigator.pop(context),
                       ),
                     ],
@@ -184,26 +184,36 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
           GestureDetector(
             onTap: _pickImage,
             child: SizedBox(
-              width: 110,
-              height: 110,
+              width: 100,
+              height: 100,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   // Glass circle background
                   VezGlass.circleButton(
-                    assetIcon: "assets/icons/auth/icon_camera.png",
+                    assetIcon: "assets/icons/auth/icon_camera_90x90.png",
                     onTap: _pickImage,
-                    size: 70,
-                    iconSize: 60,
+                    size: 100,
+                    iconSize: 50
                   ),
+
                   // Profile photo on top when selected
                   if (_profileImage != null)
-                    ClipOval(
-                      child: Image.file(
-                        _profileImage!,
-                        width: 110,
-                        height: 110,
-                        fit: BoxFit.cover,
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white10,
+                          width: 3,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: Image.file(
+                          _profileImage!,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                 ],
