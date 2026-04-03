@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> {
   int _indexEventGroup = 1;
 
   // instance of the remote db service
-  final RemoteDbService _dbService = RemoteDbService();
+  final RemoteDbService _dbService = RemoteDbService(username: UserSession().username);
   // user profile photo
   String _profilePhoto = "";
 
@@ -57,11 +57,11 @@ class _HomePageState extends State<HomePage> {
 
   // getter of the user profile photo
   void getUserProfilePhoto() async {
-    String photo = await _dbService.getProfilePhoto(UserSession().username);
+    String? photo = await _dbService.getUserData("profile_photo");
 
     if (!mounted) return;
     setState(() {
-      _profilePhoto = photo.trim();
+      _profilePhoto = photo!.trim();
     });
   }
 

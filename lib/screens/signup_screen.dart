@@ -388,7 +388,13 @@ class _SignupPageState extends State<SignupPage> {
 
                   // Username must be at least 4 characters
                   if (username.length <= 3) {
-                    setState(() => errorMessage = "Username is too short.\nMin. 4 characters");
+                    setState(() => errorMessage = "Username is too short.\nMin. 4 characters\nMax. 15 characters");
+                    return;
+                  }
+
+                  // Username must be less than 15 characters
+                  if (username.length > 15) {
+                    setState(() => errorMessage = "Username is too long.\nMin. 4 characters\nMax. 15 characters");
                     return;
                   }
 
@@ -474,7 +480,7 @@ class _SignupPageState extends State<SignupPage> {
     } else if (response == 409) {
       setState(() => errorMessage = "User already exists");
     } else {
-      setState(() => errorMessage = "Signup failed");
+      setState(() => errorMessage = "Signup failed\n${response.toString()}");
     }
   }
 

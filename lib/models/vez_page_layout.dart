@@ -59,7 +59,7 @@ class VezPageLayout extends StatelessWidget {
           /// 3) OVERGROUND: Blur Progressivo (Top) - Rimane a tutto schermo!
           Positioned(
             top: 0, left: 0, right: 0,
-            height: 200,
+            height: 300,
             child: IgnorePointer(
               child: ShaderMask(
                 shaderCallback: (rect) {

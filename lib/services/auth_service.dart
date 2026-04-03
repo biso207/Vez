@@ -43,8 +43,8 @@ class RemoteDbService {
       // connection to the db
       print('Connecting to $_baseUrl to register user: $username');
 
-      // 1. define the endpoint (table 'user' in 'Vez' DB)
-      final url = Uri.parse('$_baseUrl/rest/v1/user');
+      // 1. define the endpoint (table 'users' in 'Vez' DB)
+      final url = Uri.parse('$_baseUrl/rest/v1/users');
 
       // 2. body of the request => the name on the right are the fields in the table
       final Map<String, dynamic> userData = {
@@ -96,7 +96,7 @@ class RemoteDbService {
 
       // 2. Querying the user with matching username and hashed password
       // PostgresSQL REST syntax for filtering: ?column=eq.value
-      final url = Uri.parse('$_baseUrl/rest/v1/user?username=eq.$username&hash_psw=eq.$hashedPassword&select=*');
+      final url = Uri.parse('$_baseUrl/rest/v1/users?username=eq.$username&hash_psw=eq.$hashedPassword&select=*');
 
       final response = await http.get(
         url,
