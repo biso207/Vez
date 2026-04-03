@@ -70,8 +70,8 @@ class _LoginPageState extends State<LoginPage> {
                       "Hey!",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),

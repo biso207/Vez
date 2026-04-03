@@ -100,8 +100,8 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                       "Welcome",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
