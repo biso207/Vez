@@ -132,6 +132,19 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      /// ================= ERROR BANNER =================
+                      AnimatedOpacity(
+                        opacity: errorMessage != null ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                        child: errorMessage != null
+                            ? Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Center(child: VezErrorBanner(message: errorMessage!)),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+
                       _StepDots(currentPage: page, total: 3),
                       const SizedBox(height: 24),
                       _navigation(),
@@ -148,21 +161,6 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                       height: MediaQuery.of(context).viewInsets.bottom),
                 ],
               ),
-            ),
-          ),
-
-          /// ================= ERROR BANNER (floating, no layout shift) =================
-          Positioned(
-            bottom: 250,
-            left: 0,
-            right: 0,
-            child: AnimatedOpacity(
-              opacity: errorMessage != null ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              child: errorMessage != null
-                  ? Center(child: VezErrorBanner(message: errorMessage!))
-                  : const SizedBox.shrink(),
             ),
           ),
 

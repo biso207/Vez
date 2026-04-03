@@ -16,7 +16,7 @@ class VezGlass {
 
   /// border style (3px white 50%)
   static Border border = Border.all(
-    color: Colors.white.withOpacity(0.5),
+    color: Colors.white54,
     width: 3,
   );
 
@@ -58,6 +58,7 @@ class VezGlass {
     double? iconSize = 90,
     double rotation = 0,
     Color? color,
+    bool isProfile = false, // Flag per gestire la foto profilo
   }) {
     final bool isRemote = assetIcon.startsWith('http');
     final bool isEmpty = assetIcon.isEmpty;
@@ -75,24 +76,31 @@ class VezGlass {
               border: border,
               color: color ?? Colors.black.withOpacity(.5),
             ),
-
             child: Center(
               child: Transform.rotate(
                 angle: rotation,
-                child: isRemote
-                    ? Image.network(
-                  assetIcon,
-                  width: size, 
-                  height: size,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      ImageIcon(const AssetImage("assets/icons/home_page/profile_photo.png"), color: Colors.white),
-                )
+                child: isProfile
+                    ? (isRemote
+                        ? Image.network(
+                            assetIcon,
+                            width: size,
+                            height: size,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Image.asset("assets/icons/home_page/profile_photo.png", color: Colors.white),
+                          )
+                        : Image.asset(
+                            isEmpty ? "assets/icons/home_page/profile_photo.png" : assetIcon,
+                            width: size,
+                            height: size,
+                            fit: BoxFit.cover,
+                            color: isEmpty ? Colors.white : null,
+                          ))
                     : Image.asset(
-                  isEmpty ? "assets/icons/home_page/profile_photo.png" : assetIcon,
-                  width: iconSize,
-                  color: (isEmpty || !assetIcon.contains('bg')) ? Colors.white : null,
-                ),
+                        isEmpty ? "assets/icons/home_page/profile_photo.png" : assetIcon,
+                        width: iconSize,
+                        color: (isEmpty || !assetIcon.contains('bg')) ? Colors.white : null,
+                      ),
               ),
             ),
           ),
