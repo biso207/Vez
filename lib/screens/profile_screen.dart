@@ -85,6 +85,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       // user profile photo
       profileIconPath: "assets/icons/profile_page/settings.png",
+      isProfileAvatar: false,
       // tapping on the profile photo
       onProfileTap: () {
         // TODO: go to the settings page

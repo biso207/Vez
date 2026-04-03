@@ -20,10 +20,10 @@ class SignupPage extends StatefulWidget {
   State<SignupPage> createState() => _SignupPageState();
 }
 
-class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProviderStateMixin
+class _SignupPageState extends State<SignupPage> {
   final RemoteDbService _dbService = RemoteDbService();
 
-  // controllers
+  // Controllers for each form field
   final TextEditingController emailController    = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
@@ -36,7 +36,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
 
-  // page navigation
+  // Page navigation
   final PageController _pageController = PageController();
   int page = 0;
 
@@ -57,11 +57,13 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     super.dispose();
   }
 
+  /// Advances to the next signup step
   void next() => _pageController.nextPage(
     duration: const Duration(milliseconds: 350),
     curve: Curves.easeInOut,
   );
 
+  /// Goes back to the previous signup step
   void back() => _pageController.previousPage(
     duration: const Duration(milliseconds: 350),
     curve: Curves.easeInOut,
@@ -84,7 +86,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
             ),
           ),
 
-          /// ================= STATIC CONTENT (Animazioni rimosse) =================
+          /// ================= STATIC CONTENT =================
           SafeArea(
             child: SizedBox(
               height:
@@ -94,20 +96,36 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
               child: Column(
                 children: [
                   /// ====== 1) TOP: TITLE ======
-                  const Spacer(),
+                  const Spacer(flex: 2),
                   const Center(
-                    child: Text(
-                      "Welcome",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Welcome to Vez",
+                          style: TextStyle(
+                            fontFamily: 'InstagramSans',
+                            color: Colors.white,
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "Create and Enjoy real life events",
+                          style: TextStyle(
+                            fontFamily: 'InstagramSans',
+                            color: Colors.white,
+                            fontSize: 25,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
                   /// ====== 2) CENTRE: FORM ======
-                  const Spacer(),
+                  const Spacer(flex: 3),
                   SizedBox(
                     height: 300,
                     child: PageView(
@@ -116,7 +134,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                       onPageChanged: (i) {
                         setState(() {
                           page = i;
-                          errorMessage = null; // clear errors on step change
+                          errorMessage = null; // Clear errors on step change
                         });
                       },
                       children: [
@@ -127,38 +145,42 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                     ),
                   ),
 
-                  /// ====== 3) BOTTOM: ACTIONS ======
-                  const Spacer(),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      /// ================= ERROR BANNER =================
-                      AnimatedOpacity(
+                  /// ================= ERROR BANNER =================
+                  /// Fix: replaced the fixed-height [SizedBox] (which clipped
+                  /// multi-line messages) with [AnimatedSize] so the area
+                  /// grows/shrinks smoothly to fit the full banner content.
+                  /// [AnimatedOpacity] handles the fade-in/out independently.
+                  const Spacer(flex: 3),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      child: AnimatedOpacity(
                         opacity: errorMessage != null ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeOut,
+                        // When null: zero-size placeholder so the layout stays
+                        // stable while the opacity animation plays out.
                         child: errorMessage != null
-                            ? Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: Center(child: VezErrorBanner(message: errorMessage!)),
-                              )
+                            ? VezErrorBanner(message: errorMessage!)
                             : const SizedBox.shrink(),
                       ),
-
-                      _StepDots(currentPage: page, total: 3),
-                      const SizedBox(height: 24),
-                      _navigation(),
-                      const SizedBox(height: 24),
-                      VezGlass.pillButton(
-                        text: "LOGIN",
-                        color: Colors.white38,
-                        onTap: () => Navigator.pop(context),
-                      ),
-                    ],
+                    ),
                   ),
+
+                  /// ====== 3) BOTTOM: ACTIONS ======
+                  const Spacer(flex: 3),
+                  _StepDots(currentPage: page, total: 3),
+                  const Spacer(flex: 3),
+                  _navigation(),
                   const SizedBox(height: 60),
-                  SizedBox(
-                      height: MediaQuery.of(context).viewInsets.bottom),
+                  VezGlass.pillButton(
+                    text: "LOGIN",
+                    color: Colors.white38,
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
@@ -172,7 +194,8 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
   }
 
   // ── Step widgets ────────────────────────────────────────────────────────────
-  // first page
+
+  // First page: avatar + username
   Widget _stepOne() {
     return Center(
       child: Column(
@@ -232,7 +255,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     );
   }
 
-  // second page
+  // Second page: email + password
   Widget _stepTwo() {
     return Center(
       child: Column(
@@ -254,7 +277,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
             width: MediaQuery.of(context).size.width * 0.75,
             color: Colors.white54,
 
-            // detector of the click on the eye icon
+            // Detector for the tap on the eye icon
             suffixIcon: GestureDetector(
               onTap: () => setState(
                       () => _showPassword = !_showPassword),
@@ -275,7 +298,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     );
   }
 
-  // third page
+  // Third page: date of birth + city
   Widget _stepThree() {
     return Center(
       child: Column(
@@ -298,20 +321,20 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
           ),
           const SizedBox(height: 20),
           GestureDetector(
-            onTap: _fetchUserCity, // Al click parte il GPS
+            onTap: _fetchUserCity, // Tapping starts GPS lookup
             child: AbsorbPointer(
-              // AbsorbPointer blocca i tap "interni", così la tastiera non si apre mai
+              // AbsorbPointer blocks inner taps so the keyboard never opens
               child: Stack(
                 alignment: Alignment.centerRight,
                 children: [
                   VezGlass.textField(
                     controller: cityController,
-                    // Il testo cambia mentre cerca
+                    // Hint changes while locating
                     hint: _isLocatingCity ? "Locating your city..." : "Tap to set City",
                     width: MediaQuery.of(context).size.width * 0.75,
                     color: Colors.white54,
                   ),
-                  // Mostriamo una rotellina di caricamento dentro il campo se sta cercando
+                  // Show a spinner inside the field while locating
                   if (_isLocatingCity)
                     const Padding(
                       padding: EdgeInsets.only(right: 15.0),
@@ -329,11 +352,12 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     );
   }
 
-  // buttons to navigate through the pages
+  // Buttons to navigate through the steps
   Widget _navigation() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        // Back button — only visible from step 2 onwards
         if (page > 0)
           VezGlass.circleButton(
             assetIcon: "assets/icons/auth/icon_next.png",
@@ -346,7 +370,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
               ? "assets/icons/auth/icon_save.png"
               : "assets/icons/auth/icon_next.png",
           onTap: () {
-              // reset all errors
+              // Clear any previous error
               setState(() => errorMessage = null);
 
               final username = usernameController.text.trim();
@@ -356,14 +380,14 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
 
               switch (page) {
                 case 0:
-                  // one of the fields is empty
+                  // Check that all fields on step 1 are filled
                   if ((username.isEmpty || _profileImage == null)) {
                     setState(() => errorMessage = "Please fill all fields");
                     return;
                   }
 
-                  // username is too short
-                  if (username.length<=3) {
+                  // Username must be at least 4 characters
+                  if (username.length <= 3) {
                     setState(() => errorMessage = "Username is too short.\nMin. 4 characters");
                     return;
                   }
@@ -372,19 +396,19 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                   break;
 
                 case 1:
-                  // one of the fields is empty
-                  if (page==1 && (password.isEmpty || email.isEmpty)) {
+                  // Check that all fields on step 2 are filled
+                  if (page == 1 && (password.isEmpty || email.isEmpty)) {
                     setState(() => errorMessage = "Please fill all fields");
                     return;
                   }
 
-                  // invalid email
+                  // Validate email format
                   if (!_isValidEmail(email)) {
                     setState(() => errorMessage = "Invalid email");
                     return;
                   }
 
-                  // invalid password
+                  // Validate password strength
                   final String? passwordError = _validatePassword(password);
                   if (passwordError != null) {
                     setState(() => errorMessage = passwordError);
@@ -395,7 +419,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                   break;
 
                 case 2:
-                  // one of the fields is empty
+                  // Check that all fields on step 3 are filled
                   if (city.isEmpty || selectedDate == null) {
                     setState(() => errorMessage = "Please fill all fields");
                     return;
@@ -438,7 +462,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     setState(() => isLoading = false);
 
     if (response == 200 || response == 201) {
-      UserSession().username = username; // writing username to the sessione
+      UserSession().username = username; // Writing username to the session
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Signup Successful!")),
@@ -454,7 +478,8 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     }
   }
 
-  // password error message
+  /// Returns a formatted error string if the password does not meet the rules,
+  /// or null if the password is valid.
   String? _validatePassword(String password) {
     if (!_isValidPsw(password)) {
       return "Invalid Password - At least:\n"
@@ -462,11 +487,12 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
           "• 1 uppercase letter\n"
           "• 1 lowercase letter\n"
           "• 1 number\n"
-          "• 1 special character"; }
+          "• 1 special character";
+    }
     return null;
   }
 
-  // password validator
+  /// Returns true only if [password] satisfies all strength requirements.
   bool _isValidPsw(String password) {
     if (password.length < 8 ||
         !RegExp(r'[A-Z]').hasMatch(password) ||
@@ -477,11 +503,11 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     return true;
   }
 
-  // email validator
+  /// Returns true if [email] matches a standard email pattern.
   bool _isValidEmail(String email) =>
       RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
 
-  // date selector
+  /// Opens the system date picker and stores the selected date.
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -492,7 +518,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     if (picked != null) setState(() => selectedDate = picked);
   }
 
-  // image picker
+  /// Opens the gallery to let the user pick a profile photo.
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -505,22 +531,22 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
     }
   }
 
-  // city picker based on the gps
+  /// Uses the device GPS to automatically fill the city field.
   Future<void> _fetchUserCity() async {
-    // Mostriamo all'utente che stiamo cercando
+    // Show the user that we are searching
     setState(() {
       _isLocatingCity = true;
-      errorMessage = null; // puliamo eventuali errori precedenti
+      errorMessage = null; // Clear any previous error
     });
 
     try {
-      // 1. Controlla se il GPS del telefono è acceso
+      // 1. Check whether the device location service is enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         throw Exception("Please enable location services on your device.");
       }
 
-      // 2. Controlla e chiedi i permessi all'utente
+      // 2. Check and request location permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -532,32 +558,32 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
         throw Exception("Location permissions are permanently denied. Change it in settings.");
       }
 
-      // 3. Ottieni le coordinate precise
+      // 3. Obtain the precise coordinates
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high
       );
 
-      // 4. Reverse Geocoding (da Lat/Lon a nome della città)
+      // 4. Reverse geocoding: coordinates → city name
       List<Placemark> placemarks = await placemarkFromCoordinates(
           position.latitude, position.longitude
       );
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
-        // 'locality' di solito è la città principale. 'subAdministrativeArea' è la provincia.
+        // 'locality' is usually the main city; fall back to sub-administrative area
         String cityName = place.locality ?? place.subAdministrativeArea ?? "Unknown City";
 
         setState(() {
-          cityController.text = cityName; // Inserisce il testo da solo!
+          cityController.text = cityName; // Auto-fill the field
         });
       }
     } catch (e) {
-      // Se qualcosa va storto, mostriamo l'errore nel banner
+      // Show any error in the banner
       setState(() {
         errorMessage = e.toString().replaceAll("Exception: ", "");
       });
     } finally {
-      // Spegniamo il caricamento
+      // Always stop the loading indicator
       setState(() {
         _isLocatingCity = false;
       });

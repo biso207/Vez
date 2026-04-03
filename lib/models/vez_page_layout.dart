@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:vez/models/vez_event_card.dart';
 import 'package:vez/models/vez_glass.dart';
 import 'package:vez/models/vez_popup.dart';
-import 'package:vez/screens/home_screen.dart';
 
 class VezPageLayout extends StatelessWidget {
   final Widget body;
@@ -11,6 +10,7 @@ class VezPageLayout extends StatelessWidget {
   final double horizontalMargin;
   final TextEditingController searchController;
   final String profileIconPath;
+  final bool isProfileAvatar;
   final VoidCallback? onProfileTap;
   final String searchHint;
   final String filterIconPath;
@@ -20,12 +20,13 @@ class VezPageLayout extends StatelessWidget {
     super.key,
     required this.body,
     this.bottomNavBar,
-    required this.searchController, // Required
-    this.profileIconPath = "", // Optional
-    this.onProfileTap, // Optional
-    this.searchHint = "Search", // Optional
-    this.filterIconPath = "", // Optional
-    this.onFilterSelected, // Optional
+    required this.searchController,
+    this.profileIconPath = "",
+    this.isProfileAvatar = false,
+    this.onProfileTap,
+    this.searchHint = "Search",
+    this.filterIconPath = "",
+    this.onFilterSelected,
     this.horizontalMargin = 40.0,
   });
 
@@ -136,37 +137,75 @@ class VezPageLayout extends StatelessWidget {
     );
   }
 
+  // widget template for the top navbar of every pages
   Widget _buildTopNavBar(BuildContext context) {
+    final bool isNetworkImage =
+    profileIconPath.startsWith("http");
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        VezGlass.circleButton(
-          assetIcon: profileIconPath,
+        GestureDetector(
           onTap: onProfileTap ?? () {},
-          size: 45,
-          iconSize: 24,
+          child: Container(
+            width: 45,
+            height: 45,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isProfileAvatar
+                    ? Colors.white
+                    : Colors.white54,
+                width: 2,
+              ),
+            ),
+            child: ClipOval(
+              child: isProfileAvatar
+                  ? (profileIconPath.isEmpty
+                  ? const Icon(Icons.person,
+                  color: Colors.white)
+                  : Image(
+                image: isNetworkImage
+                    ? NetworkImage(profileIconPath)
+                    : AssetImage(profileIconPath)
+                as ImageProvider,
+                fit: BoxFit.cover,
+                width: 45,
+                height: 45,
+              ))
+                  : Center(
+                child: Image.asset(
+                  profileIconPath,
+                  width: 30,
+                  height: 30,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ),
-        const SizedBox(width: 20), // Spazio significativo
+
+        const SizedBox(width: 20),
+
         Expanded(
           child: VezGlass.textField(
             controller: searchController,
             hint: searchHint,
-            prefixIcon: const Icon(Icons.search, color: Colors.white70), color: Colors.white,
-            // Regolerò l'altezza e il raggio di curvatura per abbinare le immagini
-            // L'altezza è di 44. Il raggio di curvatura del container glass
+            prefixIcon:
+            const Icon(Icons.search, color: Colors.white70),
+            color: Colors.white,
           ),
         ),
-        const SizedBox(width: 20), // Spazio significativo
 
+        const SizedBox(width: 20),
 
-        // PULSANTE FILTRO MODIFICATO
         VezGlass.circleButton(
           assetIcon: filterIconPath,
           onTap: () {
             VezPopup.show(
               context: context,
-              width: 250, // Più largo come richiesto
-              alignment: Alignment.center, // Centered on the page
+              width: 250,
+              alignment: Alignment.center,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

@@ -11,13 +11,13 @@ import 'package:flutter/material.dart';
 
 class VezGlass {
 
-  /// default blur used everywhere
+  /// Default blur applied to every glass element
   static const double blur = 5;
 
-  /// border style (3px white 50%)
+  /// Shared border style: 3 px white at 50% opacity
   static Border border = Border.all(
     color: Colors.white54,
-    width: 3,
+    width: 2,
   );
 
   /// ---------------------------------------------------
@@ -29,7 +29,7 @@ class VezGlass {
     EdgeInsets padding = const EdgeInsets.symmetric(
         horizontal: 30, vertical: 7),
     Color? color,
-    
+
   }) {
     return ClipRRect(
       borderRadius: radius,
@@ -58,7 +58,7 @@ class VezGlass {
     double? iconSize = 90,
     double rotation = 0,
     Color? color,
-    bool isProfile = false, // Flag per gestire la foto profilo
+    bool isProfile = false, // Flag to handle profile photo rendering
   }) {
     final bool isRemote = assetIcon.startsWith('http');
     final bool isEmpty = assetIcon.isEmpty;
@@ -161,7 +161,7 @@ class VezGlass {
         EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 18),
 
         Widget? prefixIcon,
-        Widget? suffixIcon, required Color color, // optional trailing widget (e.g. eye toggle)
+        Widget? suffixIcon, required Color color, // Optional trailing widget (e.g. eye toggle)
       }
     )
   {
@@ -206,8 +206,12 @@ class VezGlass {
 
 // ─── Shared UI Widgets ───────────────────────────────────────────────────────
 
-/// Glassy inline error banner with a leading error icon.
-/// Wrap in [AnimatedSize] for smooth height transitions.
+/// Glassy error banner that grows to fit any number of lines.
+///
+/// Fix: replaced [IntrinsicWidth] + [Expanded] (incompatible combination that
+/// prevented text from wrapping) with a plain [Row] using [Flexible] for the
+/// [Text] child.  [Flexible] lets the text shrink/grow within the available
+/// horizontal space without requiring an intrinsic-size pass.
 class VezErrorBanner extends StatelessWidget {
   final String message;
   const VezErrorBanner({super.key, required this.message});
@@ -215,19 +219,33 @@ class VezErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return VezGlass.container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      radius: BorderRadius.circular(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      radius: BorderRadius.circular(35),
       child: Row(
+        // Shrink-wrap horizontally but allow the text to fill remaining space
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start, // Align icon to first line
         children: [
-          const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
-          const SizedBox(width: 8),
-          Text(
-            message,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+          // Error icon pinned to the top of the first text line
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.error_outline, color: Colors.redAccent, size: 20),
+          ),
+          const SizedBox(width: 12),
+          // [Flexible] (not [Expanded]) allows the text to wrap onto multiple
+          // lines without conflicting with the parent's intrinsic-width layout.
+          Flexible(
+            child: Text(
+              message,
+              textAlign: TextAlign.left,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                height: 1.3, // Comfortable line spacing for multi-line text
+              ),
+              softWrap: true,
+              maxLines: null, // Unlimited lines — never truncate
             ),
           ),
         ],

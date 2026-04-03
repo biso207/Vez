@@ -46,6 +46,7 @@ class _HomePageState extends State<HomePage> {
   // user profile photo
   String _profilePhoto = "";
 
+
   // trigger
   @override
   void initState() {
@@ -56,15 +57,12 @@ class _HomePageState extends State<HomePage> {
 
   // getter of the user profile photo
   void getUserProfilePhoto() async {
-    // Recuperiamo il path dal servizio
     String photo = await _dbService.getProfilePhoto(UserSession().username);
 
-    // Aggiorniamo lo stato per far apparire la foto
-    if (mounted) { // Controllo di sicurezza: l'utente potrebbe aver cambiato pagina nel frattempo
-      setState(() {
-        _profilePhoto = photo;
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _profilePhoto = photo.trim();
+    });
   }
 
   @override
@@ -82,6 +80,7 @@ class _HomePageState extends State<HomePage> {
 
       // user profile photo
       profileIconPath: _profilePhoto,
+      isProfileAvatar: true,
       // tapping on the profile photo to open the user profile
       onProfileTap: () {
         Navigator.pushReplacement(

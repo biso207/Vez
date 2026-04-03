@@ -64,82 +64,112 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 children: [
                   /// ====== 1) TOP: TITLE ======
-                  const Spacer(),
+                  const Spacer(flex: 2),
                   const Center(
-                    child: Text(
-                      "Hey!",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  /// ====== 2) CENTRE: FORM ======
-                  const Spacer(),
-                  Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        VezGlass.textField(
-                          controller: usernameController,
-                          hint: "Username",
-                          width: MediaQuery.of(context).size.width * 0.75,
-                          color: Colors.white54,
+                        Text(
+                          "Hey!",
+                          style: TextStyle(
+                            fontFamily: 'InstagramSans',
+                            color: Colors.white,
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        VezGlass.textField(
-                          controller: passwordController,
-                          hint: "Password",
-                          obscure: !_showPassword, // icon show/not show psw
-                          width: MediaQuery.of(context).size.width * 0.75,
-                          color: Colors.white54,
-
-                          // detector of the click on the eye icon
-                          suffixIcon: GestureDetector(
-                            onTap: () => setState(
-                                () => _showPassword = !_showPassword),
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 6),
-                              child: Icon(
-                                !_showPassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: Colors.white54,
-                                size: 20,
-                              ),
-                            ),
+                        SizedBox(height: 8),
+                        Text(
+                          "Welcome Back to Vez",
+                          style: TextStyle(
+                            fontFamily: 'InstagramSans',
+                            color: Colors.white,
+                            fontSize: 25,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  /// ====== 3) BOTTOM: ACTIONS ======
-                  const Spacer(),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      /// ================= ERROR BANNER =================
-                      AnimatedOpacity(
+                  /// ====== 2) CENTRE: FORM ======
+                  const Spacer(flex: 3),
+                  SizedBox(
+                    height: 300,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          VezGlass.textField(
+                            controller: usernameController,
+                            hint: "Username",
+                            width: MediaQuery.of(context).size.width * 0.75,
+                            color: Colors.white54,
+                          ),
+                          const SizedBox(height: 20),
+                          VezGlass.textField(
+                            controller: passwordController,
+                            hint: "Password",
+                            obscure: !_showPassword, // icon show/not show psw
+                            width: MediaQuery.of(context).size.width * 0.75,
+                            color: Colors.white54,
+
+                            // Detector for the tap on the eye icon
+                            suffixIcon: GestureDetector(
+                              onTap: () => setState(
+                                  () => _showPassword = !_showPassword),
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: Icon(
+                                  !_showPassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: Colors.white54,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  /// ================= ERROR BANNER =================
+                  /// Fix: replaced the fixed-height [SizedBox] (which clipped
+                  /// multi-line messages) with [AnimatedSize] so the area
+                  /// grows/shrinks smoothly to fit the full banner content.
+                  /// [AnimatedOpacity] handles the fade-in/out independently.
+                  const Spacer(flex: 3),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      child: AnimatedOpacity(
                         opacity: errorMessage != null ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeOut,
+                        // When null: zero-size placeholder so the layout stays
+                        // stable while the opacity animation plays out.
                         child: errorMessage != null
-                            ? Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: Center(child: VezErrorBanner(message: errorMessage!)),
-                              )
+                            ? VezErrorBanner(message: errorMessage!)
                             : const SizedBox.shrink(),
                       ),
+                    ),
+                  ),
 
+                  /// ====== 3) BOTTOM: ACTIONS ======
+                  const Spacer(flex: 3),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       VezGlass.circleButton(
                         assetIcon: "assets/icons/auth/icon_login.png",
                         iconSize: 30,
                         onTap: login,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 60),
                       VezGlass.pillButton(
                         text: "SIGNUP",
                         color: Colors.white.withOpacity(0.5),
@@ -151,9 +181,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 60),
-                  SizedBox(
-                      height: MediaQuery.of(context).viewInsets.bottom),
+                  const SizedBox(height: 32),
+                  SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
                 ],
               ),
             ),
@@ -166,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // ── logic ──────────────────────────────────────────────────────────────────
+  // ── Logic ──────────────────────────────────────────────────────────────────
 
   void login() async {
     final username = usernameController.text.trim();
@@ -191,14 +220,14 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = false);
 
     if (response == 200 || response == 201) {
-      UserSession().username = username; // writing username to the sessione
+      UserSession().username = username; // Writing username to the session
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => HomePage()),
       );
     } else {
       setState(() => errorMessage = "Invalid credentials");
-      // reset fields
+      // Reset fields on failed login
       usernameController.clear();
       passwordController.clear();
     }
