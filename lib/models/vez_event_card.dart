@@ -17,10 +17,18 @@ class VezEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Definizione di dimensioni responsive basate sullo schermo
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double screenWidth = MediaQuery.of(context).size.width;
+
+    // Altezza impostata al 65% dello schermo, larghezza all'85% per garantire un rettangolo verticale
+    final double cardHeight = screenHeight * 0.65;
+    final double cardWidth = screenWidth * 0.85;
+
     return Center(
       child: Container(
-        width: double.infinity, // adapting resizing based on the dimension of the screen
-        height: 550,
+        width: cardWidth,
+        height: cardHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(40),
           image: DecorationImage(

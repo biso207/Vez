@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vez/screens/loading_screen.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   // we ensure widgets are initialized
@@ -15,7 +16,7 @@ void main() {
 
     //debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     runApp(DevicePreview(
-      enabled: true, // Puoi disattivarlo per le build finali
+      enabled: false, // Puoi disattivarlo per le build finali
       builder: (context) => MyApp(),
     ),
     );
@@ -33,6 +34,16 @@ class MyApp extends StatelessWidget {
         useInheritedMediaQuery: true, // Necessario per far funzionare la simulazione
         locale: DevicePreview.locale(context),
         builder: DevicePreview.appBuilder,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'), // English
+          Locale('it'), // Italian
+          // Add other supported locales here
+        ],
 
         title: 'Vez',
         theme: ThemeData(

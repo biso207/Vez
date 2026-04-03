@@ -1,6 +1,8 @@
 // Developed and Designed by Outly • © 2026
 // Signup screen with 3-step navigation based on design mocks
 
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 import '../models/vez_glass.dart';
 import '../services/auth_service.dart';
@@ -278,7 +280,7 @@ class _SignupPageState extends State<SignupPage> { // Rimosso SingleTickerProvid
                 controller: TextEditingController(
                   text: selectedDate == null
                       ? ""
-                      : "${selectedDate!.toLocal()}".split(' ')[0],
+                      : DateFormat.yMd(Localizations.localeOf(context).toString()).format(selectedDate!),
                 ),
                 hint: "Date Of Birth",
                 width: MediaQuery.of(context).size.width * 0.75,

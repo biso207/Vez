@@ -80,22 +80,13 @@ class _LoadingPageState extends State<LoadingPage> {
                 alignment: Alignment.centerLeft,
                 widthFactor: _showLogo ? 1.0 : 0.0,
                 curve: Curves.easeInOutQuart,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // --- LETTERA V ---
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 35), // Effetto maiuscola (cap letter)
-                      child: Image.asset('assets/loading_screen/letter_V.png', height: 100),
-                    ),
-                    
-                    // --- LETTERA E ---
-                    Image.asset('assets/loading_screen/letter_E.png', height: 60),
-
-                    // --- LETTERA Z ---
-                    Image.asset('assets/loading_screen/letter_Z.png', height: 60),
-                  ],
+                child: const Text(
+                  "Vez",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 200,
+                    fontFamily: 'JollyLodger',
+                  ),
                 ),
               ),
             ),
