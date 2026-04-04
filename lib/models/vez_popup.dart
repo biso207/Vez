@@ -7,7 +7,7 @@ class VezPopup {
     required Widget child,
     double? width,
     double? height,
-    Alignment alignment = Alignment.center, // <-- Aggiunto default al centro
+    Alignment alignment = Alignment.center, // spawn in the centre of the page
     Color? backgroundColor,
     Color? borderColor,
   }) {
@@ -18,7 +18,7 @@ class VezPopup {
       barrierColor: Colors.black.withOpacity(0.4),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
-        return Align( // <-- Cambiato da Center a Align
+        return Align(
           alignment: alignment,
           child: Padding(
             padding: const EdgeInsets.only(bottom: 100), // Lo solleva un po' dal fondo se usi bottomCenter

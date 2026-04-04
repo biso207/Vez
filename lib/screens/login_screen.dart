@@ -171,13 +171,19 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 60),
                       VezGlass.pillButton(
-                        text: "SIGNUP",
+                        text: "I'M NEW",
                         color: Colors.white.withOpacity(0.5),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const SignupPage()),
-                        ),
+                        onTap: () {
+                          // 1. Rimuove il banner di errore
+                          setState(() => errorMessage = null);
+
+                          // 2. Naviga alla pagina di Signup
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const SignupPage()),
+                          );
+                        },
                       ),
                     ],
                   ),

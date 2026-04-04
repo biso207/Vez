@@ -176,7 +176,7 @@ class _SignupPageState extends State<SignupPage> {
                   _navigation(),
                   const SizedBox(height: 60),
                   VezGlass.pillButton(
-                    text: "LOGIN",
+                    text: "I'M BACK",
                     color: Colors.white38,
                     onTap: () => Navigator.pop(context),
                   ),
@@ -380,9 +380,14 @@ class _SignupPageState extends State<SignupPage> {
 
               switch (page) {
                 case 0:
-                  // Check that all fields on step 1 are filled
-                  if ((username.isEmpty || _profileImage == null)) {
-                    setState(() => errorMessage = "Please fill all fields");
+                  // username not digitated
+                  if (username.isEmpty) {
+                    setState(() => errorMessage = "Please choose a username");
+                    return;
+                  }
+
+                  if (_profileImage == null) {
+                    setState(() => errorMessage = "Please choose a profile photo");
                     return;
                   }
 

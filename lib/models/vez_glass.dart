@@ -115,7 +115,7 @@ class VezGlass {
   static Widget pillButton({
     required String text,
     required VoidCallback onTap,
-    Color? color,
+    Color? color, int? fontSize,
   }) {
     return GestureDetector(
       onTap: onTap,
