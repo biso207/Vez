@@ -367,7 +367,7 @@ class _SignupPageState extends State<SignupPage> {
         if (page > 0) const SizedBox(width: 40),
         VezGlass.circleButton(
           assetIcon: page == 2
-              ? "assets/icons/auth/icon_save.png"
+              ? "assets/icons/auth/save.png"
               : "assets/icons/auth/icon_next.png",
           onTap: () {
               // Clear any previous error
@@ -393,7 +393,7 @@ class _SignupPageState extends State<SignupPage> {
 
                   // Username must be at least 4 characters
                   if (username.length <= 3) {
-                    setState(() => errorMessage = "Username is too short.\nMin. 4 characters\nMax. 15 characters");
+                    setState(() => errorMessage = "Username is too short (Min. 4 chars)");
                     return;
                   }
 
@@ -493,12 +493,7 @@ class _SignupPageState extends State<SignupPage> {
   /// or null if the password is valid.
   String? _validatePassword(String password) {
     if (!_isValidPsw(password)) {
-      return "Invalid Password - At least:\n"
-          "• 8 characters\n"
-          "• 1 uppercase letter\n"
-          "• 1 lowercase letter\n"
-          "• 1 number\n"
-          "• 1 special character";
+      return "Invalid Password.\nNeed 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special.";
     }
     return null;
   }
