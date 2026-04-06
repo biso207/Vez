@@ -702,15 +702,10 @@ class _ProfilePageState extends State<ProfilePage> {
         setPopupState(() => popupError = "User already exists");
         return;
       }
-      if (uName==UserSession().userID) { // same username
+      if (uName==_username) { // same username
         setPopupState(() => popupError = "New username is the same as the old one");
         return;
       }
-
-      // updating the username in the local vars
-      setState(() {
-        UserSession().userID = uName;
-      });
     }
     if (psw.isNotEmpty) _dbServiceSet.updateUserData("hash_psw", psw); // password
     if (cityAkaName.isNotEmpty) _dbServiceSet.updateUserData("city_aka_name", cityAkaName); // city aka name
