@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:io'; // library to manage files
 import 'package:http/http.dart' as http; // http packet (standard in Dart/Flutter).
 import 'package:crypto/crypto.dart'; // library for the hashing of the psw
+import 'package:vez/services/user_session.dart';
 import 'api_keys.dart'; // private key to connect to the remote db
 
 class RemoteDbService {
@@ -24,9 +25,7 @@ class RemoteDbService {
     required DateTime dateOfBirth,
     required String city,
     File? profileImage,
-
-  })
-  async {
+  }) async {
     try {
       String photoUrl = "";
       if (profileImage != null) photoUrl = await uploadProfilePhoto(profileImage, username) ?? "";
@@ -69,12 +68,20 @@ class RemoteDbService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_apiKey', // access token
           'apikey': _apiKey,                 // Supabase wants thi header
-          'Prefer': 'return=minimal',
+          'Prefer': 'return=representation', // return the created record
         },
         body: jsonEncode(userData),
       );
 
-      // 4. return of the response
+      // success
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        // setting the userID
+        if (data.isNotEmpty) UserSession().userID = data[0]['user_id']!.toString();
+        return response.statusCode;
+      }
+
+      // any error
       return response.statusCode;
     } catch (e) {
       print('Signup error: $e');
@@ -86,8 +93,7 @@ class RemoteDbService {
   Future<int> login({
     required String username,
     required String password,
-  })
-  async {
+  }) async {
     try {
       // 1. Hashing the password (must match the salt used in signup)
       var bytes = utf8.encode(password + salt);
@@ -109,7 +115,12 @@ class RemoteDbService {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         
-        if (data.isNotEmpty) { return 200; } // Success
+        if (data.isNotEmpty) { // Success
+
+          // reading from the db the userID
+          UserSession().userID = data[0]['user_id']!.toString();
+          return 200;
+        }
         else { return 401; } // Unauthorized
       }
       else { return response.statusCode; }
@@ -117,7 +128,6 @@ class RemoteDbService {
       return 0;
     }
   }
-  
 
   // method to upload a file (profile photo)
   Future<String?> uploadProfilePhoto(File imageFile, String username) async {

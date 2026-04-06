@@ -367,7 +367,7 @@ class _SignupPageState extends State<SignupPage> {
         if (page > 0) const SizedBox(width: 40),
         VezGlass.circleButton(
           assetIcon: page == 2
-              ? "assets/icons/auth/save.png"
+              ? "assets/icons/auth/icon_save.png"
               : "assets/icons/auth/icon_next.png",
           onTap: () {
               // Clear any previous error
@@ -391,15 +391,15 @@ class _SignupPageState extends State<SignupPage> {
                     return;
                   }
 
-                  // Username must be at least 4 characters
-                  if (username.length <= 3) {
-                    setState(() => errorMessage = "Username is too short (Min. 4 chars)");
+                  // Username must be at least 3 characters
+                  if (username.length < 3) {
+                    setState(() => errorMessage = "Username is too short (Min. 3 chars)");
                     return;
                   }
 
                   // Username must be less than 15 characters
                   if (username.length > 15) {
-                    setState(() => errorMessage = "Username is too long.\nMin. 4 characters\nMax. 15 characters");
+                    setState(() => errorMessage = "Username is too long (Max 15 chars)");
                     return;
                   }
 
@@ -473,8 +473,6 @@ class _SignupPageState extends State<SignupPage> {
     setState(() => isLoading = false);
 
     if (response == 200 || response == 201) {
-      UserSession().username = username; // Writing username to the session
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Signup Successful!")),
       );

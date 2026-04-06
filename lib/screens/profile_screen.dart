@@ -8,7 +8,8 @@ import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
 import '../models/vez_popup.dart';
 import '../services/getters_service.dart';
-import '../services/user_session.dart'; // Importato come richiesto
+import '../services/setters_service.dart';
+import '../services/user_session.dart';
 import 'home_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -26,11 +27,26 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController searchController = TextEditingController();
 
+  final ImagePicker picker = ImagePicker();
+
+  // Inizializziamo i controller con i dati attuali
+  final TextEditingController newUsernameController = TextEditingController();
+  final TextEditingController newPasswordController = TextEditingController();
+  final TextEditingController cityAkaNameController = TextEditingController();
+  final TextEditingController bioController = TextEditingController();
+
+  bool _showBadge = true; // Toggle category badge
+  File? newProfileImage;
+  String? popupError;
+  late String? _userID;
+
   // instance of the remote db service
-  final RemoteDbService _dbService = RemoteDbService(username: UserSession().username ?? "");
+  late GetDBService _dbServiceGet;
+  late SetDBService _dbServiceSet;
 
   // --- USER DATA ---
   String _profilePhoto = ""; // profile photo
+  String _username = ""; // username
   String _cityAkaName = "City AkaName"; // city akaName
   String _city = "City"; // city
   String _bio = "No Bio."; // bio
@@ -38,16 +54,21 @@ class _ProfilePageState extends State<ProfilePage> {
   int _numFollowing = 0;// numFollowing
   int _numParticipatedEvents = 0; // numParticipatedEvents
 
-  // default event group index
-  int _indexEventGroup = 1;
-
   bool _showPassword = false;
 
   @override
   void initState() {
     super.initState();
-    // getting the user data at the start of the page
-    getUserData();
+    final currentID = UserSession().userID;
+
+    if (currentID.isNotEmpty) {
+      // initializing the services with the user id
+      _dbServiceGet = GetDBService(userID: currentID);
+      _dbServiceSet = SetDBService(userID: currentID);
+
+      // getting the user data at the start of the page
+      getUserData();
+    }
   }
 
   @override
@@ -100,7 +121,6 @@ class _ProfilePageState extends State<ProfilePage> {
       filterIconPath: "assets/icons/profile_page/following_requests.png",
       onFilterSelected: (index) {
         setState(() {
-          _indexEventGroup = index;
         });
         // TODO: go to the following_requests page
       },
@@ -188,33 +208,34 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
 
-                          // badge most-participated category
-                          Positioned(
-                            top: -5,
-                            right: -5,
-                            child: ClipOval(
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                child: Container(
-                                  width: 30,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(51, 0, 10, 218), // #000ADA 20%
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: const Color.fromARGB(128, 0, 10, 218), // #000ADA 50%
-                                      width: 2,
+                          // badge most-participated event category
+                          if (_showBadge)
+                            Positioned(
+                              top: -5,
+                              right: -5,
+                              child: ClipOval(
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                  child: Container(
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(51, 0, 10, 218), // #000ADA 20%
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: const Color.fromARGB(128, 0, 10, 218), // #000ADA 50%
+                                        width: 2,
+                                      ),
                                     ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    /// will be automatic set based on the most participated event category
-                                    child: Image.asset("assets/icons/categories/pub.png", color: Colors.white),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      /// will be automatic set based on the most participated event category
+                                      child: Image.asset("assets/icons/categories/pub.png", color: Colors.white),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       ),
 
@@ -227,7 +248,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           children: [
                             // username
                             Text(
-                              UserSession().username ?? "Username",
+                              _username,
                               style: const TextStyle(
                                 fontFamily: 'JollyLodger',
                                 fontSize: 30,
@@ -307,7 +328,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildStatItem("assets/icons/profile_page/followers.png", _numFollowers.toString()),
-                  _buildStatItem("assets/icons/profile_page/partecipated_events.png", _numParticipatedEvents.toString()),
+                  _buildStatItem("assets/icons/profile_page/participated_events.png", _numParticipatedEvents.toString()),
                   _buildStatItem("assets/icons/profile_page/following_requests.png", _numFollowing.toString()),
                 ],
               ),
@@ -353,55 +374,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // --- GETTER FOR USER DATA ---
-  void getUserData() async {
-    // getting userID
-    String? userID = await _dbService.getUserData("id");
-
-    // Fetching all string data
-    String? photo = await _dbService.getUserData("profile_photo");
-    String? city = await _dbService.getUserData("city");
-    String? akaName = await _dbService.getUserData("city_aka_name");
-    String? bio = await _dbService.getUserData("bio");
-    String? numParticipatedEventsStr = await _dbService.getUserData("num_participated_events");
-
-    // Fetching counts
-    int followers = 0;
-    int followingCount = 0;
-
-    if (userID != null) {
-      followers = await _dbService.getFollowersCount(userID);
-      List<dynamic> followingList = await _dbService.getFollowing(userID);
-      followingCount = followingList.length;
-    }
-
-    // Update the UI safely
-    if (mounted) {
-      setState(() {
-        _profilePhoto = photo ?? "";
-        _city = city ?? "City";
-        _cityAkaName = akaName ?? "City AkaName";
-        _bio = bio ?? "No Bio.";
-        _numParticipatedEvents = int.tryParse(numParticipatedEventsStr ?? "0") ?? 0;
-        _numFollowers = followers;
-        _numFollowing = followingCount;
-      });
-    }
-  }
-
   // --- POPUP MODIFICA PROFILO ---
   void _showEditProfilePopup() {
-    final ImagePicker picker = ImagePicker();
-
-    // Inizializziamo i controller con i dati attuali
-    final TextEditingController newUsernameController = TextEditingController();
-    final TextEditingController newPasswordController = TextEditingController();
-    final TextEditingController cityAkaNameController = TextEditingController();
-    final TextEditingController bioController = TextEditingController();
-
-    bool showBadge = true; // Toggle category badge
-    File? newProfileImage;
-    String? popupError;
 
     // Helper per creare i campi di testo in stile "Glass" richiesto
     Widget buildPopupInput({
@@ -411,6 +385,8 @@ class _ProfilePageState extends State<ProfilePage> {
       int maxLines = 1,
       bool obscure = false,
       Widget? suffixIcon,
+      Widget? suffixText,
+      required StateSetter setPopupState,
     }) {
       return Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -422,12 +398,16 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         child: TextField(
           controller: controller,
+          onChanged: (value) => setPopupState(() {}),
           maxLength: maxLength,
           maxLines: maxLines,
           obscureText: obscure,
           style: const TextStyle(color: Colors.white, fontFamily: 'InstagramSans', fontWeight: FontWeight.bold, fontSize: 20),
           decoration: InputDecoration(
             hintText: hint,
+            suffixText: maxLength != null
+                ? "${controller.text.length}/$maxLength"
+                : null,
             hintStyle: const TextStyle(color: Colors.white54),
             border: InputBorder.none,
             counterText: "", // Nasconde il numerino dei caratteri rimanenti
@@ -456,7 +436,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       maxWidth: 512, maxHeight: 512, imageQuality: 75,
                     );
                     if (pickedFile != null) {
-                      setPopupState(() => newProfileImage = File(pickedFile.path));
+                      setState(() => newProfileImage = File(pickedFile.path));
                     }
                   },
                   child: Container(
@@ -470,7 +450,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ? FileImage(newProfileImage!) as ImageProvider
                             : (_profilePhoto.isNotEmpty
                             ? NetworkImage(_profilePhoto)
-                            : const AssetImage("assets/icons/home_page/profile_photo.png")) as ImageProvider,
+                            : const AssetImage("assets/icons/auth/icon_camera_90x90.png")) as ImageProvider,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -482,40 +462,47 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 // --- CAMPI DI TESTO ---
                 buildPopupInput(
-                    hint: "New Username",
-                    controller: newUsernameController,
-                    maxLength: 15),
+                  hint: "New Username",
+                  controller: newUsernameController,
+                  maxLength: 15,
+                  setPopupState: setPopupState,
+                ),
                 buildPopupInput(
-                    hint: "New Password",
-                    controller: newPasswordController,
-                    obscure: !_showPassword, // icon show/not show psw
+                  hint: "New Password",
+                  controller: newPasswordController,
+                  obscure: !_showPassword, // icon show/not show psw
 
-                    // Detector for the tap on the eye icon
-                    suffixIcon: GestureDetector(
-                      onTap: () => setState(
-                              () => _showPassword = !_showPassword),
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: Icon(
-                          !_showPassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: Colors.white54,
-                          size: 20,
-                        ),
+                  // Detector for the tap on the eye icon
+                  suffixIcon: GestureDetector(
+                    onTap: () => setPopupState(
+                            () => _showPassword = !_showPassword),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Icon(
+                        !_showPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: Colors.white54,
+                        size: 20,
                       ),
                     ),
+                  ),
+                  setPopupState: setPopupState,
                 ),
 
                 buildPopupInput(
-                    hint: "City Aka Name",
-                    controller: cityAkaNameController,
-                    maxLength: 10),
+                  hint: "City Aka Name",
+                  controller: cityAkaNameController,
+                  maxLength: 10,
+                  setPopupState: setPopupState,
+                ),
                 buildPopupInput(
-                    hint: "Bio",
-                    controller: bioController,
-                    maxLength: 150, // max bio chars
-                    maxLines: 4),
+                  hint: "Bio",
+                  controller: bioController,
+                  maxLength: 30,
+                  maxLines: 2,
+                  setPopupState: setPopupState,
+                ),
 
                 // --- TOGGLE CATEGORY BADGE ---
                 Row(
@@ -531,7 +518,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: ImageIcon(const AssetImage("assets/icons/categories/hang_out.png"), color: Colors.white, size:20.45),
                       ),
                     ),
-                    const SizedBox(width: 28),
+                    const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
                         "Category Badge",
@@ -539,9 +526,12 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     Switch(
-                      value: showBadge,
-                      onChanged: (val) => setPopupState(() => showBadge = val),
-                      activeColor: Colors.black,
+                      value: _showBadge,
+                      onChanged: (val) {
+                        setPopupState(() => _showBadge = val); // changing the toggle UI
+                        setState(() => _showBadge = val); // changing the badge in the UI page
+                      },
+                      activeThumbColor: Colors.black,
                       activeTrackColor: Colors.white,
                       inactiveThumbColor: Colors.white54,
                       inactiveTrackColor: Colors.white24,
@@ -549,17 +539,29 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
 
-                // --- ERRORE BANNER (appare solo se c'è un errore) ---
+                // --- ERRORE BANNER (appears only if there's an error) ---
+                const SizedBox(height: 32),
+
                 if (popupError != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    popupError!,
-                    style: const TextStyle(color: Colors.redAccent, fontFamily: 'InstagramSans'),
-                    textAlign: TextAlign.center,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      child: AnimatedOpacity(
+                        opacity: popupError != null ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                        // When null: zero-size placeholder so the layout stays
+                        // stable while the opacity animation plays out.
+                        child: popupError != null
+                            ? VezErrorBanner(message: popupError!)
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
                   ),
                 ],
 
-                // Spazio uguale a quello in alto
                 const SizedBox(height: 32),
 
                 // --- PULSANTI AZIONE ---
@@ -567,44 +569,24 @@ class _ProfilePageState extends State<ProfilePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     
-                    // Bottone Salva (Verde)
+                    // button save (green)
                     GestureDetector(
-                      onTap: () {
-                        final String uName = newUsernameController.text.trim();
-                        final String psw = newPasswordController.text;
+                      onTap: () async {
+                        popupError=null; // resetting errors
 
-                        // Validazione Username
-                        if (uName.length < 4) {
-                          setPopupState(() => popupError = "Username is too short (Min. 4 chars).");
-                          return;
+                        // update the db with the new data
+                        await updateData(setPopupState);
+
+                        // if there's no errors close the popup
+                        if (popupError == null) {
+                          Navigator.pop(context);
+
+                          // cleaning controllers
+                          newUsernameController.clear();
+                          newPasswordController.clear();
+                          cityAkaNameController.clear();
+                          bioController.clear();
                         }
-
-                        // Validazione Password (solo se l'utente la sta cambiando)
-                        if (psw.isNotEmpty) {
-                          if (psw.length < 8 ||
-                              !RegExp(r'[A-Z]').hasMatch(psw) ||
-                              !RegExp(r'[a-z]').hasMatch(psw) ||
-                              !RegExp(r'[0-9]').hasMatch(psw) ||
-                              !RegExp(r'[!@#$&*~£€?§+]').hasMatch(psw)) {
-                            setPopupState(() => popupError = "Invalid Password.\nNeed 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special.");
-                            return;
-                          }
-                        }
-
-                        // Se tutto è valido: Rimuovi errori, Salva su DB, aggiorna UI e chiudi
-                        setPopupState(() => popupError = null);
-
-                        // TODO: Chiamata effettiva _dbService.updateUserData(...)
-
-                        setState(() {
-                          UserSession().username = uName;
-                          _cityAkaName = cityAkaNameController.text.trim();
-                          _bio = bioController.text.trim();
-                          // mock update per foto profilo se cambiata
-                          if (newProfileImage != null) _profilePhoto = newProfileImage!.path;
-                        });
-
-                        Navigator.pop(context); // Chiude il popup
                       },
                       child: Container(
                         padding: const EdgeInsets.all(10),
@@ -619,9 +601,20 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     const SizedBox(width: 30),
 
-                    // Bottone Annulla (Rosso)
+                    // button discard (red)
                     GestureDetector(
-                      onTap: () => Navigator.pop(context),
+                      onTap: () {
+                        Navigator.pop(context);
+
+                        // cleaning controllers
+                        newUsernameController.clear();
+                        newPasswordController.clear();
+                        cityAkaNameController.clear();
+                        bioController.clear();
+
+                        // disabling the error banner
+                        popupError = null;
+                      },
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
@@ -640,5 +633,96 @@ class _ProfilePageState extends State<ProfilePage> {
         },
       ),
     );
+  }
+
+  // method to get the user data from the db
+  void getUserData() async {
+    // fetching all string data
+    String? photo = await _dbServiceGet.getUserData("profile_photo");
+    String? username = await _dbServiceGet.getUserData("username");
+    String? city = await _dbServiceGet.getUserData("city");
+    String? akaName = await _dbServiceGet.getUserData("city_aka_name");
+    String? bio = await _dbServiceGet.getUserData("bio");
+    String? numParticipatedEventsStr = await _dbServiceGet.getUserData("num_participated_events");
+    String? showBadge = await _dbServiceGet.getUserData("category_badge");
+
+    // fetching counts
+    int followers = 0;
+    int followingCount = 0;
+
+    followers = await _dbServiceGet.getFollowersCount();
+    List<dynamic> followingList = await _dbServiceGet.getFollowing();
+    followingCount = followingList.length;
+
+    // Update the UI safely
+    if (mounted) {
+      setState(() {
+        _profilePhoto = photo!.trim() ?? "";
+        _username = username ?? "Username";
+        _city = city ?? "City";
+        _cityAkaName = akaName ?? "City AkaName";
+        _bio = bio ?? "No Bio.";
+        _numParticipatedEvents = int.tryParse(numParticipatedEventsStr ?? "0") ?? 0;
+        _numFollowers = followers;
+        _numFollowing = followingCount;
+        _showBadge = bool.parse(showBadge!);
+      });
+    }
+  }
+
+  // method to update the data on the db
+  Future<void> updateData(StateSetter setPopupState) async {
+    final String uName = newUsernameController.text.trim();
+    final String psw = newPasswordController.text;
+    final String cityAkaName = cityAkaNameController.text.trim();
+    final String bio = bioController.text.trim();
+
+    // if the email is not empty (so user has digitized it), validate it
+    if (uName.length < 3 && uName.isNotEmpty) {
+      setPopupState(() => popupError = "Username is too short (Min. 3 chars).");
+      return;
+    }
+
+    // if the password is not empty (so user has digitized it), validate it
+    if (psw.isNotEmpty) {
+      if (psw.length < 8 ||
+          !RegExp(r'[A-Z]').hasMatch(psw) ||
+          !RegExp(r'[a-z]').hasMatch(psw) ||
+          !RegExp(r'[0-9]').hasMatch(psw) ||
+          !RegExp(r'[!@#$&*~£€?§+]').hasMatch(psw)) {
+        setPopupState(() => popupError = "Invalid Password.\nNeed 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special.");
+        return;
+      }
+    }
+
+    if (uName.isNotEmpty) { // username
+      int response = await _dbServiceSet.updateUserData("username", uName); // request to change the username
+
+      if (response == 409) { // error 409: conflict
+        setPopupState(() => popupError = "User already exists");
+        return;
+      }
+      if (uName==UserSession().userID) { // same username
+        setPopupState(() => popupError = "New username is the same as the old one");
+        return;
+      }
+
+      // updating the username in the local vars
+      setState(() {
+        UserSession().userID = uName;
+      });
+    }
+    if (psw.isNotEmpty) _dbServiceSet.updateUserData("hash_psw", psw); // password
+    if (cityAkaName.isNotEmpty) _dbServiceSet.updateUserData("city_aka_name", cityAkaName); // city aka name
+    if (bio.isNotEmpty) _dbServiceSet.updateUserData("bio", bio); // bio
+    _dbServiceSet.updateUserData("category_badge", _showBadge); // show/not show the category badge
+
+    // updating local vars with the new data
+    setState(() {
+      if (cityAkaName.isNotEmpty) _cityAkaName = cityAkaName;
+      if (bio.isNotEmpty) _bio = bio;
+      // mock update per foto profilo se cambiata
+      if (newProfileImage != null) _profilePhoto = newProfileImage!.path;
+    });
   }
 }

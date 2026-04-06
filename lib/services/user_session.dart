@@ -1,7 +1,7 @@
 // services/user_session.dart
 
 // Questa è la variabile globale "neutra"
-String globalUsername = "";
+String userID = "";
 
 // Se vuoi essere ancora più pulito, usa una classe Singleton
 class UserSession {
@@ -9,6 +9,6 @@ class UserSession {
   factory UserSession() => _instance;
   UserSession._internal();
 
-  String username = "";
+  String userID = "";
   String profilePic = "assets/icons/home_page/icon_profile.png";
 }

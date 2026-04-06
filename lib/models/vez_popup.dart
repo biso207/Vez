@@ -21,7 +21,7 @@ class VezPopup {
         return Align(
           alignment: alignment,
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 100), // Lo solleva un po' dal fondo se usi bottomCenter
+            padding: EdgeInsets.zero,
             child: Material(
               color: Colors.transparent,
               child: BackdropFilter(

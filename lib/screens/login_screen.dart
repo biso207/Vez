@@ -226,7 +226,6 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = false);
 
     if (response == 200 || response == 201) {
-      UserSession().username = username; // Writing username to the session
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => HomePage()),

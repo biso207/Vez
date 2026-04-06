@@ -6,19 +6,18 @@ import 'dart:convert';
 import 'package:http/http.dart' as http; // http packet (standard in Dart/Flutter).
 import 'api_keys.dart'; // private key to connect to the remote db
 
-
-class RemoteDbService {
+class GetDBService {
   final String _apiKey = ApiKeys.remoteDbKey;
   final String _baseUrl = ApiKeys.baseUrl;
-  final String username;
+  final String userID;
 
-  RemoteDbService({required this.username});
+  GetDBService({required this.userID});
 
   /// generic method to get any user attribute
   Future<String?> getUserData(String column) async {
     try {
       final url = Uri.parse(
-          '$_baseUrl/rest/v1/users?username=eq.$username&select=$column');
+          '$_baseUrl/rest/v1/users?user_id=eq.$userID&select=$column');
 
       final response = await http.get(
         url,
@@ -41,10 +40,10 @@ class RemoteDbService {
   }
 
   /// counts followers for a specific user ID
-  Future<int> getFollowersCount(String userId) async {
+  Future<int> getFollowersCount() async {
     try {
       // Using Supabase/PostgREST syntax for counting
-      final url = Uri.parse('$_baseUrl/rest/v1/follows?following_id=eq.$userId&select=count');
+      final url = Uri.parse('$_baseUrl/rest/v1/follows?following_id=eq.$userID&select=count');
       final response = await http.get(
         url,
         headers: {
@@ -67,9 +66,9 @@ class RemoteDbService {
   }
 
   /// gets the list of users that a specific user ID is following
-  Future<List<dynamic>> getFollowing(String userId) async {
+  Future<List<dynamic>> getFollowing() async {
     try {
-      final url = Uri.parse('$_baseUrl/rest/v1/follows?follower_id=eq.$userId&select=*');
+      final url = Uri.parse('$_baseUrl/rest/v1/follows?follower_id=eq.$userID&select=*');
       final response = await http.get(
         url,
         headers: {
