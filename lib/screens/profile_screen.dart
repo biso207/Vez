@@ -7,6 +7,7 @@ import 'dart:ui';
 import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
 import '../models/vez_popup.dart';
+import '../services/auth_service.dart';
 import '../services/getters_service.dart';
 import '../services/setters_service.dart';
 import '../services/user_session.dart';
@@ -38,7 +39,8 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _showBadge = true; // Toggle category badge
   File? newProfileImage;
   String? popupError;
-  late String? _userID;
+
+  final _RemoteDbService = new RemoteDbService();
 
   // instance of the remote db service
   late GetDBService _dbServiceGet;
@@ -436,7 +438,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       maxWidth: 512, maxHeight: 512, imageQuality: 75,
                     );
                     if (pickedFile != null) {
-                      setState(() => newProfileImage = File(pickedFile.path));
+                      setPopupState(() => newProfileImage = File(pickedFile.path));
                     }
                   },
                   child: Container(
@@ -712,12 +714,19 @@ class _ProfilePageState extends State<ProfilePage> {
     if (bio.isNotEmpty) _dbServiceSet.updateUserData("bio", bio); // bio
     _dbServiceSet.updateUserData("category_badge", _showBadge); // show/not show the category badge
 
+    // saving the new photo
+    String photoUrl = "";
+    if (newProfileImage != null) {
+      photoUrl = await _RemoteDbService.uploadProfilePhoto(newProfileImage!, _username) ?? "";
+      _dbServiceSet.updateUserData("profile_photo", photoUrl); // saving on the db
+    }
+
     // updating local vars with the new data
     setState(() {
       if (cityAkaName.isNotEmpty) _cityAkaName = cityAkaName;
       if (bio.isNotEmpty) _bio = bio;
       // mock update per foto profilo se cambiata
-      if (newProfileImage != null) _profilePhoto = newProfileImage!.path;
+      if (newProfileImage != null) _profilePhoto = photoUrl;
     });
   }
 }
