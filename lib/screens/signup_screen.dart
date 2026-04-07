@@ -7,6 +7,7 @@ import '../models/vez_glass.dart';
 import '../services/auth_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import '../services/translation_service.dart';
 import 'home_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -95,12 +96,12 @@ class _SignupPageState extends State<SignupPage> {
                 children: [
                   /// ====== 1) TOP: TITLE ======
                   const Spacer(flex: 2),
-                  const Center(
+                  Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "Welcome to Vez",
+                          StringRes.at("top_title_signup"),
                           style: TextStyle(
                             fontFamily: 'InstagramSans',
                             color: Colors.white,
@@ -108,9 +109,9 @@ class _SignupPageState extends State<SignupPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
-                          "Create and Enjoy real life events",
+                          StringRes.at("under_title_signup"),
                           style: TextStyle(
                             fontFamily: 'InstagramSans',
                             color: Colors.white,
@@ -174,7 +175,7 @@ class _SignupPageState extends State<SignupPage> {
                   _navigation(),
                   const SizedBox(height: 60),
                   VezGlass.pillButton(
-                    text: "I'M BACK",
+                    text: StringRes.at("signup"),
                     color: Colors.white38,
                     onTap: () => Navigator.pop(context),
                   ),
@@ -244,9 +245,22 @@ class _SignupPageState extends State<SignupPage> {
 
           VezGlass.textField(
             controller: usernameController,
-            hint: "Username",
-            width: MediaQuery.of(context).size.width * 0.75,
+            hint: StringRes.at("username"),
             color: Colors.white54,
+            width: MediaQuery.of(context).size.width * 0.75,
+            maxLength: 15,
+            onChanged: (value) => setState(() {}),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Text(
+                "${usernameController.text.length}/15",
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -261,7 +275,7 @@ class _SignupPageState extends State<SignupPage> {
         children: [
           VezGlass.textField(
             controller: emailController,
-            hint: "Email",
+            hint: StringRes.at("email"),
             width: MediaQuery.of(context).size.width * 0.75,
             color: Colors.white54,
           ),
@@ -270,7 +284,7 @@ class _SignupPageState extends State<SignupPage> {
 
           VezGlass.textField(
             controller: passwordController,
-            hint: "Password",
+            hint: StringRes.at("password"),
             obscure: !_showPassword, // icon show/not show psw
             width: MediaQuery.of(context).size.width * 0.75,
             color: Colors.white54,
@@ -311,7 +325,7 @@ class _SignupPageState extends State<SignupPage> {
                       ? ""
                       : DateFormat.yMd(Localizations.localeOf(context).toString()).format(selectedDate!),
                 ),
-                hint: "Date Of Birth",
+                hint: StringRes.at("date_of_birth"),
                 width: MediaQuery.of(context).size.width * 0.75,
                 color: Colors.white54,
               ),
@@ -328,7 +342,7 @@ class _SignupPageState extends State<SignupPage> {
                   VezGlass.textField(
                     controller: cityController,
                     // Hint changes while locating
-                    hint: _isLocatingCity ? "Locating your city..." : "Tap to set City",
+                    hint: _isLocatingCity ? StringRes.at("locating_the_city") : StringRes.at("set_city"),
                     width: MediaQuery.of(context).size.width * 0.75,
                     color: Colors.white54,
                   ),
@@ -380,24 +394,18 @@ class _SignupPageState extends State<SignupPage> {
                 case 0:
                   // username not digitated
                   if (username.isEmpty) {
-                    setState(() => errorMessage = "Please choose a username");
+                    setState(() => errorMessage = StringRes.at("choose_username"));
                     return;
                   }
 
                   if (_profileImage == null) {
-                    setState(() => errorMessage = "Please choose a profile photo");
+                    setState(() => errorMessage = StringRes.at("choose_profile_photo"));
                     return;
                   }
 
                   // Username must be at least 3 characters
                   if (username.length < 3) {
-                    setState(() => errorMessage = "Username is too short (Min. 3 chars)");
-                    return;
-                  }
-
-                  // Username must be less than 15 characters
-                  if (username.length > 15) {
-                    setState(() => errorMessage = "Username is too long (Max 15 chars)");
+                    setState(() => errorMessage = StringRes.at("username_too_short"));
                     return;
                   }
 
@@ -407,13 +415,13 @@ class _SignupPageState extends State<SignupPage> {
                 case 1:
                   // Check that all fields on step 2 are filled
                   if (page == 1 && (password.isEmpty || email.isEmpty)) {
-                    setState(() => errorMessage = "Please fill all fields");
+                    setState(() => errorMessage = StringRes.at("fill_all_fields"));
                     return;
                   }
 
                   // Validate email format
                   if (!_isValidEmail(email)) {
-                    setState(() => errorMessage = "Invalid email");
+                    setState(() => errorMessage = StringRes.at("invalid_email"));
                     return;
                   }
 
@@ -430,7 +438,7 @@ class _SignupPageState extends State<SignupPage> {
                 case 2:
                   // Check that all fields on step 3 are filled
                   if (city.isEmpty || selectedDate == null) {
-                    setState(() => errorMessage = "Please fill all fields");
+                    setState(() => errorMessage = StringRes.at("fill_all_fields"));
                     return;
                   }
 
@@ -438,7 +446,7 @@ class _SignupPageState extends State<SignupPage> {
                   break;
 
                 default:
-                  setState(() => errorMessage = "Something went wrong");
+                  setState(() => errorMessage = StringRes.at("something_went_wrong"));
             }
           },
         ),
@@ -472,16 +480,16 @@ class _SignupPageState extends State<SignupPage> {
 
     if (response == 200 || response == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Signup Successful!")),
+        SnackBar(content: Text(StringRes.at("signup_successful"))),
       );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => HomePage()),
       );
     } else if (response == 409) {
-      setState(() => errorMessage = "User already exists");
+      setState(() => errorMessage = StringRes.at("user_already_exists"));
     } else {
-      setState(() => errorMessage = "Signup failed\n${response.toString()}");
+      setState(() => errorMessage = "${StringRes.at("signup_failed")}\n${response.toString()}");
     }
   }
 
@@ -489,7 +497,7 @@ class _SignupPageState extends State<SignupPage> {
   /// or null if the password is valid.
   String? _validatePassword(String password) {
     if (!_isValidPsw(password)) {
-      return "Invalid Password.\nNeed 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special.";
+      return StringRes.at("invalid_password");
     }
     return null;
   }
@@ -545,7 +553,7 @@ class _SignupPageState extends State<SignupPage> {
       // 1. Check whether the device location service is enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        throw Exception("Please enable location services on your device.");
+        throw Exception(StringRes.at("enable_location_service"));
       }
 
       // 2. Check and request location permission
@@ -553,11 +561,11 @@ class _SignupPageState extends State<SignupPage> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          throw Exception("Location permissions are denied.");
+          throw Exception(StringRes.at("location_permissions_denied"));
         }
       }
       if (permission == LocationPermission.deniedForever) {
-        throw Exception("Location permissions are permanently denied. Change it in settings.");
+        throw Exception(StringRes.at("location_permissions_permanently_denied"));
       }
 
       // 3. Obtain the precise coordinates
@@ -573,7 +581,7 @@ class _SignupPageState extends State<SignupPage> {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
         // 'locality' is usually the main city; fall back to sub-administrative area
-        String cityName = place.locality ?? place.subAdministrativeArea ?? "Unknown City";
+        String cityName = place.locality ?? place.subAdministrativeArea ?? StringRes.at("unknown_city");
 
         setState(() {
           cityController.text = cityName; // Auto-fill the field

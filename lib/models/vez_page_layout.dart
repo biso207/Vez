@@ -4,6 +4,8 @@ import 'package:vez/models/vez_event_card.dart';
 import 'package:vez/models/vez_glass.dart';
 import 'package:vez/models/vez_popup.dart';
 
+import '../services/translation_service.dart';
+
 class VezPageLayout extends StatelessWidget {
   final Widget body;
   final Widget? bottomNavBar;
@@ -212,7 +214,7 @@ class VezPageLayout extends StatelessWidget {
                 children: [
                   _buildPopupItem(
                     icon: eventGroupsIcons[0]["icon"],
-                    label: "By You",
+                    label: StringRes.at("filter_by_you"),
                     onTap: () {
                       onFilterSelected?.call(0);
                       Navigator.pop(context);
@@ -221,7 +223,7 @@ class VezPageLayout extends StatelessWidget {
                   _customDivider(),
                   _buildPopupItem(
                     icon: eventGroupsIcons[1]["icon"],
-                    label: "Invited",
+                    label: StringRes.at("filter_invited"),
                     onTap: () {
                       onFilterSelected?.call(1);
                       Navigator.pop(context);
@@ -230,7 +232,7 @@ class VezPageLayout extends StatelessWidget {
                   _customDivider(),
                   _buildPopupItem(
                     icon: eventGroupsIcons[2]["icon"],
-                    label: "Nearby",
+                    label: StringRes.at("filter_nearby"),
                     onTap: () {
                       onFilterSelected?.call(2);
                       Navigator.pop(context);

@@ -40,7 +40,7 @@ class VezGlass {
           decoration: BoxDecoration(
             borderRadius: radius,
             border: border,
-            color: color ?? Colors.black.withOpacity(.5),
+            color: color ?? Color.fromARGB(51, 0, 0, 0),
           ),
           child: child,
         ),
@@ -145,26 +145,26 @@ class VezGlass {
   /// ---------------------------------------------------
   /// Glass text field
   /// ---------------------------------------------------
-  static Widget textField(
-      {
-        required TextEditingController controller,
-        required String hint,
-        bool obscure = false,
+  static Widget textField({
+    required TextEditingController controller,
+    required String hint,
+    bool obscure = false,
 
-        double? width,
-        double height = 44,
-        BorderRadius? radius,
+    double? width,
+    double height = 44,
+    BorderRadius? radius,
 
-        double fontSize = 20,
-        FontWeight fontWeight = FontWeight.bold,
+    double fontSize = 20,
+    FontWeight fontWeight = FontWeight.bold,
 
-        EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 18),
+    EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 18),
 
-        Widget? prefixIcon,
-        Widget? suffixIcon, required Color color, // Optional trailing widget (e.g. eye toggle)
-      }
-    )
-  {
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    required Color color,
+    int? maxLength,
+    void Function(String)? onChanged, // 1. <-- AGGIUNGI IL PARAMETRO QUI
+  }) {
     final BorderRadius finalRadius =
         radius ?? BorderRadius.circular(height / 2);
 
@@ -178,6 +178,8 @@ class VezGlass {
           child: TextField(
             controller: controller,
             obscureText: obscure,
+            maxLength: maxLength, // 2. <-- PASSALO AL WIDGET NATIVO
+            onChanged: onChanged, // 3. <-- PASSALO AL WIDGET NATIVO
             style: TextStyle(
                 fontSize: fontSize,
                 fontWeight: fontWeight,
@@ -186,6 +188,7 @@ class VezGlass {
             decoration: InputDecoration(
               isCollapsed: true,
               border: InputBorder.none,
+              counterText: "", // 4. <-- NASCONDE IL COUNTER DI DEFAULT SOTTO LA RIGA
               hintText: hint,
               hintStyle: TextStyle(
                   fontSize: fontSize,

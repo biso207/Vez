@@ -554,7 +554,7 @@ class _CreateEventState extends State<CreateEvent> {
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
                                 decoration: const InputDecoration(
-                                  hintText: "Event Title",
+                                  hintText: "Title",
                                   hintStyle: TextStyle(color: Colors.white),
                                   border: InputBorder.none,
                                 ),

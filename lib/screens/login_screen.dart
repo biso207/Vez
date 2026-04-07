@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:vez/screens/signup_screen.dart';
 import '../models/vez_glass.dart';
 import '../services/auth_service.dart';
+import '../services/translation_service.dart';
 import 'home_screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -64,12 +65,12 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   /// ====== 1) TOP: TITLE ======
                   const Spacer(flex: 2),
-                  const Center(
+                  Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "Hey!",
+                          StringRes.at("top_title_login"),
                           style: TextStyle(
                             fontFamily: 'InstagramSans',
                             color: Colors.white,
@@ -77,9 +78,9 @@ class _LoginPageState extends State<LoginPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
-                          "Welcome Back to Vez",
+                          StringRes.at("under_title_login"),
                           style: TextStyle(
                             fontFamily: 'InstagramSans',
                             color: Colors.white,
@@ -101,14 +102,14 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           VezGlass.textField(
                             controller: usernameController,
-                            hint: "Username",
+                            hint: StringRes.at("username"),
                             width: MediaQuery.of(context).size.width * 0.75,
                             color: Colors.white54,
                           ),
                           const SizedBox(height: 20),
                           VezGlass.textField(
                             controller: passwordController,
-                            hint: "Password",
+                            hint: StringRes.at("password"),
                             obscure: !_showPassword, // icon show/not show psw
                             width: MediaQuery.of(context).size.width * 0.75,
                             color: Colors.white54,
@@ -170,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 60),
                       VezGlass.pillButton(
-                        text: "I'M NEW",
+                        text: StringRes.at("login"),
                         color: Colors.white.withOpacity(0.5),
                         onTap: () {
                           // 1. Rimuove il banner di errore
@@ -207,7 +208,7 @@ class _LoginPageState extends State<LoginPage> {
     final password = passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
-      setState(() => errorMessage = "Please fill all fields");
+      setState(() => errorMessage = StringRes.at("fill_all_fields"));
       return;
     }
 
@@ -230,7 +231,7 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (_) => HomePage()),
       );
     } else {
-      setState(() => errorMessage = "Invalid credentials");
+      setState(() => errorMessage = StringRes.at("invalid_credentials"));
       // Reset fields on failed login
       usernameController.clear();
       passwordController.clear();

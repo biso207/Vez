@@ -10,6 +10,7 @@ import '../models/vez_popup.dart';
 import '../services/auth_service.dart';
 import '../services/getters_service.dart';
 import '../services/setters_service.dart';
+import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import 'create_event_screen.dart';
 import 'home_screen.dart';
@@ -50,9 +51,9 @@ class _ProfilePageState extends State<ProfilePage> {
   // --- USER DATA ---
   String _profilePhoto = ""; // profile photo
   String _username = ""; // username
-  String _cityAkaName = "City AkaName"; // city akaName
-  String _city = "City"; // city
-  String _bio = "No Bio."; // bio
+  String _cityAkaName = StringRes.at("city_aka_name"); // city akaName
+  String _city = StringRes.at("city"); // city
+  String _bio = StringRes.at("bio"); // bio
   int _numFollowers = 0; // numFollowers
   int _numFollowing = 0;// numFollowing
   int _numParticipatedEvents = 0; // numParticipatedEvents
@@ -470,13 +471,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 // --- CAMPI DI TESTO ---
                 buildPopupInput(
-                  hint: "New Username",
+                  hint: StringRes.at("new_username"),
                   controller: newUsernameController,
                   maxLength: 15,
                   setPopupState: setPopupState,
                 ),
                 buildPopupInput(
-                  hint: "New Password",
+                  hint: StringRes.at("new_password"),
                   controller: newPasswordController,
                   obscure: !_showPassword, // icon show/not show psw
 
@@ -499,13 +500,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
 
                 buildPopupInput(
-                  hint: "City Aka Name",
+                  hint: StringRes.at("city_aka_name"),
                   controller: cityAkaNameController,
                   maxLength: 10,
                   setPopupState: setPopupState,
                 ),
                 buildPopupInput(
-                  hint: "Bio",
+                  hint: StringRes.at("bio"),
                   controller: bioController,
                   maxLength: 30,
                   maxLines: 2,
@@ -527,9 +528,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        "Category Badge",
+                        StringRes.at("category_badge"),
                         style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'InstagramSans'),
                       ),
                     ),
@@ -687,7 +688,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // if the email is not empty (so user has digitized it), validate it
     if (uName.length < 3 && uName.isNotEmpty) {
-      setPopupState(() => popupError = "Username is too short (Min. 3 chars).");
+      setPopupState(() => popupError = StringRes.at("username_too_short"));
       return;
     }
 
@@ -698,7 +699,7 @@ class _ProfilePageState extends State<ProfilePage> {
           !RegExp(r'[a-z]').hasMatch(psw) ||
           !RegExp(r'[0-9]').hasMatch(psw) ||
           !RegExp(r'[!@#$&*~£€?§+]').hasMatch(psw)) {
-        setPopupState(() => popupError = "Invalid Password.\nNeed 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special.");
+        setPopupState(() => popupError = StringRes.at("invalid_password"));
         return;
       }
     }
@@ -707,11 +708,11 @@ class _ProfilePageState extends State<ProfilePage> {
       int response = await _dbServiceSet.updateUserData("username", uName); // request to change the username
 
       if (response == 409) { // error 409: conflict
-        setPopupState(() => popupError = "User already exists");
+        setPopupState(() => popupError = StringRes.at("user_already_exists"));
         return;
       }
       if (uName==_username) { // same username
-        setPopupState(() => popupError = "New username is the same as the old one");
+        setPopupState(() => popupError = StringRes.at("same_username"));
         return;
       }
     }

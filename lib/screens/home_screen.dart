@@ -6,6 +6,7 @@ import 'package:vez/screens/profile_screen.dart';
 import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
 import '../models/vez_event_card.dart';
+import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import '../services/getters_service.dart';
 import 'create_event_screen.dart';
@@ -89,7 +90,7 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(builder: (_) => ProfilePage()),
         );
       },
-      searchHint: "Search",
+      searchHint: StringRes.at("search"),
       filterIconPath: eventGroupsIcons[_indexEventGroup]["icon"],
       onFilterSelected: (index) {
         setState(() {
