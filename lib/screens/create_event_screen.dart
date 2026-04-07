@@ -103,7 +103,6 @@ class _CreateEventState extends State<CreateEvent> {
   }
 
   // --- EVENT LOGIC ---
-
   Future<void> _pickBackgroundImage() async {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -130,8 +129,11 @@ class _CreateEventState extends State<CreateEvent> {
     });
   }
 
-  // --- INTERACTIVE GRID LOGIC ---
+  Future<void> saveEvent() async {
+    print("Event Saved: ${titleController.text}");
+  }
 
+  // --- INTERACTIVE GRID LOGIC ---
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -343,7 +345,6 @@ class _CreateEventState extends State<CreateEvent> {
   }
 
   // --- SUPPORT WIDGETS WITH BLUR ---
-
   Widget _buildTopButton(String iconPath, VoidCallback onTap, {bool isBlue = false}) {
     return GestureDetector(
       onTap: onTap,
@@ -465,10 +466,27 @@ class _CreateEventState extends State<CreateEvent> {
           width: cardWidth,
           height: cardHeight,
           clipBehavior: Clip.antiAlias,
+
+          // todo: improve the background shadow
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(40),
-            border: Border.all(color: Colors.white24, width: 1.5),
+            // 1. BORDO PIÙ LUMINOSO: Fondamentale per definire l'angolo come su Figma
+            border: Border.all(
+                color: Colors.white.withOpacity(0.4),
+                width: 1.5
+            ),
+            // 2. BAGLIORE ESTERNO (GLOW): Sostituisce l'ombra "sporca"
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withOpacity(0.15), // Luce bianca soffusa
+                blurRadius: 25, // Ampio per non sembrare una macchia
+                spreadRadius: 2, // Definisce meglio la silhouette degli angoli
+                offset: const Offset(0, 0),
+              ),
+            ],
           ),
+
+          // centre of the card
           child: Stack(
             children: [
               // 1. Dynamic Background
@@ -649,9 +667,5 @@ class _CreateEventState extends State<CreateEvent> {
         ),
       ),
     );
-  }
-
-  Future<void> saveEvent() async {
-    print("Event Saved: ${titleController.text}");
   }
 }
