@@ -42,6 +42,7 @@ class VezPageLayout extends StatelessWidget {
     const Color bgColor = Color(0xFF0E0E0E);
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: bgColor,
       body: Stack(
         children: [
@@ -261,8 +262,8 @@ class VezPageLayout extends StatelessWidget {
               label,
               style: const TextStyle(
                 color: Colors.white,
+                fontWeight: FontWeight.bold,
                 fontSize: 20,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ],

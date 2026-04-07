@@ -6,7 +6,6 @@ import 'package:vez/screens/signup_screen.dart';
 import '../models/vez_glass.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
-import '../services/user_session.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

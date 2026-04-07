@@ -11,6 +11,7 @@ import '../services/auth_service.dart';
 import '../services/getters_service.dart';
 import '../services/setters_service.dart';
 import '../services/user_session.dart';
+import 'create_event_screen.dart';
 import 'home_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -148,7 +149,12 @@ class _ProfilePageState extends State<ProfilePage> {
             IconButton(
               icon: const ImageIcon(AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateEvent()),
+                );
+              },
             ),
             const SizedBox(width: 20),
             IconButton(
@@ -204,7 +210,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               image: DecorationImage(
                                 image: _profilePhoto.isNotEmpty
                                     ? NetworkImage(_profilePhoto)
-                                    : const AssetImage("assets/icons/home_page/profile_photo.png") as ImageProvider, // Immagine di fallback
+                                    : const AssetImage("assets/icons/home_page/profile_photo.png") as ImageProvider,
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -272,7 +278,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 children: [
                                   // aka
                                   TextSpan(
-                                    text: _cityAkaName ?? "No City Aka Name",
+                                    text: _cityAkaName,
                                     style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   // city
@@ -659,7 +665,7 @@ class _ProfilePageState extends State<ProfilePage> {
     // Update the UI safely
     if (mounted) {
       setState(() {
-        _profilePhoto = photo!.trim() ?? "";
+        _profilePhoto = photo!.trim();
         _username = username ?? "Username";
         _city = city ?? "City";
         _cityAkaName = akaName ?? "City AkaName";

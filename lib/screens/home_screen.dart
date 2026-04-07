@@ -8,6 +8,7 @@ import '../models/vez_page_layout.dart';
 import '../models/vez_event_card.dart';
 import '../services/user_session.dart';
 import '../services/getters_service.dart';
+import 'create_event_screen.dart';
 
 class HomePage extends StatefulWidget {
   // costruttore
@@ -107,13 +108,23 @@ class _HomePageState extends State<HomePage> {
             IconButton(
               icon: ImageIcon(const AssetImage("assets/icons/nav_bar/go_to_home_page.png"), color: Colors.white),
               iconSize: 30,
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HomePage()),
+                );
+              },
             ),
             const SizedBox(width: 20),
             IconButton(
               icon: ImageIcon(const AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateEvent()),
+                );
+              },
             ),
             const SizedBox(width: 20),
             IconButton(

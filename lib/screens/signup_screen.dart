@@ -2,7 +2,6 @@
 // Signup screen with 3-step navigation based on design mocks
 
 import 'package:intl/intl.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 import '../models/vez_glass.dart';
 import '../services/auth_service.dart';
@@ -11,7 +10,6 @@ import 'package:image_picker/image_picker.dart';
 import 'home_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import '../services/user_session.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});

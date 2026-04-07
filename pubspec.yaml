@@ -49,6 +49,7 @@ flutter:
     - assets/icons/nav_bar/
     - assets/icons/profile_page/
     - assets/icons/categories/
+    - assets/icons/event/
     - assets/loading_screen/
 
 
