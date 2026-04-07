@@ -121,7 +121,7 @@ class _ProfilePageState extends State<ProfilePage> {
         // TODO: go to the settings page
         print("Settings tapped");
       },
-      searchHint: "Search",
+      searchHint: StringRes.at("search"),
       filterIconPath: "assets/icons/profile_page/following_requests.png",
       onFilterSelected: (index) {
         setState(() {

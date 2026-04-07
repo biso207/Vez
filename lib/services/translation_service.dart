@@ -2,7 +2,7 @@ import '../l10n/en.dart';
 import '../l10n/it.dart';
 
 class StringRes {
-  static String locale = 'en'; // default language
+  static String locale = 'it'; // default language
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': en,

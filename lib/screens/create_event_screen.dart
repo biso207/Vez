@@ -10,6 +10,7 @@ import '../models/vez_popup.dart';
 import '../services/auth_service.dart';
 import '../services/getters_service.dart';
 import '../services/setters_service.dart';
+import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import 'home_screen.dart';
 import 'dart:io';
@@ -48,23 +49,23 @@ class _CreateEventState extends State<CreateEvent> {
 
   // Data Lists
   final List<Map<String, String>> categoriesList = [
-    {"name": "Cinema", "icon": "assets/icons/categories/cinema.png"},
-    {"name": "Concert", "icon": "assets/icons/categories/concert.png"},
-    {"name": "Disco", "icon": "assets/icons/categories/disco.png"},
-    {"name": "Gaming", "icon": "assets/icons/categories/gaming.png"},
-    {"name": "Hang Out", "icon": "assets/icons/categories/hang_out.png"},
-    {"name": "Journey", "icon": "assets/icons/categories/journey.png"},
-    {"name": "Kids & Family", "icon": "assets/icons/categories/kids_and_family.png"},
-    {"name": "Museum", "icon": "assets/icons/categories/museum.png"},
-    {"name": "Outdoor", "icon": "assets/icons/categories/outdoor.png"},
-    {"name": "Party", "icon": "assets/icons/categories/party.png"},
-    {"name": "Pub", "icon": "assets/icons/categories/pub.png"},
-    {"name": "Restaurant", "icon": "assets/icons/categories/restaurant.png"},
-    {"name": "Shopping", "icon": "assets/icons/categories/shopping.png"},
-    {"name": "Sport", "icon": "assets/icons/categories/sport.png"},
-    {"name": "Theatre", "icon": "assets/icons/categories/theatre.png"},
-    {"name": "Wellness", "icon": "assets/icons/categories/wellness.png"},
-    {"name": "Workshop", "icon": "assets/icons/categories/workshop.png"},
+    {"name": "cinema", "icon": "assets/icons/categories/cinema.png"},
+    {"name": "concert", "icon": "assets/icons/categories/concert.png"},
+    {"name": "disco", "icon": "assets/icons/categories/disco.png"},
+    {"name": "gaming", "icon": "assets/icons/categories/gaming.png"},
+    {"name": "hang_out", "icon": "assets/icons/categories/hang_out.png"},
+    {"name": "journey", "icon": "assets/icons/categories/journey.png"},
+    {"name": "kids_and_family", "icon": "assets/icons/categories/kids_and_family.png"},
+    {"name": "museum", "icon": "assets/icons/categories/museum.png"},
+    {"name": "outdoor", "icon": "assets/icons/categories/outdoor.png"},
+    {"name": "party", "icon": "assets/icons/categories/party.png"},
+    {"name": "pub", "icon": "assets/icons/categories/pub.png"},
+    {"name": "restaurant", "icon": "assets/icons/categories/restaurant.png"},
+    {"name": "shopping", "icon": "assets/icons/categories/shopping.png"},
+    {"name": "sport", "icon": "assets/icons/categories/sport.png"},
+    {"name": "theatre", "icon": "assets/icons/categories/theatre.png"},
+    {"name": "wellness", "icon": "assets/icons/categories/wellness.png"},
+    {"name": "workshop", "icon": "assets/icons/categories/workshop.png"},
   ];
 
   final List<Map<String, String>> eventTypesList = [
@@ -216,7 +217,7 @@ class _CreateEventState extends State<CreateEvent> {
             size: 40,
           ),
           title: Text(
-            categoriesList[i]["name"]!,
+            StringRes.at(categoriesList[i]["name"]!),
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -246,7 +247,7 @@ class _CreateEventState extends State<CreateEvent> {
         children: [
           _buildPopupItem(
             icon: eventTypesList[0]["icon"]!,
-            label: eventTypesList[0]["name"]!,
+            label: StringRes.at("exclusive"),
             onTap: () {
               setState(() {
                 selectedTypeName = eventTypesList[0]["name"]!;
@@ -258,7 +259,7 @@ class _CreateEventState extends State<CreateEvent> {
           _customDivider(), // horizontal divider
           _buildPopupItem(
             icon: eventTypesList[1]["icon"]!,
-            label: eventTypesList[1]["name"]!,
+            label: StringRes.at("private"),
             onTap: () {
               setState(() {
                 selectedTypeName = eventTypesList[1]["name"]!;
@@ -270,7 +271,7 @@ class _CreateEventState extends State<CreateEvent> {
           _customDivider(),
           _buildPopupItem(
             icon: eventTypesList[2]["icon"]!,
-            label: eventTypesList[2]["name"]!,
+            label: StringRes.at("public"),
             onTap: () {
               setState(() {
                 selectedTypeName = eventTypesList[2]["name"]!;
@@ -424,7 +425,7 @@ class _CreateEventState extends State<CreateEvent> {
           MaterialPageRoute(builder: (_) => ProfilePage()),
         );
       },
-      searchHint: "Search",
+      searchHint: StringRes.at("search"),
       filterIconPath: "assets/icons/profile_page/following_requests.png",
       onFilterSelected: (index) {
         setState(() {
@@ -523,7 +524,7 @@ class _CreateEventState extends State<CreateEvent> {
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(color: const Color.fromARGB(204, 255, 195, 0), width: 2)
                               ),
-                              child: const Text("Preview", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                              child: Text(StringRes.at("preview"), style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                             ),
                           ),
                         ),
@@ -546,7 +547,7 @@ class _CreateEventState extends State<CreateEvent> {
                               border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text("Edit Background", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            child: Text(StringRes.at("edit_bg"), style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                           ),
                         ),
                       ),
@@ -571,8 +572,8 @@ class _CreateEventState extends State<CreateEvent> {
                                 controller: titleController,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
-                                decoration: const InputDecoration(
-                                  hintText: "Title",
+                                decoration: InputDecoration(
+                                  hintText: StringRes.at("event_title"),
                                   hintStyle: TextStyle(color: Colors.white),
                                   border: InputBorder.none,
                                 ),
@@ -585,13 +586,13 @@ class _CreateEventState extends State<CreateEvent> {
                               IntrinsicHeight(
                                 child: Row(
                                   children: [
-                                    _buildGridCell("Date", "assets/icons/event/calendar.png", formattedDate, _selectDate),
+                                    _buildGridCell(StringRes.at("date"), "assets/icons/event/calendar.png", formattedDate, _selectDate),
                                     const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
-                                    _buildGridCell("Time", "assets/icons/event/time.png", formattedTime, _selectTime),
+                                    _buildGridCell(StringRes.at("time"), "assets/icons/event/time.png", formattedTime, _selectTime),
                                     const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
-                                    _buildGridCell("Location", "assets/icons/event/location.png", _location, () => _showTextInputPopup("Location", _location, (val) => setState(() => _location = val))),
+                                    _buildGridCell(StringRes.at("location"), "assets/icons/event/location.png", _location, () => _showTextInputPopup(StringRes.at("set_location"), _location, (val) => setState(() => _location = val))),
                                     const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
-                                    _buildGridCell("Details", "assets/icons/event/description.png", _description, () => _showTextInputPopup("Details", _description, (val) => setState(() => _description = val), isMultiline: true)),
+                                    _buildGridCell(StringRes.at("details"), "assets/icons/event/description.png", _description, () => _showTextInputPopup(StringRes.at("set_details"), _description, (val) => setState(() => _description = val), isMultiline: true)),
                                   ],
                                 ),
                               ),
@@ -602,9 +603,9 @@ class _CreateEventState extends State<CreateEvent> {
                               IntrinsicHeight(
                                 child: Row(
                                   children: [
-                                    _buildGridCell("Max Guest", "assets/icons/event/guests.png", _maxGuests, () => _showTextInputPopup("Max Guests", _maxGuests, (val) => setState(() => _maxGuests = val), isNumeric: true)),
+                                    _buildGridCell(StringRes.at("max_guests"), "assets/icons/event/guests.png", _maxGuests, () => _showTextInputPopup(StringRes.at("set_max_guests"), _maxGuests, (val) => setState(() => _maxGuests = val), isNumeric: true)),
                                     const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
-                                    _buildGridCell("Price", "assets/icons/event/price.png", _price != null ? "$_price€" : null, () => _showTextInputPopup("Price", _price, (val) => setState(() => _price = val), isNumeric: true)),
+                                    _buildGridCell(StringRes.at("price"), "assets/icons/event/price.png", _price != null ? "$_price€" : null, () => _showTextInputPopup(StringRes.at("set_price"), _price, (val) => setState(() => _price = val), isNumeric: true)),
                                   ],
                                 ),
                               ),
@@ -622,7 +623,7 @@ class _CreateEventState extends State<CreateEvent> {
                       children: [
                         // Save Button
                         GestureDetector(
-                          onTap: () => _showConfirmationPopup("SAVE EVENT?", saveEvent),
+                          onTap: () => _showConfirmationPopup(StringRes.at("save_event"), saveEvent),
                           child: ClipOval(
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -641,7 +642,7 @@ class _CreateEventState extends State<CreateEvent> {
                         const SizedBox(width: 40),
                         // Delete Button
                         GestureDetector(
-                          onTap: () => _showConfirmationPopup("DELETE DATA?", _resetEventData),
+                          onTap: () => _showConfirmationPopup(StringRes.at("delete_data"), _resetEventData),
                           child: ClipOval(
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
