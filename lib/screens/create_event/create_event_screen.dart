@@ -6,17 +6,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:vez/screens/profile_screen.dart';
-import 'package:vez/screens/vez_map_picker.dart';
+import 'package:vez/screens/create_event/vez_map_picker.dart';
 import 'dart:ui';
-import '../models/vez_glass.dart';
-import '../models/vez_page_layout.dart';
-import '../models/vez_popup.dart';
-import '../services/auth_service.dart';
-import '../services/getters_service.dart';
-import '../services/setters_service.dart';
-import '../services/translation_service.dart';
-import '../services/user_session.dart';
-import 'home_screen.dart';
+import '../../models/vez_glass.dart';
+import '../../models/vez_page_layout.dart';
+import '../../models/vez_popup.dart';
+import '../../services/auth_service.dart';
+import '../../services/getters_service.dart';
+import '../../services/setters_service.dart';
+import '../../services/translation_service.dart';
+import '../../services/user_session.dart';
+import '../home_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -223,10 +223,13 @@ class _CreateEventState extends State<CreateEvent> {
   // --- POPUPS ---
   // category popup
   void _showCategoryPopup() {
+    final double width = MediaQuery.of(context).size.width * 0.60;
+    final double height = MediaQuery.of(context).size.height * 0.5;
+
     VezPopup.show(
       context: context,
-      width: MediaQuery.of(context).size.width * 0.75,
-      height: MediaQuery.of(context).size.height * 0.5,
+      width: width,
+      height: height,
       backgroundColor: const Color.fromARGB(128, 6, 0, 92),
       borderColor: const Color.fromARGB(128, 0, 10, 218),
       child: ListView.separated(
@@ -234,13 +237,16 @@ class _CreateEventState extends State<CreateEvent> {
         physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
         ),
+
         itemCount: categoriesList.length, // number of items to display
+
         padding: const EdgeInsets.symmetric(vertical: 0),
-        separatorBuilder: (context, index) => _customDivider(), // row separator
+        separatorBuilder: (context, index) => _customDivider(width), // row separator
+
         itemBuilder: (context, i) => ListTile(
           dense: true,
           visualDensity: VisualDensity.compact,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
           leading: ImageIcon(
             AssetImage(categoriesList[i]["icon"]!),
             color: Colors.white,
@@ -268,9 +274,11 @@ class _CreateEventState extends State<CreateEvent> {
 
   // typology popup -> same UI of the group popup of the home screen
   void _showTypePopup() {
+    final double width = MediaQuery.of(context).size.width * 0.60;
+
     VezPopup.show(
       context: context,
-      width: 250, // Larghezza fissa per farlo venire slanciato in verticale
+      width: width,
       backgroundColor: const Color.fromARGB(200, 14, 14, 14),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -286,7 +294,7 @@ class _CreateEventState extends State<CreateEvent> {
               Navigator.pop(context);
             },
           ),
-          _customDivider(), // horizontal divider
+          _customDivider(width), // horizontal divider
           _buildPopupItem(
             icon: eventTypesList[1]["icon"]!,
             label: StringRes.at("private"),
@@ -298,7 +306,7 @@ class _CreateEventState extends State<CreateEvent> {
               Navigator.pop(context);
             },
           ),
-          _customDivider(),
+          _customDivider(width),
           _buildPopupItem(
             icon: eventTypesList[2]["icon"]!,
             label: StringRes.at("public"),
@@ -389,12 +397,20 @@ class _CreateEventState extends State<CreateEvent> {
   }
 
   // widget to create the row divider
-  Widget _customDivider() {
+  Widget _customDivider(double popupWidth) {
+    // proportion of ~70%
+    double calculatedWidth = popupWidth * 0.7;
+    // width of the divider
+    double finalWidth = calculatedWidth.clamp(142.0, popupWidth - 32.0);
+
     return Center(
       child: Container(
-        width: 200, // Divider più stretto del popup
+        width: finalWidth,
         height: 2,
-        color: Colors.white54,
+        decoration: BoxDecoration(
+          color: Colors.white54,
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }
@@ -435,7 +451,8 @@ class _CreateEventState extends State<CreateEvent> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(StringRes.at("set_location"), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-          // OPZIONE 1: Nome Semplice (Senza Mappa)
+
+          // 1) simple name -> "marco's house"
           GestureDetector(
             onTap: () {
               Navigator.pop(context);
@@ -460,8 +477,10 @@ class _CreateEventState extends State<CreateEvent> {
               ),
             ),
           ),
+
           const SizedBox(height: 15),
-          // OPZIONE 2: Mappa Precisa (OSM)
+
+          // 2) precise map location -> open the map -> set the place -> everything perfect
           GestureDetector(
             onTap: () async {
               Navigator.pop(context);
@@ -510,6 +529,11 @@ class _CreateEventState extends State<CreateEvent> {
     // height at 65% of the screen, width at 85%
     final double cardHeight = screenHeight * 0.65;
     final double cardWidth = screenWidth * 0.85;
+    // this is for the SizedBoxes
+    final double s = (screenWidth / 390).clamp(0.8, 1.2);
+
+    final double rOuter = 40 * s; // Raggio responsivo card
+    final double rInner = 30 * s; // Raggio responsivo grid componente
 
     return VezPageLayout(
       // --- TOP NAVBAR (PARAMETERS) ---
@@ -545,13 +569,16 @@ class _CreateEventState extends State<CreateEvent> {
               iconSize: 30,
               onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage())),
             ),
-            const SizedBox(width: 20),
+            SizedBox(width: 20 * s),
+
             IconButton(
               icon: const ImageIcon(AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
               onPressed: () {},
             ),
-            const SizedBox(width: 20),
+
+            SizedBox(width: 20 * s),
+
             IconButton(
               icon: const ImageIcon(AssetImage("assets/icons/nav_bar/notifications.png"), color: Colors.white),
               iconSize: 30,
@@ -566,23 +593,20 @@ class _CreateEventState extends State<CreateEvent> {
         child: Container(
           width: cardWidth,
           height: cardHeight,
-          clipBehavior: Clip.antiAlias,
-
-          // todo: improve the background shadow
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(40),
-            // 1. BORDO PIÙ LUMINOSO: Fondamentale per definire l'angolo come su Figma
-            border: Border.all(
-                color: Color.fromARGB(102, 0, 0, 0),
-                width: 1.5
-            ),
-            // 2. BAGLIORE ESTERNO (GLOW): Sostituisce l'ombra "sporca"
+            color: Colors.black.withOpacity(0.5), // Sfondo fumé card
+            borderRadius: BorderRadius.circular(rOuter),
+
+            // --- 1. FIGMA SPEC: NO BORDERS (BORDER: NULL) ---
+            border: null,
+
+            // --- 2. FIGMA SPEC: DROP SHADOW BIANCA 50% (Spread 5, Blur ~15-20) ---
             boxShadow: [
               BoxShadow(
-                color: Color.fromARGB(38, 255, 255, 255), // Luce bianca soffusa
-                blurRadius: 25, // Ampio per non sembrare una macchia
-                spreadRadius: 2, // Definisce meglio la silhouette degli angoli
-                offset: const Offset(0, 0),
+                color: const Color.fromARGB(128, 255, 255, 255),
+                blurRadius: 5.0, // dispersione
+                spreadRadius: 0, // spread
+                offset: const Offset(0.0, 0.0), // offset position x and y
               ),
             ],
           ),
@@ -590,26 +614,53 @@ class _CreateEventState extends State<CreateEvent> {
           // centre of the card
           child: Stack(
             children: [
-              // 1. Dynamic Background
+              // 1. dynamic background (Avvolto in ClipRRect per angoli perfetti)
               Positioned.fill(
-                  child: eventBackgroundImage != null
-                      ? Image.file(eventBackgroundImage!, fit: BoxFit.cover)
-                      : Image.asset("assets/images/bg/default_create_event_bg.jpg", fit: BoxFit.cover)
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(rOuter),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: eventBackgroundImage != null
+                            ? Image.file(
+                          eventBackgroundImage!,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.center,
+                        )
+                            : Image.asset(
+                          "assets/images/bg/default_create_event_bg.jpg",
+                          fit: BoxFit.cover,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                      // Overlay scuro per contrasto
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(80, 0, 0, 0), // Un filo più scuro (80 invece di 51)
+                            borderRadius: BorderRadius.circular(rOuter),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                )
               ),
-              Positioned.fill(child: Container(color: Color.fromARGB(51, 0, 0, 0))),
 
-              // 2. Card Content
+              // 2. card content
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    // Top Buttons
+                    // top buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(children: [
                           _buildTopButton(selectedCategoryIcon, _showCategoryPopup, isBlue: true),
-                          const SizedBox(width: 12),
+
+                          SizedBox(width: 15 * s),
+
                           _buildTopButton(selectedTypeIcon, _showTypePopup),
                         ]),
                         // Preview Badge with Blur
@@ -653,11 +704,11 @@ class _CreateEventState extends State<CreateEvent> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20 * s),
 
-                    // Main Info Container (Title + Grid)
+                    // main info grid (Title + Grid)
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(30),
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
@@ -672,12 +723,30 @@ class _CreateEventState extends State<CreateEvent> {
                                 controller: titleController,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+                                onChanged: (value) {
+                                  setState(() {});
+                                },
+                                maxLength: 15,
                                 decoration: InputDecoration(
                                   hintText: StringRes.at("event_title"),
-                                  hintStyle: TextStyle(color: Colors.white),
+                                  hintStyle: const TextStyle(color: Colors.white),
                                   border: InputBorder.none,
+
+                                  // this to manage the space over and under the text
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+
+                                  // Nasconde il contatore predefinito che appare in basso a destra
+                                  counterText: "",
+
+                                  // Bilanciamento visivo per la centratura matematica
+                                  prefixText: "00/00",
+                                  // Stesso font size del contatore sotto per allineare il testo del titolo
+                                  prefixStyle: const TextStyle(color: Colors.transparent, fontSize: 20),
+
+                                  // Il tuo contatore a destra
+                                  suffixText: "${titleController.text.length}/15",
+                                  suffixStyle: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold, fontSize: 20),
                                 ),
-                                //maxLength: 15,
                               ),
 
                               const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 2),
@@ -697,7 +766,7 @@ class _CreateEventState extends State<CreateEvent> {
                                 ),
                               ),
 
-                              const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 1.5),
+                              const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 2),
 
                               // Grid Row 2
                               IntrinsicHeight(
@@ -715,20 +784,20 @@ class _CreateEventState extends State<CreateEvent> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20 * s),
 
-                    // Action Buttons (Save & Delete)
+                    // action buttons (save & delete)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Save Button
+                        // save Button
                         GestureDetector(
                           onTap: () => _showConfirmationPopup(StringRes.at("save_event"), saveEvent),
                           child: ClipOval(
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: const Color.fromARGB(128, 8, 157, 13), // original green
                                   shape: BoxShape.circle,
@@ -739,15 +808,17 @@ class _CreateEventState extends State<CreateEvent> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 40),
-                        // Delete Button
+
+                        SizedBox(width: 30 * s),
+
+                        // delete Button
                         GestureDetector(
                           onTap: () => _showConfirmationPopup(StringRes.at("delete_data"), _resetEventData),
                           child: ClipOval(
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: const Color.fromARGB(128, 255, 49, 49), // original red
                                   shape: BoxShape.circle,

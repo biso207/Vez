@@ -163,7 +163,7 @@ class VezGlass {
     Widget? suffixIcon,
     required Color color,
     int? maxLength,
-    void Function(String)? onChanged, // 1. <-- AGGIUNGI IL PARAMETRO QUI
+    void Function(String)? onChanged,
   }) {
     final BorderRadius finalRadius =
         radius ?? BorderRadius.circular(height / 2);

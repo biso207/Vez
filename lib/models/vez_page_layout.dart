@@ -29,7 +29,7 @@ class VezPageLayout extends StatelessWidget {
     this.searchHint = "Search",
     this.filterIconPath = "",
     this.onFilterSelected,
-    this.horizontalMargin = 40.0,
+    this.horizontalMargin = 100.0,
   });
 
   // list of icons of the event types
@@ -41,6 +41,14 @@ class VezPageLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // defining size based on the screen size
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    // this is for the SizedBoxes
+    final double s = (screenWidth / 390).clamp(0.8, 1.2);
+    // responsive margin
+    final double actualMargin = screenWidth < 600 ? 40.0 : horizontalMargin;
+
     const Color bgColor = Color(0xFF0E0E0E);
 
     return Scaffold(
@@ -54,8 +62,8 @@ class VezPageLayout extends StatelessWidget {
           Positioned(
             top: 0,
             bottom: 0,
-            left: horizontalMargin,  // <-- Applica la linea blu di sinistra
-            right: horizontalMargin, // <-- Applica la linea blu di destra
+            left: actualMargin,
+            right: actualMargin,
             child: body,
           ),
 
@@ -124,9 +132,9 @@ class VezPageLayout extends StatelessWidget {
           /// 5) Navbars
           Positioned(
             top: MediaQuery.of(context).padding.top + 40,
-            left: horizontalMargin,  // <-- Allineata alla griglia sx
-            right: horizontalMargin, // <-- Allineata alla griglia dx
-            child: _buildTopNavBar(context), // standard layout
+            left: actualMargin,  // <-- Allineata alla griglia sx
+            right: actualMargin, // <-- Allineata alla griglia dx
+            child: _buildTopNavBar(context, s), // standard layout
           ),
 
           if (bottomNavBar != null)
@@ -141,7 +149,7 @@ class VezPageLayout extends StatelessWidget {
   }
 
   // widget template for the top navbar of every pages
-  Widget _buildTopNavBar(BuildContext context) {
+  Widget _buildTopNavBar(BuildContext context, double s) {
     final bool isNetworkImage =
     profileIconPath.startsWith("http");
 
@@ -188,19 +196,19 @@ class VezPageLayout extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(width: 20),
+        SizedBox(width: 20 * s),
 
         Expanded(
           child: VezGlass.textField(
             controller: searchController,
             hint: searchHint,
             prefixIcon:
-            const Icon(Icons.search, color: Colors.white70),
+            const Icon(Icons.search, color: Colors.white70, fontWeight: FontWeight.bold),
             color: Colors.white,
           ),
         ),
 
-        const SizedBox(width: 20),
+        SizedBox(width: 20 * s),
 
         VezGlass.circleButton(
           assetIcon: filterIconPath,
@@ -211,6 +219,7 @@ class VezPageLayout extends StatelessWidget {
               alignment: Alignment.center,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildPopupItem(
                     icon: eventGroupsIcons[0]["icon"],

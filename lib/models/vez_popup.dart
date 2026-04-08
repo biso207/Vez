@@ -16,7 +16,7 @@ class VezPopup {
       barrierDismissible: true,
       barrierLabel: 'Dismiss',
       barrierColor: Colors.black.withOpacity(0.4),
-      transitionDuration: const Duration(milliseconds: 300),
+      transitionDuration: const Duration(milliseconds: 450),
       pageBuilder: (context, animation, secondaryAnimation) {
         return Align(
           alignment: alignment,
@@ -29,10 +29,10 @@ class VezPopup {
                 child: Container(
                   width: width,
                   height: height,
-                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10), // Padding interno
+                  padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0), // Padding interno
                   decoration: BoxDecoration(
                     color: backgroundColor ?? const Color(0xFF0E0E0E).withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(40),
+                    borderRadius: BorderRadius.circular(30),
                     border: Border.all(
                       color: borderColor ?? Colors.white54,
                       width: 2,
@@ -46,7 +46,7 @@ class VezPopup {
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        // Animazione di comparsa morbida (fade + leggero zoom)
+        // animazione di comparsa morbida (fade + leggero zoom)
         return FadeTransition(
           opacity: animation,
           child: ScaleTransition(

@@ -2,11 +2,11 @@
 // Screen to manage the login process
 
 import 'package:flutter/material.dart';
-import 'package:vez/screens/signup_screen.dart';
-import '../models/vez_glass.dart';
-import '../services/auth_service.dart';
-import '../services/translation_service.dart';
-import 'home_screen.dart';
+import 'package:vez/screens/auth/signup_screen.dart';
+import '../../models/vez_glass.dart';
+import '../../services/auth_service.dart';
+import '../../services/translation_service.dart';
+import '../home_screen.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

@@ -12,7 +12,7 @@ import '../services/getters_service.dart';
 import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
-import 'create_event_screen.dart';
+import 'create_event/create_event_screen.dart';
 import 'home_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -153,6 +153,11 @@ class _ProfilePageState extends State<ProfilePage> {
         setPopupState(() => popupError = StringRes.at("same_username"));
         return;
       }
+
+      setState(() {
+        _username = uName;
+        return;
+      });
     }
     if (psw.isNotEmpty) _dbServiceSet.updateUserData("hash_psw", psw); // password
     if (cityAkaName.isNotEmpty) _dbServiceSet.updateUserData("city_aka_name", cityAkaName); // city aka name
@@ -177,7 +182,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // --- SUPPORT WIDGETS ---
   // Widget helper per le icone delle statistiche
-  Widget _buildStatItem(String iconPath, String value) {
+  Widget _buildStatItem(String iconPath, String value, double s) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -187,7 +192,7 @@ class _ProfilePageState extends State<ProfilePage> {
           height: 30,
           color: Colors.white, // Forza il colore se l'icona è trasparente, rimuovilo se l'asset è già bianco
         ),
-        const SizedBox(height: 5),
+        SizedBox(height: 1 * s),
         Text(
           value,
           style: const TextStyle(
@@ -201,9 +206,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // --- POPUPS ---
-  void _showEditProfilePopup() {
-
+  // --- POPUPS EDIT PROFILE ---
+  void _showEditProfilePopup(double s) {
     // Helper per creare i campi di testo in stile "Glass" richiesto
     Widget buildPopupInput({
       required String hint,
@@ -254,6 +258,8 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // --- SPAZIO SOPRA IMMAGINE ---
+                SizedBox(height: 30 * s),
 
                 // --- IMMAGINE PROFILO ---
                 GestureDetector(
@@ -284,8 +290,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
 
-                // Spazio uguale a quello in basso
-                const SizedBox(height: 32),
+                // Spazio tra immagine e campi uguale a quello in basso
+                SizedBox(height: 30 * s),
 
                 // --- CAMPI DI TESTO ---
                 buildPopupInput(
@@ -327,12 +333,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   hint: StringRes.at("bio"),
                   controller: bioController,
                   maxLength: 30,
-                  maxLines: 2,
+                  maxLines: 1,
                   setPopupState: setPopupState,
                 ),
 
                 // --- TOGGLE CATEGORY BADGE ---
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
                       decoration: BoxDecoration(
@@ -345,18 +352,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: ImageIcon(const AssetImage("assets/icons/categories/hang_out.png"), color: Colors.white, size:20.45),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        StringRes.at("category_badge"),
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'InstagramSans'),
-                      ),
+                    SizedBox(width: 15 * s),
+                    Text(
+                      StringRes.at("category_badge"),
+                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'InstagramSans'),
                     ),
+                    SizedBox(width: 30 * s),
                     Switch(
                       value: _showBadge,
                       onChanged: (val) {
-                        setPopupState(() => _showBadge = val); // changing the toggle UI
-                        setState(() => _showBadge = val); // changing the badge in the UI page
+                        setPopupState(() => _showBadge = val);
+                        setState(() => _showBadge = val);
                       },
                       activeThumbColor: Colors.black,
                       activeTrackColor: Colors.white,
@@ -367,7 +373,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
 
                 // --- ERRORE BANNER (appears only if there's an error) ---
-                const SizedBox(height: 32),
+                SizedBox(height: 30 * s),
 
                 if (popupError != null) ...[
                   Padding(
@@ -387,9 +393,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                   ),
-                ],
 
-                const SizedBox(height: 32),
+                  SizedBox(height: 30 * s),
+                ],
 
                 // --- PULSANTI AZIONE ---
                 Row(
@@ -426,7 +432,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
 
-                    const SizedBox(width: 30),
+                    SizedBox(width: 30 * s),
 
                     // button discard (red)
                     GestureDetector(
@@ -454,6 +460,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ],
                 ),
+
+                // --- SPAZIO SOTTO PULSANTI ---
+                SizedBox(height: 30 * s),
               ],
             ),
           );
@@ -465,6 +474,10 @@ class _ProfilePageState extends State<ProfilePage> {
   // --- PAGE LAYOUT ---
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double s = (screenWidth / 390).clamp(0.8, 1.2);
+
     return VezPageLayout(
       // --- TOP NAVBAR (PARAMETERS) ---
       searchController: searchController,
@@ -502,7 +515,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
-            const SizedBox(width: 20),
+
+            SizedBox(width: 20 * s),
+
             IconButton(
               icon: const ImageIcon(AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
@@ -513,7 +528,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
-            const SizedBox(width: 20),
+
+            SizedBox(width: 20 * s),
+
             IconButton(
               icon: const ImageIcon(AssetImage("assets/icons/nav_bar/notifications.png"), color: Colors.white),
               iconSize: 30,
@@ -527,179 +544,175 @@ class _ProfilePageState extends State<ProfilePage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const SizedBox(height: 180),
+            SizedBox(height: 150*s),
 
             // --- USER DATA CARD ---
             GestureDetector(
-              onTap: () => _showEditProfilePopup(), // opening the popup to edit the profile
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 0),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4), // Sfondo leggermente più coprente
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                        color: Colors.white54, // Bordo più delicato
-                        width: 2 // Spessore ridotto
+              onTap: () => _showEditProfilePopup(s), // opening the popup to edit the profile
+              child: Container(
+                width: double.infinity, // Occupa tutta la larghezza concessa dal layout
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0E0E0E),
+                  borderRadius: BorderRadius.circular(40),
+                  border: Border.all(color:Color.fromARGB(128, 255, 255, 255), width:2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color.fromARGB(128, 255, 255, 255),
+                      blurRadius: 5.0, // Ombra presente ma contenuta
+                      spreadRadius: 0,
+                      offset: Offset(0.0, 0.0),
                     ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.white10, // Ombra più "soffice" e densa
-                        blurRadius: 12,
-                        spreadRadius: 0, // Lo zero crea un alone perfetto sui lati
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile Photo & Category Badge
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 75,
+                          height: 75,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            image: DecorationImage(
+                              image: _profilePhoto.isNotEmpty
+                                  ? NetworkImage(_profilePhoto)
+                                  : const AssetImage("assets/icons/home_page/profile_photo.png") as ImageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
 
-                      // Profile Photo & Category Badge
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 75,
-                            height: 75,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                              image: DecorationImage(
-                                image: _profilePhoto.isNotEmpty
-                                    ? NetworkImage(_profilePhoto)
-                                    : const AssetImage("assets/icons/home_page/profile_photo.png") as ImageProvider,
-                                fit: BoxFit.cover,
+                        // badge most-participated event category
+                        if (_showBadge)
+                          Positioned(
+                            top: -5,
+                            right: -5,
+                            child: ClipOval(
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(51, 0, 10, 218), // #000ADA 20%
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color.fromARGB(128, 0, 10, 218), // #000ADA 50%
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    /// will be automatic set based on the most participated event category
+                                    child: Image.asset("assets/icons/categories/pub.png", color: Colors.white),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
+                      ],
+                    ),
 
-                          // badge most-participated event category
-                          if (_showBadge)
-                            Positioned(
-                              top: -5,
-                              right: -5,
-                              child: ClipOval(
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                  child: Container(
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      color: const Color.fromARGB(51, 0, 10, 218), // #000ADA 20%
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: const Color.fromARGB(128, 0, 10, 218), // #000ADA 50%
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(5.0),
-                                      /// will be automatic set based on the most participated event category
-                                      child: Image.asset("assets/icons/categories/pub.png", color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                    SizedBox(width: 16*s),
+
+                    // User Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // username
+                          Text(
+                            _username,
+                            style: const TextStyle(
+                              fontFamily: 'JollyLodger',
+                              fontSize: 30,
+                              color: Colors.white,
+                              height: 1.0,
                             ),
-                        ],
-                      ),
+                          ),
 
-                      const SizedBox(width: 16),
+                          SizedBox(height: 4*s),
 
-                      // User Details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // username
-                            Text(
-                              _username,
-                              style: const TextStyle(
-                                fontFamily: 'JollyLodger',
-                                fontSize: 30,
-                                color: Colors.white,
-                                height: 1.0,
-                              ),
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            // aka name of the city & the city
-                            RichText(
-                              text: TextSpan(
-                                style: const TextStyle(
-                                  fontFamily: 'InstagramSans',
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                ),
-                                children: [
-                                  // aka
-                                  TextSpan(
-                                    text: _cityAkaName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  // city
-                                  TextSpan(
-                                    text: " • $_city",
-                                    style: const TextStyle(fontWeight: FontWeight.w300), // Light
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            // bio/des
-                            Text(
-                              _bio,
+                          // aka name of the city & the city
+                          RichText(
+                            text: TextSpan(
                               style: const TextStyle(
                                 fontFamily: 'InstagramSans',
-                                fontSize: 15,
                                 color: Colors.white,
+                                fontSize: 15,
                               ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
+                              children: [
+                                // aka
+                                TextSpan(
+                                  text: _cityAkaName,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                // city
+                                TextSpan(
+                                  text: " • $_city",
+                                  style: const TextStyle(fontWeight: FontWeight.w300), // Light
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+
+                          SizedBox(height: 4*s),
+
+                          // bio/des
+                          Text(
+                            _bio,
+                            style: const TextStyle(
+                              fontFamily: 'InstagramSans',
+                              fontSize: 15,
+                              color: Colors.white,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20*s),
 
             // --- STATS CARD ---
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 50),
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(50),
-                border: Border.all(
-                    color: Colors.white54,
-                    width:2
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30), // La rende più stretta della User Card
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0E0E0E),
+                  borderRadius: BorderRadius.circular(50),
+                  border: Border.all(color:Color.fromARGB(128, 255, 255, 255), width:2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color.fromARGB(128, 255, 255, 255),
+                      blurRadius: 5.0,
+                      spreadRadius: 0,
+                    ),
+                  ],
                 ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.white10,
-                    blurRadius: 12,
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildStatItem("assets/icons/profile_page/followers.png", _numFollowers.toString()),
-                  _buildStatItem("assets/icons/profile_page/participated_events.png", _numParticipatedEvents.toString()),
-                  _buildStatItem("assets/icons/profile_page/following_requests.png", _numFollowing.toString()),
-                ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Distribuisce le 3 stats perfettamente
+                  children: [
+                    _buildStatItem("assets/icons/profile_page/followers.png", _numFollowers.toString(), s),
+                    _buildStatItem("assets/icons/profile_page/participated_events.png", _numParticipatedEvents.toString(), s),
+                    _buildStatItem("assets/icons/profile_page/following_requests.png", _numFollowing.toString(), s),
+                  ],
+                ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20 * s),
 
             // --- PAST EVENTS GRID ---
             SizedBox(
@@ -732,7 +745,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            const SizedBox(height: 100),
+            SizedBox(height: 100*s),
           ],
         ),
       ),

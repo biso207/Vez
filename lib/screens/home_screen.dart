@@ -9,7 +9,7 @@ import '../models/vez_event_card.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import '../services/getters_service.dart';
-import 'create_event_screen.dart';
+import 'create_event/create_event_screen.dart';
 
 class HomePage extends StatefulWidget {
   // costruttore
@@ -76,6 +76,12 @@ class _HomePageState extends State<HomePage> {
   // --- PAGE LAYOUT ---
   @override
   Widget build(BuildContext context) {
+    // defining size based on the screen size
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    // this is for the SizedBoxes
+    final double s = (screenWidth / 390).clamp(0.8, 1.2);
+
     return VezPageLayout(
       // --- TOP NAVBAR (PARAMETERS) ---
       searchController: searchController,
@@ -116,7 +122,9 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-            const SizedBox(width: 20),
+
+            SizedBox(width: 20 * s),
+
             IconButton(
               icon: ImageIcon(const AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
@@ -127,7 +135,9 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-            const SizedBox(width: 20),
+
+            SizedBox(width: 20 * s),
+
             IconButton(
               icon: ImageIcon(const AssetImage("assets/icons/nav_bar/notifications.png"), color: Colors.white),
               iconSize: 30,
