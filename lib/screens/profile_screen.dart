@@ -81,6 +81,101 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  // LOGIC //
+  // method to get the user data from the db
+  void getUserData() async {
+    // fetching all string data
+    String? photo = await _dbServiceGet.getUserData("profile_photo");
+    String? username = await _dbServiceGet.getUserData("username");
+    String? city = await _dbServiceGet.getUserData("city");
+    String? akaName = await _dbServiceGet.getUserData("city_aka_name");
+    String? bio = await _dbServiceGet.getUserData("bio");
+    String? numParticipatedEventsStr = await _dbServiceGet.getUserData("num_participated_events");
+    String? showBadge = await _dbServiceGet.getUserData("category_badge");
+
+    // fetching counts
+    int followers = 0;
+    int followingCount = 0;
+
+    followers = await _dbServiceGet.getFollowersCount();
+    List<dynamic> followingList = await _dbServiceGet.getFollowing();
+    followingCount = followingList.length;
+
+    // Update the UI safely
+    if (mounted) {
+      setState(() {
+        _profilePhoto = photo!.trim();
+        _username = username ?? "Username";
+        _city = city ?? "City";
+        _cityAkaName = akaName ?? "City AkaName";
+        _bio = bio ?? "No Bio.";
+        _numParticipatedEvents = int.tryParse(numParticipatedEventsStr ?? "0") ?? 0;
+        _numFollowers = followers;
+        _numFollowing = followingCount;
+        _showBadge = bool.parse(showBadge!);
+      });
+    }
+  }
+
+  // method to update the data on the db
+  Future<void> updateData(StateSetter setPopupState) async {
+    final String uName = newUsernameController.text.trim();
+    final String psw = newPasswordController.text;
+    final String cityAkaName = cityAkaNameController.text.trim();
+    final String bio = bioController.text.trim();
+
+    // if the email is not empty (so user has digitized it), validate it
+    if (uName.length < 3 && uName.isNotEmpty) {
+      setPopupState(() => popupError = StringRes.at("username_too_short"));
+      return;
+    }
+
+    // if the password is not empty (so user has digitized it), validate it
+    if (psw.isNotEmpty) {
+      if (psw.length < 8 ||
+          !RegExp(r'[A-Z]').hasMatch(psw) ||
+          !RegExp(r'[a-z]').hasMatch(psw) ||
+          !RegExp(r'[0-9]').hasMatch(psw) ||
+          !RegExp(r'[!@#$&*~£€?§+]').hasMatch(psw)) {
+        setPopupState(() => popupError = StringRes.at("invalid_password"));
+        return;
+      }
+    }
+
+    if (uName.isNotEmpty) { // username
+      int response = await _dbServiceSet.updateUserData("username", uName); // request to change the username
+
+      if (response == 409) { // error 409: conflict
+        setPopupState(() => popupError = StringRes.at("user_already_exists"));
+        return;
+      }
+      if (uName==_username) { // same username
+        setPopupState(() => popupError = StringRes.at("same_username"));
+        return;
+      }
+    }
+    if (psw.isNotEmpty) _dbServiceSet.updateUserData("hash_psw", psw); // password
+    if (cityAkaName.isNotEmpty) _dbServiceSet.updateUserData("city_aka_name", cityAkaName); // city aka name
+    if (bio.isNotEmpty) _dbServiceSet.updateUserData("bio", bio); // bio
+    _dbServiceSet.updateUserData("category_badge", _showBadge); // show/not show the category badge
+
+    // saving the new photo
+    String photoUrl = "";
+    if (newProfileImage != null) {
+      photoUrl = await _RemoteDbService.uploadProfilePhoto(newProfileImage!, _username) ?? "";
+      _dbServiceSet.updateUserData("profile_photo", photoUrl); // saving on the db
+    }
+
+    // updating local vars with the new data
+    setState(() {
+      if (cityAkaName.isNotEmpty) _cityAkaName = cityAkaName;
+      if (bio.isNotEmpty) _bio = bio;
+      // mock update per foto profilo se cambiata
+      if (newProfileImage != null) _profilePhoto = photoUrl;
+    });
+  }
+
+  // --- SUPPORT WIDGETS ---
   // Widget helper per le icone delle statistiche
   Widget _buildStatItem(String iconPath, String value) {
     return Column(
@@ -103,6 +198,267 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ],
+    );
+  }
+
+  // --- POPUPS ---
+  void _showEditProfilePopup() {
+
+    // Helper per creare i campi di testo in stile "Glass" richiesto
+    Widget buildPopupInput({
+      required String hint,
+      required TextEditingController controller,
+      int? maxLength,
+      int maxLines = 1,
+      bool obscure = false,
+      Widget? suffixIcon,
+      Widget? suffixText,
+      required StateSetter setPopupState,
+    }) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(maxLines > 1 ? 20 : 30),
+          border: Border.all(color: Colors.white54, width: 1.5),
+        ),
+        child: TextField(
+          controller: controller,
+          onChanged: (value) => setPopupState(() {}),
+          maxLength: maxLength,
+          maxLines: maxLines,
+          obscureText: obscure,
+          style: const TextStyle(color: Colors.white, fontFamily: 'InstagramSans', fontWeight: FontWeight.bold, fontSize: 20),
+          decoration: InputDecoration(
+            hintText: hint,
+            suffixText: maxLength != null
+                ? "${controller.text.length}/$maxLength"
+                : null,
+            hintStyle: const TextStyle(color: Colors.white54),
+            border: InputBorder.none,
+            counterText: "", // Nasconde il numerino dei caratteri rimanenti
+            suffixIcon: suffixIcon,
+            suffixIconConstraints: const BoxConstraints(),
+          ),
+        ),
+      );
+    }
+
+    VezPopup.show(
+      context: context,
+      width: MediaQuery.of(context).size.width * 0.85,
+      child: StatefulBuilder(
+        builder: (BuildContext context, StateSetter setPopupState) {
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                // --- IMMAGINE PROFILO ---
+                GestureDetector(
+                  onTap: () async {
+                    final XFile? pickedFile = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 512, maxHeight: 512, imageQuality: 75,
+                    );
+                    if (pickedFile != null) {
+                      setPopupState(() => newProfileImage = File(pickedFile.path));
+                    }
+                  },
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      image: DecorationImage(
+                        image: newProfileImage != null
+                            ? FileImage(newProfileImage!) as ImageProvider
+                            : (_profilePhoto.isNotEmpty
+                            ? NetworkImage(_profilePhoto)
+                            : const AssetImage("assets/icons/auth/icon_camera_90x90.png")) as ImageProvider,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Spazio uguale a quello in basso
+                const SizedBox(height: 32),
+
+                // --- CAMPI DI TESTO ---
+                buildPopupInput(
+                  hint: StringRes.at("new_username"),
+                  controller: newUsernameController,
+                  maxLength: 15,
+                  setPopupState: setPopupState,
+                ),
+                buildPopupInput(
+                  hint: StringRes.at("new_password"),
+                  controller: newPasswordController,
+                  obscure: !_showPassword, // icon show/not show psw
+
+                  // Detector for the tap on the eye icon
+                  suffixIcon: GestureDetector(
+                    onTap: () => setPopupState(
+                            () => _showPassword = !_showPassword),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Icon(
+                        !_showPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: Colors.white54,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  setPopupState: setPopupState,
+                ),
+
+                buildPopupInput(
+                  hint: StringRes.at("city_aka_name"),
+                  controller: cityAkaNameController,
+                  maxLength: 10,
+                  setPopupState: setPopupState,
+                ),
+                buildPopupInput(
+                  hint: StringRes.at("bio"),
+                  controller: bioController,
+                  maxLength: 30,
+                  maxLines: 2,
+                  setPopupState: setPopupState,
+                ),
+
+                // --- TOGGLE CATEGORY BADGE ---
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(51, 6, 0, 92),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color.fromARGB(128, 0, 10, 218), width: 2),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: ImageIcon(const AssetImage("assets/icons/categories/hang_out.png"), color: Colors.white, size:20.45),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        StringRes.at("category_badge"),
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'InstagramSans'),
+                      ),
+                    ),
+                    Switch(
+                      value: _showBadge,
+                      onChanged: (val) {
+                        setPopupState(() => _showBadge = val); // changing the toggle UI
+                        setState(() => _showBadge = val); // changing the badge in the UI page
+                      },
+                      activeThumbColor: Colors.black,
+                      activeTrackColor: Colors.white,
+                      inactiveThumbColor: Colors.white54,
+                      inactiveTrackColor: Colors.white24,
+                    ),
+                  ],
+                ),
+
+                // --- ERRORE BANNER (appears only if there's an error) ---
+                const SizedBox(height: 32),
+
+                if (popupError != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      child: AnimatedOpacity(
+                        opacity: popupError != null ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                        // When null: zero-size placeholder so the layout stays
+                        // stable while the opacity animation plays out.
+                        child: popupError != null
+                            ? VezErrorBanner(message: popupError!)
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 32),
+
+                // --- PULSANTI AZIONE ---
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+
+                    // button save (green)
+                    GestureDetector(
+                      onTap: () async {
+                        popupError=null; // resetting errors
+
+                        // update the db with the new data
+                        await updateData(setPopupState);
+
+                        // if there's no errors close the popup
+                        if (popupError == null) {
+                          Navigator.pop(context);
+
+                          // cleaning controllers
+                          newUsernameController.clear();
+                          newPasswordController.clear();
+                          cityAkaNameController.clear();
+                          bioController.clear();
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(128, 8, 157, 13),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color.fromARGB(204, 8, 157, 13), width: 2),
+                        ),
+                        child: ImageIcon(const AssetImage("assets/icons/profile_page/save.png"), color: Colors.white, size:30),
+                      ),
+                    ),
+
+                    const SizedBox(width: 30),
+
+                    // button discard (red)
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+
+                        // cleaning controllers
+                        newUsernameController.clear();
+                        newPasswordController.clear();
+                        cityAkaNameController.clear();
+                        bioController.clear();
+
+                        // disabling the error banner
+                        popupError = null;
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(128, 255, 49, 49),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color.fromARGB(204, 255, 49, 49), width: 2),
+                        ),
+                        child: ImageIcon(const AssetImage("assets/icons/profile_page/delete.png"), color: Colors.white, size:30),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -381,359 +737,5 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
-  }
-
-  // --- POPUP MODIFICA PROFILO ---
-  void _showEditProfilePopup() {
-
-    // Helper per creare i campi di testo in stile "Glass" richiesto
-    Widget buildPopupInput({
-      required String hint,
-      required TextEditingController controller,
-      int? maxLength,
-      int maxLines = 1,
-      bool obscure = false,
-      Widget? suffixIcon,
-      Widget? suffixText,
-      required StateSetter setPopupState,
-    }) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(maxLines > 1 ? 20 : 30),
-          border: Border.all(color: Colors.white54, width: 1.5),
-        ),
-        child: TextField(
-          controller: controller,
-          onChanged: (value) => setPopupState(() {}),
-          maxLength: maxLength,
-          maxLines: maxLines,
-          obscureText: obscure,
-          style: const TextStyle(color: Colors.white, fontFamily: 'InstagramSans', fontWeight: FontWeight.bold, fontSize: 20),
-          decoration: InputDecoration(
-            hintText: hint,
-            suffixText: maxLength != null
-                ? "${controller.text.length}/$maxLength"
-                : null,
-            hintStyle: const TextStyle(color: Colors.white54),
-            border: InputBorder.none,
-            counterText: "", // Nasconde il numerino dei caratteri rimanenti
-            suffixIcon: suffixIcon,
-            suffixIconConstraints: const BoxConstraints(),
-          ),
-        ),
-      );
-    }
-
-    VezPopup.show(
-      context: context,
-      width: MediaQuery.of(context).size.width * 0.85,
-      child: StatefulBuilder(
-        builder: (BuildContext context, StateSetter setPopupState) {
-          return SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-
-                // --- IMMAGINE PROFILO ---
-                GestureDetector(
-                  onTap: () async {
-                    final XFile? pickedFile = await picker.pickImage(
-                      source: ImageSource.gallery,
-                      maxWidth: 512, maxHeight: 512, imageQuality: 75,
-                    );
-                    if (pickedFile != null) {
-                      setPopupState(() => newProfileImage = File(pickedFile.path));
-                    }
-                  },
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      image: DecorationImage(
-                        image: newProfileImage != null
-                            ? FileImage(newProfileImage!) as ImageProvider
-                            : (_profilePhoto.isNotEmpty
-                            ? NetworkImage(_profilePhoto)
-                            : const AssetImage("assets/icons/auth/icon_camera_90x90.png")) as ImageProvider,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Spazio uguale a quello in basso
-                const SizedBox(height: 32),
-
-                // --- CAMPI DI TESTO ---
-                buildPopupInput(
-                  hint: StringRes.at("new_username"),
-                  controller: newUsernameController,
-                  maxLength: 15,
-                  setPopupState: setPopupState,
-                ),
-                buildPopupInput(
-                  hint: StringRes.at("new_password"),
-                  controller: newPasswordController,
-                  obscure: !_showPassword, // icon show/not show psw
-
-                  // Detector for the tap on the eye icon
-                  suffixIcon: GestureDetector(
-                    onTap: () => setPopupState(
-                            () => _showPassword = !_showPassword),
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Icon(
-                        !_showPassword
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        color: Colors.white54,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  setPopupState: setPopupState,
-                ),
-
-                buildPopupInput(
-                  hint: StringRes.at("city_aka_name"),
-                  controller: cityAkaNameController,
-                  maxLength: 10,
-                  setPopupState: setPopupState,
-                ),
-                buildPopupInput(
-                  hint: StringRes.at("bio"),
-                  controller: bioController,
-                  maxLength: 30,
-                  maxLines: 2,
-                  setPopupState: setPopupState,
-                ),
-
-                // --- TOGGLE CATEGORY BADGE ---
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(51, 6, 0, 92),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color.fromARGB(128, 0, 10, 218), width: 2),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(5.0),
-                        child: ImageIcon(const AssetImage("assets/icons/categories/hang_out.png"), color: Colors.white, size:20.45),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        StringRes.at("category_badge"),
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'InstagramSans'),
-                      ),
-                    ),
-                    Switch(
-                      value: _showBadge,
-                      onChanged: (val) {
-                        setPopupState(() => _showBadge = val); // changing the toggle UI
-                        setState(() => _showBadge = val); // changing the badge in the UI page
-                      },
-                      activeThumbColor: Colors.black,
-                      activeTrackColor: Colors.white,
-                      inactiveThumbColor: Colors.white54,
-                      inactiveTrackColor: Colors.white24,
-                    ),
-                  ],
-                ),
-
-                // --- ERRORE BANNER (appears only if there's an error) ---
-                const SizedBox(height: 32),
-
-                if (popupError != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      child: AnimatedOpacity(
-                        opacity: popupError != null ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOut,
-                        // When null: zero-size placeholder so the layout stays
-                        // stable while the opacity animation plays out.
-                        child: popupError != null
-                            ? VezErrorBanner(message: popupError!)
-                            : const SizedBox.shrink(),
-                      ),
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 32),
-
-                // --- PULSANTI AZIONE ---
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    
-                    // button save (green)
-                    GestureDetector(
-                      onTap: () async {
-                        popupError=null; // resetting errors
-
-                        // update the db with the new data
-                        await updateData(setPopupState);
-
-                        // if there's no errors close the popup
-                        if (popupError == null) {
-                          Navigator.pop(context);
-
-                          // cleaning controllers
-                          newUsernameController.clear();
-                          newPasswordController.clear();
-                          cityAkaNameController.clear();
-                          bioController.clear();
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color.fromARGB(128, 8, 157, 13),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: const Color.fromARGB(204, 8, 157, 13), width: 2),
-                        ),
-                        child: ImageIcon(const AssetImage("assets/icons/profile_page/save.png"), color: Colors.white, size:30),
-                      ),
-                    ),
-
-                    const SizedBox(width: 30),
-
-                    // button discard (red)
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-
-                        // cleaning controllers
-                        newUsernameController.clear();
-                        newPasswordController.clear();
-                        cityAkaNameController.clear();
-                        bioController.clear();
-
-                        // disabling the error banner
-                        popupError = null;
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color.fromARGB(128, 255, 49, 49),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: const Color.fromARGB(204, 255, 49, 49), width: 2),
-                        ),
-                        child: ImageIcon(const AssetImage("assets/icons/profile_page/delete.png"), color: Colors.white, size:30),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // method to get the user data from the db
-  void getUserData() async {
-    // fetching all string data
-    String? photo = await _dbServiceGet.getUserData("profile_photo");
-    String? username = await _dbServiceGet.getUserData("username");
-    String? city = await _dbServiceGet.getUserData("city");
-    String? akaName = await _dbServiceGet.getUserData("city_aka_name");
-    String? bio = await _dbServiceGet.getUserData("bio");
-    String? numParticipatedEventsStr = await _dbServiceGet.getUserData("num_participated_events");
-    String? showBadge = await _dbServiceGet.getUserData("category_badge");
-
-    // fetching counts
-    int followers = 0;
-    int followingCount = 0;
-
-    followers = await _dbServiceGet.getFollowersCount();
-    List<dynamic> followingList = await _dbServiceGet.getFollowing();
-    followingCount = followingList.length;
-
-    // Update the UI safely
-    if (mounted) {
-      setState(() {
-        _profilePhoto = photo!.trim();
-        _username = username ?? "Username";
-        _city = city ?? "City";
-        _cityAkaName = akaName ?? "City AkaName";
-        _bio = bio ?? "No Bio.";
-        _numParticipatedEvents = int.tryParse(numParticipatedEventsStr ?? "0") ?? 0;
-        _numFollowers = followers;
-        _numFollowing = followingCount;
-        _showBadge = bool.parse(showBadge!);
-      });
-    }
-  }
-
-  // method to update the data on the db
-  Future<void> updateData(StateSetter setPopupState) async {
-    final String uName = newUsernameController.text.trim();
-    final String psw = newPasswordController.text;
-    final String cityAkaName = cityAkaNameController.text.trim();
-    final String bio = bioController.text.trim();
-
-    // if the email is not empty (so user has digitized it), validate it
-    if (uName.length < 3 && uName.isNotEmpty) {
-      setPopupState(() => popupError = StringRes.at("username_too_short"));
-      return;
-    }
-
-    // if the password is not empty (so user has digitized it), validate it
-    if (psw.isNotEmpty) {
-      if (psw.length < 8 ||
-          !RegExp(r'[A-Z]').hasMatch(psw) ||
-          !RegExp(r'[a-z]').hasMatch(psw) ||
-          !RegExp(r'[0-9]').hasMatch(psw) ||
-          !RegExp(r'[!@#$&*~£€?§+]').hasMatch(psw)) {
-        setPopupState(() => popupError = StringRes.at("invalid_password"));
-        return;
-      }
-    }
-
-    if (uName.isNotEmpty) { // username
-      int response = await _dbServiceSet.updateUserData("username", uName); // request to change the username
-
-      if (response == 409) { // error 409: conflict
-        setPopupState(() => popupError = StringRes.at("user_already_exists"));
-        return;
-      }
-      if (uName==_username) { // same username
-        setPopupState(() => popupError = StringRes.at("same_username"));
-        return;
-      }
-    }
-    if (psw.isNotEmpty) _dbServiceSet.updateUserData("hash_psw", psw); // password
-    if (cityAkaName.isNotEmpty) _dbServiceSet.updateUserData("city_aka_name", cityAkaName); // city aka name
-    if (bio.isNotEmpty) _dbServiceSet.updateUserData("bio", bio); // bio
-    _dbServiceSet.updateUserData("category_badge", _showBadge); // show/not show the category badge
-
-    // saving the new photo
-    String photoUrl = "";
-    if (newProfileImage != null) {
-      photoUrl = await _RemoteDbService.uploadProfilePhoto(newProfileImage!, _username) ?? "";
-      _dbServiceSet.updateUserData("profile_photo", photoUrl); // saving on the db
-    }
-
-    // updating local vars with the new data
-    setState(() {
-      if (cityAkaName.isNotEmpty) _cityAkaName = cityAkaName;
-      if (bio.isNotEmpty) _bio = bio;
-      // mock update per foto profilo se cambiata
-      if (newProfileImage != null) _profilePhoto = photoUrl;
-    });
   }
 }

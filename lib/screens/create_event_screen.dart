@@ -1,8 +1,12 @@
 // Developed and Designed by Outly • © 2026
 // Screen to create an event
 
+// TODO: improve UI of the popup setters
+// todo: fix the bug related the display of the location name (is not display when selected from the map)
+
 import 'package:flutter/material.dart';
 import 'package:vez/screens/profile_screen.dart';
+import 'package:vez/screens/vez_map_picker.dart';
 import 'dart:ui';
 import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
@@ -47,6 +51,12 @@ class _CreateEventState extends State<CreateEvent> {
   String? _maxGuests;
   String? _price;
 
+  String _locationName = "";
+  String _locationAddress = "";
+  double? _locationLat;
+  double? _locationLng;
+  bool _isLocationPrecise = false;
+
   // Data Lists
   final List<Map<String, String>> categoriesList = [
     {"name": "cinema", "icon": "assets/icons/categories/cinema.png"},
@@ -75,6 +85,7 @@ class _CreateEventState extends State<CreateEvent> {
   ];
 
   late GetDBService _dbServiceGet;
+  late SetDBService _dbServiceSet;
   String _profilePhoto = "";
 
   @override
@@ -84,6 +95,7 @@ class _CreateEventState extends State<CreateEvent> {
 
     if (currentID.isNotEmpty) {
       _dbServiceGet = GetDBService(userID: currentID);
+      _dbServiceSet = SetDBService(userID: currentID);
       getUserProfilePhoto();
     }
   }
@@ -130,8 +142,25 @@ class _CreateEventState extends State<CreateEvent> {
     });
   }
 
+  // method to save the event in the db
   Future<void> saveEvent() async {
-    print("Event Saved: ${titleController.text}");
+    // map with the event data
+    Map<String, dynamic> eventData = {
+      "title": titleController.text,
+      "category": selectedCategoryName,
+      "type": selectedTypeName,
+      "date": "${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!
+          .day}",
+      "time": "${_selectedTime!.hour}:${_selectedTime!.minute}",
+      "location": _location,
+      "max_guests": _maxGuests,
+      "price": _price,
+      "description": _description,
+      "background_image": eventBackgroundImage,
+    };
+
+    // call the method to store the event in the db
+    final int response = await _dbServiceSet.storeEvent(eventData);
   }
 
   // --- INTERACTIVE GRID LOGIC ---
@@ -153,8 +182,9 @@ class _CreateEventState extends State<CreateEvent> {
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
+  // popup to digit text for a specific event data
   void _showTextInputPopup(String title, String? currentValue, Function(String) onSave, {bool isNumeric = false, bool isMultiline = false}) {
-    final TextEditingController _popupController = TextEditingController(text: currentValue);
+    final TextEditingController popupController = TextEditingController(text: currentValue);
 
     VezPopup.show(
       context: context,
@@ -165,7 +195,7 @@ class _CreateEventState extends State<CreateEvent> {
           Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 15),
           TextField(
-            controller: _popupController,
+            controller: popupController,
             style: const TextStyle(color: Colors.white),
             keyboardType: isNumeric ? TextInputType.number : (isMultiline ? TextInputType.multiline : TextInputType.text),
             maxLines: isMultiline ? 4 : 1,
@@ -180,7 +210,7 @@ class _CreateEventState extends State<CreateEvent> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
             onPressed: () {
-              onSave(_popupController.text);
+              onSave(popupController.text);
               Navigator.pop(context);
             },
             child: const Text("Save"),
@@ -285,46 +315,6 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
-  // --- POPUP HELPERS (VERTICAL LAYOUT) ---
-  Widget _buildPopupItem({
-    required String icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10), // I 10px di Figma
-        child: Row(
-          children: [
-            Image.asset(icon, width: 40, height: 40), // Icona dimensione 40
-            const SizedBox(width: 15),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // widget to create the row divider
-  Widget _customDivider() {
-    return Center(
-      child: Container(
-        width: 200, // Divider più stretto del popup
-        height: 2,
-        color: Colors.white54,
-      ),
-    );
-  }
-
   void _showConfirmationPopup(String title, VoidCallback onConfirm) {
     VezPopup.show(
       context: context,
@@ -345,7 +335,7 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
-  // --- SUPPORT WIDGETS WITH BLUR ---
+  // --- SUPPORT WIDGETS ---
   Widget _buildTopButton(String iconPath, VoidCallback onTap, {bool isBlue = false}) {
     return GestureDetector(
       onTap: onTap,
@@ -394,6 +384,116 @@ class _CreateEventState extends State<CreateEvent> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // widget to create the row divider
+  Widget _customDivider() {
+    return Center(
+      child: Container(
+        width: 200, // Divider più stretto del popup
+        height: 2,
+        color: Colors.white54,
+      ),
+    );
+  }
+
+  Widget _buildPopupItem({
+    required String icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10), // I 10px di Figma
+        child: Row(
+          children: [
+            Image.asset(icon, width: 40, height: 40), // Icona dimensione 40
+            const SizedBox(width: 15),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- LOCATION LOGIC ---
+  void _showLocationTypeSelector() {
+    VezPopup.show(
+      context: context,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(StringRes.at("set_location"), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+          // OPZIONE 1: Nome Semplice (Senza Mappa)
+          GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+              _showTextInputPopup("Location Name", _locationName, (val) {
+                setState(() {
+                  _locationName = val;
+                  _isLocationPrecise = false;
+                  _locationAddress = "";
+                  _locationLat = null;
+                  _locationLng = null;
+                });
+              });
+            },
+            child: VezGlass.container(
+              padding: const EdgeInsets.all(15),
+              child: const Row(
+                children: [
+                  Icon(Icons.edit, color: Colors.white),
+                  SizedBox(width: 15),
+                  Expanded(child: Text("Simple Name (e.g. Casa Marco)", style: TextStyle(color: Colors.white, fontSize: 16))),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 15),
+          // OPZIONE 2: Mappa Precisa (OSM)
+          GestureDetector(
+            onTap: () async {
+              Navigator.pop(context);
+              // Apriamo la pagina della mappa (che creeremo al passo 3)
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const VezMapPicker()),
+              );
+
+              // Se l'utente ha salvato un luogo dalla mappa, aggiorniamo i dati
+              if (result != null && result is Map<String, dynamic>) {
+                setState(() {
+                  _locationName = result['name'] ?? "Selected Location";
+                  _locationAddress = result['address'];
+                  _locationLat = result['latitude'];
+                  _locationLng = result['longitude'];
+                  _isLocationPrecise = result['is_precise'];
+                });
+              }
+            },
+            child: VezGlass.container(
+              padding: const EdgeInsets.all(15),
+              child: const Row(
+                children: [
+                  Icon(Icons.map, color: Colors.white),
+                  SizedBox(width: 15),
+                  Expanded(child: Text("Precise Location (Map)", style: TextStyle(color: Colors.white, fontSize: 16))),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -473,13 +573,13 @@ class _CreateEventState extends State<CreateEvent> {
             borderRadius: BorderRadius.circular(40),
             // 1. BORDO PIÙ LUMINOSO: Fondamentale per definire l'angolo come su Figma
             border: Border.all(
-                color: Colors.white.withOpacity(0.4),
+                color: Color.fromARGB(102, 0, 0, 0),
                 width: 1.5
             ),
             // 2. BAGLIORE ESTERNO (GLOW): Sostituisce l'ombra "sporca"
             boxShadow: [
               BoxShadow(
-                color: Colors.white.withOpacity(0.15), // Luce bianca soffusa
+                color: Color.fromARGB(38, 255, 255, 255), // Luce bianca soffusa
                 blurRadius: 25, // Ampio per non sembrare una macchia
                 spreadRadius: 2, // Definisce meglio la silhouette degli angoli
                 offset: const Offset(0, 0),
@@ -496,7 +596,7 @@ class _CreateEventState extends State<CreateEvent> {
                       ? Image.file(eventBackgroundImage!, fit: BoxFit.cover)
                       : Image.asset("assets/images/bg/default_create_event_bg.jpg", fit: BoxFit.cover)
               ),
-              Positioned.fill(child: Container(color: Colors.black.withOpacity(0.3))),
+              Positioned.fill(child: Container(color: Color.fromARGB(51, 0, 0, 0))),
 
               // 2. Card Content
               Padding(
@@ -590,7 +690,7 @@ class _CreateEventState extends State<CreateEvent> {
                                     const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
                                     _buildGridCell(StringRes.at("time"), "assets/icons/event/time.png", formattedTime, _selectTime),
                                     const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
-                                    _buildGridCell(StringRes.at("location"), "assets/icons/event/location.png", _location, () => _showTextInputPopup(StringRes.at("set_location"), _location, (val) => setState(() => _location = val))),
+                                    _buildGridCell(StringRes.at("location"), "assets/icons/event/location.png", _locationName.isNotEmpty ? _locationName : null, _showLocationTypeSelector),
                                     const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
                                     _buildGridCell(StringRes.at("details"), "assets/icons/event/description.png", _description, () => _showTextInputPopup(StringRes.at("set_details"), _description, (val) => setState(() => _description = val), isMultiline: true)),
                                   ],
