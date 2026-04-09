@@ -20,8 +20,6 @@ class RemoteDbService {
     required String email,
     required String password,
     required String username,
-    required String name,
-    required String surname,
     required DateTime dateOfBirth,
     required String city,
     File? profileImage,
@@ -50,9 +48,7 @@ class RemoteDbService {
         'username': username,
         'email': email,
         'hash_psw': hashedPassword, // hashed psw
-        'name': name,
-        'surname': surname,
-        'date_of_birth': dateOfBirth.toIso8601String(), // DateTime to String
+        'date_of_birth': '${dateOfBirth.year.toString().padLeft(4, '0')}-${dateOfBirth.month.toString().padLeft(2, '0')}-${dateOfBirth.day.toString().padLeft(2, '0')}', // Date only (YYYY-MM-DD)
         'city': city,
         'profile_photo': photoUrl,
         'bio': "",
@@ -72,6 +68,11 @@ class RemoteDbService {
         },
         body: jsonEncode(userData),
       );
+
+      // DEBUG: log the full response for diagnosis
+      print('Signup response status: ${response.statusCode}');
+      print('Signup response body: ${response.body}');
+      print('Signup request payload: ${jsonEncode(userData)}');
 
       // success
       if (response.statusCode == 201 || response.statusCode == 200) {

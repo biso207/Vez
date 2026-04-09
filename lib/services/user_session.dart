@@ -11,4 +11,5 @@ class UserSession {
 
   String userID = "";
   String profilePic = "assets/icons/home_page/icon_profile.png";
+  String locale = 'en'; // default language, updated on app start
 }

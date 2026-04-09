@@ -84,4 +84,21 @@ const Map<String, String> en = {
   "theatre": "Theatre",
   "wellness": "Wellness",
   "workshop": "Workshop",
-};
+
+  // event validation & save //
+  "event_title_required": "Please set an event title",
+  "event_date_required": "Please set a date",
+  "event_time_required": "Please set a time",
+  "event_location_required": "Please set a location",
+  "event_details_required": "Please add some details",
+  "event_guests_required": "Please set max guests",
+  "event_price_required": "Please set a price",
+  "event_place_save_failed": "Failed to save the location. Try again.",
+  "event_saved_success": "Event created successfully!",
+  "event_save_failed": "Failed to save the event",
+
+  // language selection //
+  "select_language": "Select Language",
+  "lang_en": "English",
+  "lang_it": "Italiano",
+};

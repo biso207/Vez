@@ -372,6 +372,31 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
 
+                // --- LANGUAGE SELECTOR ---
+                SizedBox(height: 16 * s),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showLanguagePopup();
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        StringRes.locale == 'it' ? '🇮🇹' : '🇬🇧',
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                      SizedBox(width: 10 * s),
+                      Text(
+                        StringRes.at("select_language"),
+                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'InstagramSans'),
+                      ),
+                      SizedBox(width: 10 * s),
+                      const Icon(Icons.chevron_right, color: Colors.white54, size: 24),
+                    ],
+                  ),
+                ),
+
                 // --- ERRORE BANNER (appears only if there's an error) ---
                 SizedBox(height: 30 * s),
 
@@ -471,6 +496,65 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // --- LANGUAGE POPUP ---
+  void _showLanguagePopup() {
+    VezPopup.show(
+      context: context,
+      width: MediaQuery.of(context).size.width * 0.55,
+      backgroundColor: const Color.fromARGB(200, 14, 14, 14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            StringRes.at("select_language"),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          const SizedBox(height: 15),
+          _buildLanguageOption('🇬🇧', StringRes.at("lang_en"), 'en'),
+          const SizedBox(height: 8),
+          _buildLanguageOption('🇮🇹', StringRes.at("lang_it"), 'it'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(String flag, String label, String localeCode) {
+    final bool isSelected = StringRes.locale == localeCode;
+    return GestureDetector(
+      onTap: () {
+        StringRes.setLocale(localeCode);
+        Navigator.pop(context);
+        setState(() {}); // rebuild UI with new language
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(15),
+          border: isSelected ? Border.all(color: Colors.white24, width: 1.5) : null,
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
   // --- PAGE LAYOUT ---
   @override
   Widget build(BuildContext context) {
@@ -487,8 +571,7 @@ class _ProfilePageState extends State<ProfilePage> {
       isProfileAvatar: false,
       // tapping on the profile photo
       onProfileTap: () {
-        // TODO: go to the settings page
-        print("Settings tapped");
+        _showLanguagePopup();
       },
       searchHint: StringRes.at("search"),
       filterIconPath: "assets/icons/profile_page/following_requests.png",

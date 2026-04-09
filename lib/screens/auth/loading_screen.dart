@@ -2,6 +2,7 @@
 // Screen to manage the app's loading process
 
 import 'package:flutter/material.dart';
+import '../../services/translation_service.dart';
 import 'login_screen.dart';
 
 class LoadingPage extends StatefulWidget {
@@ -19,6 +20,7 @@ class _LoadingPageState extends State<LoadingPage> {
   @override
   void initState() {
     super.initState();
+    StringRes.initLocale(); // Auto-detect device language
     startAppAnimations();
   }
 

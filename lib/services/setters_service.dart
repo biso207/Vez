@@ -56,13 +56,71 @@ class SetDBService {
     }
   }
 
-  /// Method to store an event in the db
-  Future<int> storeEvent(Map<String, dynamic> eventData) async {
+  /// Creates a place in the database and returns the generated place_id.
+  /// Returns null if the creation fails.
+  Future<String?> storePlace({
+    required String name,
+    String? address,
+    required bool isPrecise,
+    double? latitude,
+    double? longitude,
+  }) async {
+    try {
+      final url = Uri.parse('$_baseUrl/rest/v1/place');
+
+      final Map<String, dynamic> placeData = {
+        'name': name,
+        'is_precise': isPrecise,
+        'address': (address != null && address.isNotEmpty) ? address : '',
+        'latitude': latitude ?? 0.0,
+        'longitude': longitude ?? 0.0,
+      };
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_apiKey',
+          'apikey': _apiKey,
+          'Prefer': 'return=representation', // returns the created record with place_id
+        },
+        body: jsonEncode(placeData),
+      );
+
+      print('storePlace response: ${response.statusCode} - ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final List<dynamic> data = jsonDecode(response.body);
+        if (data.isNotEmpty) {
+          return data[0]['place_id'].toString();
+        }
+      }
+      return null;
+    } catch (e) {
+      print('storePlace error: $e');
+      return null;
+    }
+  }
+
+  /// Method to store an event in the db.
+  /// Requires a valid [placeId] obtained from [storePlace].
+  Future<int> storeEvent(Map<String, dynamic> eventData, {required String placeId}) async {
     try {
       // 1) recovering categoryID
+      print('===== STORE EVENT DEBUG =====');
+      print('1) Category name to look up: "${eventData['category']}"');
       final String categoryID = await getCategoryID(eventData['category']);
+      print('2) Got categoryID: "$categoryID"');
+
+      // Check if categoryID looks like a valid UUID
+      if (categoryID.length < 10) {
+        print('ERROR: categoryID is NOT a valid UUID. Category lookup failed!');
+        return 400;
+      }
+
       // 2) recovering event title
       String title = eventData['title'];
+      print('3) Title: "$title", placeId: "$placeId"');
 
       // 3) formatting date and time
       // "2026-4-8" -> "2026-04-08"
@@ -84,8 +142,10 @@ class SetDBService {
       }
 
       // 4) getting url of the photo
-      String photoUrl = eventData['background_image'];
-      photoUrl = await getURLEventBackgroundPhoto(photoUrl as File, title) ?? "";
+      String photoUrl = "";
+      if (eventData['background_image'] != null && eventData['background_image'] is File) {
+        photoUrl = await getURLEventBackgroundPhoto(eventData['background_image'] as File, title) ?? "";
+      }
 
       // 5) creating the payload to be sent
       final Map<String, dynamic> insertData = {
@@ -97,9 +157,11 @@ class SetDBService {
         "creator_user_id": userID,
         "bg_photo": photoUrl,
         "category_id": categoryID,
-        "price": eventData['price'],
-        // "place_id": null, // todo: get the id of the place
+        "price": eventData['price'] != null ? int.tryParse(eventData['price'].toString()) : null,
+        "place_id": placeId,
       };
+
+      print('6) storeEvent payload: ${jsonEncode(insertData)}');
 
       // 6) url to send the request
       final insertUrl = Uri.parse('$_baseUrl/rest/v1/events');
@@ -111,15 +173,19 @@ class SetDBService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_apiKey',
           'apikey': _apiKey,
-          'Prefer': 'return=minimal', // Ritorna un payload leggero
+          'Prefer': 'return=minimal',
         },
         body: jsonEncode(insertData),
       );
+
+      print('7) storeEvent response: ${response.statusCode} - ${response.body}');
+      print('===== END STORE EVENT DEBUG =====');
 
       // 8) returning the status code of the response
       return response.statusCode;
 
     } catch (e) {
+      print('storeEvent error: $e');
       return 0; // error
     }
   }
@@ -159,6 +225,8 @@ class SetDBService {
     try {
       // url to send the request
       final categoryUrl = Uri.parse('$_baseUrl/rest/v1/event_category?select=category_id&name=eq.$categoryName');
+      print('  getCategoryID: querying name="$categoryName"');
+      print('  getCategoryID: URL = $categoryUrl');
 
       // sending the request
       final categoryResponse = await http.get(
@@ -170,16 +238,21 @@ class SetDBService {
         },
       );
 
+      print('  getCategoryID: response ${categoryResponse.statusCode} body=${categoryResponse.body}');
+
       // recovering the category id
       if (categoryResponse.statusCode == 200) {
         final List<dynamic> categories = jsonDecode(categoryResponse.body);
         if (categories.isNotEmpty) {
-          return categories[0]['id'];
+          print('  getCategoryID: FOUND ID = ${categories[0]['category_id']}');
+          return categories[0]['category_id'];
         }
+        print('  getCategoryID: WARNING empty result! No category named "$categoryName" in DB.');
       }
       return categoryResponse.statusCode.toString(); // error code
     }
     catch (e) {
+      print('  getCategoryID EXCEPTION: $e');
       return "0";
     }
   }

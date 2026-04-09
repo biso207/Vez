@@ -36,12 +36,13 @@ class _CreateEventState extends State<CreateEvent> {
 
   // --- EVENT CREATION STATE ---
   File? eventBackgroundImage;
-  String selectedCategoryName = "Cinema";
+  String selectedCategoryName = "cinema";
   String selectedCategoryIcon = "assets/icons/categories/cinema.png";
   String selectedTypeName = "Public";
   String selectedTypeIcon = "assets/icons/event/public.png";
 
   final TextEditingController titleController = TextEditingController();
+  final FocusNode _titleFocusNode = FocusNode();
 
   // --- GRID VARIABLES ---
   DateTime? _selectedDate;
@@ -112,6 +113,7 @@ class _CreateEventState extends State<CreateEvent> {
   void dispose() {
     searchController.dispose();
     titleController.dispose();
+    _titleFocusNode.dispose();
     super.dispose();
   }
 
@@ -128,7 +130,7 @@ class _CreateEventState extends State<CreateEvent> {
   void _resetEventData() {
     setState(() {
       eventBackgroundImage = null;
-      selectedCategoryName = "Cinema";
+      selectedCategoryName = "cinema";
       selectedCategoryIcon = "assets/icons/categories/cinema.png";
       selectedTypeName = "Public";
       selectedTypeIcon = "assets/icons/event/public.png";
@@ -144,27 +146,100 @@ class _CreateEventState extends State<CreateEvent> {
 
   // method to save the event in the db
   Future<void> saveEvent() async {
-    // map with the event data
+    // --- VALIDATION: all fields are required ---
+    final String title = titleController.text.trim();
+
+    if (title.isEmpty) {
+      _showErrorSnackBar(StringRes.at("event_title_required"));
+      return;
+    }
+    if (_selectedDate == null) {
+      _showErrorSnackBar(StringRes.at("event_date_required"));
+      return;
+    }
+    if (_selectedTime == null) {
+      _showErrorSnackBar(StringRes.at("event_time_required"));
+      return;
+    }
+    if (_locationName.isEmpty) {
+      _showErrorSnackBar(StringRes.at("event_location_required"));
+      return;
+    }
+    if (_description == null || _description!.isEmpty) {
+      _showErrorSnackBar(StringRes.at("event_details_required"));
+      return;
+    }
+    if (_maxGuests == null || _maxGuests!.isEmpty) {
+      _showErrorSnackBar(StringRes.at("event_guests_required"));
+      return;
+    }
+    if (_price == null || _price!.isEmpty) {
+      _showErrorSnackBar(StringRes.at("event_price_required"));
+      return;
+    }
+
+    // --- STEP 1: Create the Place ---
+    final String? placeId = await _dbServiceSet.storePlace(
+      name: _locationName,
+      address: _locationAddress.isNotEmpty ? _locationAddress : null,
+      isPrecise: _isLocationPrecise,
+      latitude: _locationLat,
+      longitude: _locationLng,
+    );
+
+    if (placeId == null) {
+      _showErrorSnackBar(StringRes.at("event_place_save_failed"));
+      return;
+    }
+
+    // --- STEP 2: Create the Event with the place_id ---
     Map<String, dynamic> eventData = {
-      "title": titleController.text,
+      "title": title,
       "category": selectedCategoryName,
       "type": selectedTypeName,
-      "date": "${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!
-          .day}",
+      "date": "${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}",
       "time": "${_selectedTime!.hour}:${_selectedTime!.minute}",
-      "location": _location,
       "max_guests": _maxGuests,
       "price": _price,
       "description": _description,
       "background_image": eventBackgroundImage,
     };
 
-    // call the method to store the event in the db
-    final int response = await _dbServiceSet.storeEvent(eventData);
+    final int response = await _dbServiceSet.storeEvent(eventData, placeId: placeId);
+
+    if (!mounted) return;
+
+    if (response == 200 || response == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(StringRes.at("event_saved_success")),
+          backgroundColor: const Color.fromARGB(200, 8, 157, 13),
+        ),
+      );
+      // Reset and go back to home
+      _resetEventData();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
+    } else {
+      _showErrorSnackBar("${StringRes.at("event_save_failed")} ($response)");
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color.fromARGB(200, 255, 49, 49),
+      ),
+    );
   }
 
   // --- INTERACTIVE GRID LOGIC ---
   Future<void> _selectDate() async {
+    _titleFocusNode.unfocus();
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
@@ -175,6 +250,7 @@ class _CreateEventState extends State<CreateEvent> {
   }
 
   Future<void> _selectTime() async {
+    _titleFocusNode.unfocus();
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime ?? TimeOfDay.now(),
@@ -184,6 +260,7 @@ class _CreateEventState extends State<CreateEvent> {
 
   // popup to digit text for a specific event data
   void _showTextInputPopup(String title, String? currentValue, Function(String) onSave, {bool isNumeric = false, bool isMultiline = false}) {
+    _titleFocusNode.unfocus();
     final TextEditingController popupController = TextEditingController(text: currentValue);
 
     VezPopup.show(
@@ -210,6 +287,7 @@ class _CreateEventState extends State<CreateEvent> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
             onPressed: () {
+              FocusScope.of(context).unfocus();
               onSave(popupController.text);
               Navigator.pop(context);
             },
@@ -223,6 +301,7 @@ class _CreateEventState extends State<CreateEvent> {
   // --- POPUPS ---
   // category popup
   void _showCategoryPopup() {
+    _titleFocusNode.unfocus();
     final double width = MediaQuery.of(context).size.width * 0.60;
     final double height = MediaQuery.of(context).size.height * 0.5;
 
@@ -274,6 +353,7 @@ class _CreateEventState extends State<CreateEvent> {
 
   // typology popup -> same UI of the group popup of the home screen
   void _showTypePopup() {
+    _titleFocusNode.unfocus();
     final double width = MediaQuery.of(context).size.width * 0.60;
 
     VezPopup.show(
@@ -324,6 +404,7 @@ class _CreateEventState extends State<CreateEvent> {
   }
 
   void _showConfirmationPopup(String title, VoidCallback onConfirm) {
+    _titleFocusNode.unfocus();
     VezPopup.show(
       context: context,
       child: Column(
@@ -445,6 +526,7 @@ class _CreateEventState extends State<CreateEvent> {
 
   // --- LOCATION LOGIC ---
   void _showLocationTypeSelector() {
+    _titleFocusNode.unfocus();
     VezPopup.show(
       context: context,
       child: Column(
@@ -719,34 +801,36 @@ class _CreateEventState extends State<CreateEvent> {
                           ),
                           child: Column(
                             children: [
-                              TextField(
-                                controller: titleController,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
-                                onChanged: (value) {
-                                  setState(() {});
-                                },
-                                maxLength: 15,
-                                decoration: InputDecoration(
-                                  hintText: StringRes.at("event_title"),
-                                  hintStyle: const TextStyle(color: Colors.white),
-                                  border: InputBorder.none,
-
-                                  // this to manage the space over and under the text
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-
-                                  // Nasconde il contatore predefinito che appare in basso a destra
-                                  counterText: "",
-
-                                  // Bilanciamento visivo per la centratura matematica
-                                  prefixText: "00/00",
-                                  // Stesso font size del contatore sotto per allineare il testo del titolo
-                                  prefixStyle: const TextStyle(color: Colors.transparent, fontSize: 20),
-
-                                  // Il tuo contatore a destra
-                                  suffixText: "${titleController.text.length}/15",
-                                  suffixStyle: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold, fontSize: 20),
-                                ),
+                              Stack(
+                                alignment: Alignment.centerRight,
+                                children: [
+                                  TextField(
+                                    controller: titleController,
+                                    focusNode: _titleFocusNode,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                                    onChanged: (value) {
+                                      setState(() {});
+                                    },
+                                    maxLength: 15,
+                                    decoration: InputDecoration(
+                                      hintText: StringRes.at("event_title"),
+                                      hintStyle: const TextStyle(color: Colors.white),
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      counterText: "",
+                                    ),
+                                  ),
+                                  // Counter overlay in basso a destra
+                                  Positioned(
+                                    right: 12,
+                                    bottom: 4,
+                                    child: Text(
+                                      "${titleController.text.length}/15",
+                                      style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold, fontSize: 12),
+                                    ),
+                                  ),
+                                ],
                               ),
 
                               const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 2),

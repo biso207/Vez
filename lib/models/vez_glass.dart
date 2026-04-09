@@ -120,7 +120,7 @@ class VezGlass {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 140,
+        width: 180,
         height: 50,
         child: container(
           color: color ?? Colors.black.withOpacity(.3),
@@ -131,7 +131,7 @@ class VezGlass {
               text,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 26,
+                fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,

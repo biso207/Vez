@@ -3,7 +3,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:vez/screens/auth/signup_screen.dart';
+import 'dart:ui';
 import '../../models/vez_glass.dart';
+import '../../models/vez_popup.dart';
 import '../../services/auth_service.dart';
 import '../../services/translation_service.dart';
 import '../home_screen.dart';
@@ -194,6 +196,36 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
+          /// ================= LANGUAGE SELECTOR =================
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10, right: 16),
+                child: GestureDetector(
+                  onTap: _showLanguagePopup,
+                  child: ClipOval(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.15),
+                          border: Border.all(color: Colors.white24, width: 1.5),
+                        ),
+                        child: Text(
+                          StringRes.locale == 'it' ? '🇮🇹' : '🇬🇧',
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           /// ================= LOADING OVERLAY =================
           if (isLoading) const VezLoadingOverlay(),
         ],
@@ -202,6 +234,64 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // ── Logic ──────────────────────────────────────────────────────────────────
+
+  void _showLanguagePopup() {
+    VezPopup.show(
+      context: context,
+      width: MediaQuery.of(context).size.width * 0.55,
+      backgroundColor: const Color.fromARGB(200, 14, 14, 14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            StringRes.at("select_language"),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          const SizedBox(height: 15),
+          _buildLanguageOption('🇬🇧', StringRes.at("lang_en"), 'en'),
+          const SizedBox(height: 8),
+          _buildLanguageOption('🇮🇹', StringRes.at("lang_it"), 'it'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(String flag, String label, String localeCode) {
+    final bool isSelected = StringRes.locale == localeCode;
+    return GestureDetector(
+      onTap: () {
+        StringRes.setLocale(localeCode);
+        Navigator.pop(context);
+        setState(() {}); // rebuild UI with new language
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(15),
+          border: isSelected ? Border.all(color: Colors.white24, width: 1.5) : null,
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
 
   void login() async {
     final username = usernameController.text.trim();
