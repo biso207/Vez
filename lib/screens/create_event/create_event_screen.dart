@@ -35,7 +35,7 @@ class _CreateEventState extends State<CreateEvent> {
   final ImagePicker picker = ImagePicker();
 
   // --- EVENT CREATION STATE ---
-  File? eventBackgroundImage;
+  String eventBackgroundImage = "assets/images/bg/default_create_event_bg.jpg";
   String selectedCategoryName = "cinema";
   String selectedCategoryIcon = "assets/icons/categories/cinema.png";
   String selectedTypeName = "Public";
@@ -58,7 +58,7 @@ class _CreateEventState extends State<CreateEvent> {
   double? _locationLng;
   bool _isLocationPrecise = false;
 
-  // Data Lists
+  // category list
   final List<Map<String, String>> categoriesList = [
     {"name": "cinema", "icon": "assets/icons/categories/cinema.png"},
     {"name": "concert", "icon": "assets/icons/categories/concert.png"},
@@ -78,7 +78,7 @@ class _CreateEventState extends State<CreateEvent> {
     {"name": "wellness", "icon": "assets/icons/categories/wellness.png"},
     {"name": "workshop", "icon": "assets/icons/categories/workshop.png"},
   ];
-
+  // type list
   final List<Map<String, String>> eventTypesList = [
     {"name": "Exclusive", "icon": "assets/icons/event/exclusive.png"},
     {"name": "Private", "icon": "assets/icons/event/private.png"},
@@ -118,18 +118,20 @@ class _CreateEventState extends State<CreateEvent> {
   }
 
   // --- EVENT LOGIC ---
+  // method to pick a background image
   Future<void> _pickBackgroundImage() async {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       setState(() {
-        eventBackgroundImage = File(image.path);
+        eventBackgroundImage = image.path;
       });
     }
   }
 
+  // method to reset the event data
   void _resetEventData() {
     setState(() {
-      eventBackgroundImage = null;
+      eventBackgroundImage = "assets/images/bg/default_create_event_bg.jpg";
       selectedCategoryName = "cinema";
       selectedCategoryIcon = "assets/icons/categories/cinema.png";
       selectedTypeName = "Public";
@@ -148,35 +150,6 @@ class _CreateEventState extends State<CreateEvent> {
   Future<void> saveEvent() async {
     // --- VALIDATION: all fields are required ---
     final String title = titleController.text.trim();
-
-    if (title.isEmpty) {
-      _showErrorSnackBar(StringRes.at("event_title_required"));
-      return;
-    }
-    if (_selectedDate == null) {
-      _showErrorSnackBar(StringRes.at("event_date_required"));
-      return;
-    }
-    if (_selectedTime == null) {
-      _showErrorSnackBar(StringRes.at("event_time_required"));
-      return;
-    }
-    if (_locationName.isEmpty) {
-      _showErrorSnackBar(StringRes.at("event_location_required"));
-      return;
-    }
-    if (_description == null || _description!.isEmpty) {
-      _showErrorSnackBar(StringRes.at("event_details_required"));
-      return;
-    }
-    if (_maxGuests == null || _maxGuests!.isEmpty) {
-      _showErrorSnackBar(StringRes.at("event_guests_required"));
-      return;
-    }
-    if (_price == null || _price!.isEmpty) {
-      _showErrorSnackBar(StringRes.at("event_price_required"));
-      return;
-    }
 
     // --- STEP 1: Create the Place ---
     final String? placeId = await _dbServiceSet.storePlace(
@@ -227,6 +200,21 @@ class _CreateEventState extends State<CreateEvent> {
     }
   }
 
+  // check if all the fields are set
+  bool _isEventValid() {
+    if (titleController.text.isNotEmpty &&
+        selectedCategoryName.isNotEmpty &&
+        selectedTypeName.isNotEmpty &&
+        _selectedDate != null &&
+        _selectedTime != null &&
+        _locationName.isNotEmpty) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // todo: remove
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -299,6 +287,7 @@ class _CreateEventState extends State<CreateEvent> {
   }
 
   // --- POPUPS ---
+  // todo: improve the UI
   // category popup
   void _showCategoryPopup() {
     _titleFocusNode.unfocus();
@@ -703,17 +692,9 @@ class _CreateEventState extends State<CreateEvent> {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: eventBackgroundImage != null
-                            ? Image.file(
-                          eventBackgroundImage!,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.center,
-                        )
-                            : Image.asset(
-                          "assets/images/bg/default_create_event_bg.jpg",
-                          fit: BoxFit.cover,
-                          alignment: Alignment.center,
-                        ),
+                        child: eventBackgroundImage.startsWith('assets')
+                          ? Image.asset(eventBackgroundImage, fit: BoxFit.cover)
+                          : Image.file(File(eventBackgroundImage), fit: BoxFit.cover),
                       ),
                       // Overlay scuro per contrasto
                       Positioned.fill(
@@ -876,16 +857,24 @@ class _CreateEventState extends State<CreateEvent> {
                       children: [
                         // save Button
                         GestureDetector(
-                          onTap: () => _showConfirmationPopup(StringRes.at("save_event"), saveEvent),
+                          onTap: _isEventValid() // clickable only if all the data are set
+                              ? () => _showConfirmationPopup(StringRes.at("save_event"), saveEvent)
+                              : null,
                           child: ClipOval(
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color.fromARGB(128, 8, 157, 13), // original green
+                                  color: _isEventValid()
+                                    ? const Color.fromARGB(128, 8, 157, 13) // original green
+                                    : const Color.fromARGB(128, 0, 0, 0),
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: const Color.fromARGB(204, 8, 157, 13), width: 2),
+                                  border: Border.all(
+                                    color: _isEventValid()
+                                      ? const Color.fromARGB(204, 8, 157, 13)
+                                      : Colors.grey,
+                                    width: 2),
                                 ),
                                 child: const ImageIcon(AssetImage("assets/icons/profile_page/save.png"), color: Colors.white, size: 30),
                               ),
@@ -897,16 +886,24 @@ class _CreateEventState extends State<CreateEvent> {
 
                         // delete Button
                         GestureDetector(
-                          onTap: () => _showConfirmationPopup(StringRes.at("delete_data"), _resetEventData),
+                          onTap: _isEventValid() // clickable only if all the data are set
+                              ? () => _showConfirmationPopup(StringRes.at("delete_data"), _resetEventData)
+                              : null,
                           child: ClipOval(
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                               child: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color.fromARGB(128, 255, 49, 49), // original red
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: const Color.fromARGB(204, 255, 49, 49), width: 2),
+                                  color: _isEventValid()
+                                    ? const Color.fromARGB(128, 255, 49, 49) // original red
+                                    : const Color.fromARGB(128, 0, 0, 0),
+                                shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _isEventValid()
+                                      ? const Color.fromARGB(204, 255, 49, 49)
+                                      : Colors.grey,
+                                    width: 2),
                                 ),
                                 child: const ImageIcon(AssetImage("assets/icons/profile_page/delete.png"), color: Colors.white, size: 30),
                               ),

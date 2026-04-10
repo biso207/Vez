@@ -712,10 +712,11 @@ class _ProfilePageState extends State<ProfilePage> {
                           Text(
                             _username,
                             style: const TextStyle(
-                              fontFamily: 'JollyLodger',
+                              fontFamily: 'InstagramSans',
                               fontSize: 30,
                               color: Colors.white,
                               height: 1.0,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
 

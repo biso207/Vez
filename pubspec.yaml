@@ -20,6 +20,7 @@ dependencies:
   intl: ^0.20.2
   flutter_map: ^6.1.0      # Il motore della mappa
   latlong2: ^0.9.0         # Gestione delle coordinate
+  connectivity_plus: 7.1.1
 
 dev_dependencies:
   flutter_test:

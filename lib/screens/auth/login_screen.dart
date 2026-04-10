@@ -1,6 +1,7 @@
 // Developed and Designed by Outly • © 2026
 // Screen to manage the login process
 
+// external codes and libraries imports
 import 'package:flutter/material.dart';
 import 'package:vez/screens/auth/signup_screen.dart';
 import 'dart:ui';
@@ -9,6 +10,7 @@ import '../../models/vez_popup.dart';
 import '../../services/auth_service.dart';
 import '../../services/translation_service.dart';
 import '../home_screen.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -293,6 +295,14 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // method to check internet connection
+  Future<bool> hasInternet() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    // Se la lista contiene 'none', non c'è connessione
+    return !connectivityResult.contains(ConnectivityResult.none);
+  }
+
+
   void login() async {
     final username = usernameController.text.trim();
     final password = passwordController.text;
@@ -302,29 +312,44 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    // checking internet connection
+    if (!(await hasInternet())) {
+      setState(() => errorMessage = StringRes.at("no_internet_connection"));
+      return;
+    }
+
     setState(() {
       errorMessage = null;
       isLoading = true;
     });
 
-    final int response = await _dbService.login(
-      username: username,
-      password: password,
-    );
-
-    if (!mounted) return;
-    setState(() => isLoading = false);
-
-    if (response == 200 || response == 201) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => HomePage()),
+    try {
+      // La chiamata al database
+      final int response = await _dbService.login(
+        username: username,
+        password: password,
       );
-    } else {
-      setState(() => errorMessage = StringRes.at("invalid_credentials"));
-      // Reset fields on failed login
-      usernameController.clear();
-      passwordController.clear();
+
+      if (!mounted) return;
+      setState(() => isLoading = false);
+
+      if (response == 200 || response == 201) { // 200 ok
+        Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => HomePage()),
+        );
+      } else if (response == 401) { // 401 unauthorized
+        setState(() => errorMessage = StringRes.at("invalid_credentials"));
+      } else {
+        setState(() => errorMessage = "${StringRes.at("login_failed")}\n${response.toString()}");
+      }
+
+    } catch (e) {
+      // probable connection error
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        errorMessage = StringRes.at("no_internet_connection");
+      });
     }
   }
 }

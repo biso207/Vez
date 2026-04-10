@@ -1,6 +1,7 @@
 // Developed and Designed by Outly • © 2026
 // Signup screen with 3-step navigation based on design mocks
 
+// external codes and libraries imports
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
@@ -13,6 +14,7 @@ import '../../services/translation_service.dart';
 import '../home_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -546,38 +548,62 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
+  // method to check internet connection
+  Future<bool> hasInternet() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    // Se la lista contiene 'none', non c'è connessione
+    return !connectivityResult.contains(ConnectivityResult.none);
+  }
+
   void signup() async {
     final username = usernameController.text.trim();
     final email    = emailController.text.trim();
     final password = passwordController.text;
     final city     = cityController.text.trim();
 
+    // checking internet connection
+    if (!(await hasInternet())) {
+      setState(() => errorMessage = StringRes.at("no_internet_connection"));
+      return;
+    }
+
     setState(() => isLoading = true);
 
-    final int response = await _dbService.signup(
-      email: email,
-      password: password,
-      username: username,
-      dateOfBirth: selectedDate!,
-      city: city,
-      profileImage: _profileImage,
-    );
-
-    if (!mounted) return;
-    setState(() => isLoading = false);
-
-    if (response == 200 || response == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(StringRes.at("signup_successful"))),
+    try {
+      final int response = await _dbService.signup(
+        email: email,
+        password: password,
+        username: username,
+        dateOfBirth: selectedDate!,
+        city: city,
+        profileImage: _profileImage,
       );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => HomePage()),
-      );
-    } else if (response == 409) {
-      setState(() => errorMessage = StringRes.at("user_already_exists"));
-    } else {
-      setState(() => errorMessage = "${StringRes.at("signup_failed")}\n${response.toString()}");
+
+      if (!mounted) return;
+      setState(() => isLoading = false);
+
+      if (response == 200 || response == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(StringRes.at("signup_successful"))),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => HomePage()),
+        );
+      } else if (response == 409) {
+        setState(() => errorMessage = StringRes.at("user_already_exists"));
+      } else {
+        setState(() =>
+        errorMessage =
+        "${StringRes.at("signup_failed")}\n${response.toString()}");
+      }
+    } catch (e) {
+      // probable connection error
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        errorMessage = StringRes.at("no_internet_connection");
+      });
     }
   }
 

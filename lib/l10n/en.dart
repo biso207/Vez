@@ -30,6 +30,8 @@ const Map<String, String> en = {
   "location_permissions_denied": "Location permissions are denied",
   "location_permissions_permanently_denied": "Location permissions are permanently denied. Change it in settings.",
   "unknown_city": "Unknown City",
+  "no_internet_connection": "No Internet Connection",
+  "login_failed": "Login Failed",
 
   // global //
   "search": "Search",
@@ -85,20 +87,8 @@ const Map<String, String> en = {
   "wellness": "Wellness",
   "workshop": "Workshop",
 
-  // event validation & save //
-  "event_title_required": "Please set an event title",
-  "event_date_required": "Please set a date",
-  "event_time_required": "Please set a time",
-  "event_location_required": "Please set a location",
-  "event_details_required": "Please add some details",
-  "event_guests_required": "Please set max guests",
-  "event_price_required": "Please set a price",
-  "event_place_save_failed": "Failed to save the location. Try again.",
-  "event_saved_success": "Event created successfully!",
-  "event_save_failed": "Failed to save the event",
-
   // language selection //
   "select_language": "Select Language",
   "lang_en": "English",
   "lang_it": "Italiano",
-};
+};
