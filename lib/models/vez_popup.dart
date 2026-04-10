@@ -16,7 +16,7 @@ class VezPopup {
       barrierDismissible: true,
       barrierLabel: 'Dismiss',
       barrierColor: Colors.black.withOpacity(0.4),
-      transitionDuration: const Duration(milliseconds: 450),
+      transitionDuration: const Duration(milliseconds: 350),
       pageBuilder: (context, animation, secondaryAnimation) {
         return Align(
           alignment: alignment,
@@ -45,14 +45,28 @@ class VezPopup {
           ),
         );
       },
+
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        // animazione di comparsa morbida (fade + leggero zoom)
+        // 2. Curva con "rimbalzo" per la scala
+        final scaleAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
+          CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack, // Questo fa il "salto" in avanti e torna indietro
+          ),
+        );
+
+        // 3. Dissolvenza leggermente più veloce
+        final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+          CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOut,
+          ),
+        );
+
         return FadeTransition(
-          opacity: animation,
+          opacity: fadeAnimation,
           child: ScaleTransition(
-            scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)
-            ),
+            scale: scaleAnimation,
             child: child,
           ),
         );
