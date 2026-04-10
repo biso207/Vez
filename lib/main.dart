@@ -15,10 +15,10 @@ void main() {
     DeviceOrientation.portraitDown,
   ]).then((_) {
 
-    debugDefaultTargetPlatformOverride = TargetPlatform.iOS; // comment before release build
+    //debugDefaultTargetPlatformOverride = TargetPlatform.iOS; // comment before release build
 
     runApp(DevicePreview(
-      enabled: true, // set true to enable the device preview (iPhones) • set false before release build
+      enabled: false, // set true to enable the device preview (iPhones) • set false before release build
       builder: (context) => MyApp(),
     ),
     );
