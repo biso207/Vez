@@ -220,12 +220,12 @@ class _ProfilePageState extends State<ProfilePage> {
       required StateSetter setPopupState,
     }) {
       return Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 16, left: 20, right: 20),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(maxLines > 1 ? 20 : 30),
-          border: Border.all(color: Colors.white54, width: 1.5),
+          border: Border.all(color: Colors.white54, width: 2),
         ),
         child: TextField(
           controller: controller,
@@ -241,7 +241,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 : null,
             hintStyle: const TextStyle(color: Colors.white54),
             border: InputBorder.none,
-            counterText: "", // Nasconde il numerino dei caratteri rimanenti
+            counterText: "", // hide the number of characters typed
             suffixIcon: suffixIcon,
             suffixIconConstraints: const BoxConstraints(),
           ),
@@ -258,10 +258,9 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // --- SPAZIO SOPRA IMMAGINE ---
                 SizedBox(height: 30 * s),
 
-                // --- IMMAGINE PROFILO ---
+                // --- PROFIILE PHOTO ---
                 GestureDetector(
                   onTap: () async {
                     final XFile? pickedFile = await picker.pickImage(
@@ -290,10 +289,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
 
-                // Spazio tra immagine e campi uguale a quello in basso
                 SizedBox(height: 30 * s),
 
-                // --- CAMPI DI TESTO ---
+                // --- TEXT FIELDS ---
                 buildPopupInput(
                   hint: StringRes.at("new_username"),
                   controller: newUsernameController,
@@ -372,8 +370,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
 
+                SizedBox(height: 15 * s),
+
                 // --- LANGUAGE SELECTOR ---
-                SizedBox(height: 16 * s),
                 GestureDetector(
                   onTap: () {
                     Navigator.pop(context);

@@ -291,7 +291,7 @@ class _CreateEventState extends State<CreateEvent> {
   // category popup
   void _showCategoryPopup() {
     _titleFocusNode.unfocus();
-    final double width = MediaQuery.of(context).size.width * 0.60;
+    final double width = MediaQuery.of(context).size.width * 0.50;
     final double height = MediaQuery.of(context).size.height * 0.5;
 
     VezPopup.show(
@@ -343,7 +343,7 @@ class _CreateEventState extends State<CreateEvent> {
   // typology popup -> same UI of the group popup of the home screen
   void _showTypePopup() {
     _titleFocusNode.unfocus();
-    final double width = MediaQuery.of(context).size.width * 0.60;
+    final double width = MediaQuery.of(context).size.width * 0.50;
 
     VezPopup.show(
       context: context,
@@ -645,7 +645,7 @@ class _CreateEventState extends State<CreateEvent> {
             IconButton(
               icon: const ImageIcon(AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
-              onPressed: () {},
+              onPressed: () {}, // nothing, user is already in the home screen
             ),
 
             SizedBox(width: 20 * s),
@@ -783,34 +783,48 @@ class _CreateEventState extends State<CreateEvent> {
                           child: Column(
                             children: [
                               Stack(
-                                alignment: Alignment.centerRight,
+                                alignment: Alignment.center,
                                 children: [
                                   TextField(
                                     controller: titleController,
                                     focusNode: _titleFocusNode,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                                    onChanged: (value) {
-                                      setState(() {});
-                                    },
                                     maxLength: 15,
+                                    // SE ha il focus allinea a sinistra, ALTRIMENTI al centro
+                                    textAlign: _titleFocusNode.hasFocus ? TextAlign.left : TextAlign.center,
+                                    onChanged: (value) => setState(() {}),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                     decoration: InputDecoration(
-                                      hintText: StringRes.at("event_title"),
-                                      hintStyle: const TextStyle(color: Colors.white),
+                                      hintText: "Title",
+                                      hintStyle: const TextStyle(color: Colors.white54),
                                       border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                       counterText: "",
+                                      // Padding condizionale:
+                                      // Quando scrivi (focus) lasciamo spazio a destra per il numero.
+                                      // Quando non scrivi, mettiamo 0 per una centratura perfetta.
+                                      contentPadding: EdgeInsets.only(
+                                        left: _titleFocusNode.hasFocus ? 20 : 0,
+                                        right: _titleFocusNode.hasFocus ? 80 : 0,
+                                      ),
                                     ),
                                   ),
-                                  // Counter overlay in basso a destra
-                                  Positioned(
-                                    right: 12,
-                                    bottom: 4,
-                                    child: Text(
-                                      "${titleController.text.length}/15",
-                                      style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold, fontSize: 12),
+
+                                  // Il contatore appare solo durante la scrittura
+                                  if (_titleFocusNode.hasFocus)
+                                    Positioned(
+                                      right: 20,
+                                      child: Text(
+                                        "${titleController.text.length}/15",
+                                        style: const TextStyle(
+                                          color: Colors.white54,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
 

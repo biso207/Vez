@@ -115,12 +115,7 @@ class _HomePageState extends State<HomePage> {
             IconButton(
               icon: ImageIcon(const AssetImage("assets/icons/nav_bar/go_to_home_page.png"), color: Colors.white),
               iconSize: 30,
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomePage()),
-                );
-              },
+              onPressed: () {}, // nothing, user is already in the home screen
             ),
 
             SizedBox(width: 20 * s),

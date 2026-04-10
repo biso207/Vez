@@ -150,12 +150,14 @@ class VezPageLayout extends StatelessWidget {
 
   // widget template for the top navbar of every pages
   Widget _buildTopNavBar(BuildContext context, double s) {
-    final bool isNetworkImage =
-    profileIconPath.startsWith("http");
+    final bool isNetworkImage = profileIconPath.startsWith("http");
+
+    final double width = MediaQuery.of(context).size.width * 0.50;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        // left button
         GestureDetector(
           onTap: onProfileTap ?? () {},
           child: Container(
@@ -198,6 +200,7 @@ class VezPageLayout extends StatelessWidget {
 
         SizedBox(width: 20 * s),
 
+        // centre search area
         Expanded(
           child: VezGlass.textField(
             controller: searchController,
@@ -210,12 +213,13 @@ class VezPageLayout extends StatelessWidget {
 
         SizedBox(width: 20 * s),
 
+        // right button
         VezGlass.circleButton(
           assetIcon: filterIconPath,
           onTap: () {
             VezPopup.show(
               context: context,
-              width: 250,
+              width: width,
               alignment: Alignment.center,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -229,7 +233,9 @@ class VezPageLayout extends StatelessWidget {
                       Navigator.pop(context);
                     },
                   ),
-                  _customDivider(),
+
+                  _customDivider(width),
+
                   _buildPopupItem(
                     icon: eventGroupsIcons[1]["icon"],
                     label: StringRes.at("filter_invited"),
@@ -238,7 +244,9 @@ class VezPageLayout extends StatelessWidget {
                       Navigator.pop(context);
                     },
                   ),
-                  _customDivider(),
+
+                  _customDivider(width),
+
                   _buildPopupItem(
                     icon: eventGroupsIcons[2]["icon"],
                     label: StringRes.at("filter_nearby"),
@@ -283,12 +291,21 @@ class VezPageLayout extends StatelessWidget {
     );
   }
 
-  Widget _customDivider() {
+  // widget to create the row divider
+  Widget _customDivider(double popupWidth) {
+    // proportion of ~70%
+    double calculatedWidth = popupWidth * 0.7;
+    // width of the divider
+    double finalWidth = calculatedWidth.clamp(142.0, popupWidth - 32.0);
+
     return Center(
       child: Container(
-        width: 200, // Divider più stretto del popup
+        width: finalWidth,
         height: 2,
-        color: Colors.white54,
+        decoration: BoxDecoration(
+          color: Colors.white54,
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }
