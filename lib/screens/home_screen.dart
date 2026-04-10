@@ -1,6 +1,7 @@
 // Developed and Designed by Outly • © 2026
 // Screen to manage the home page of the app
 
+// external codes and libraries imports
 import 'package:flutter/material.dart';
 import 'package:vez/screens/profile_screen.dart';
 import '../models/vez_glass.dart';
@@ -10,6 +11,7 @@ import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import '../services/getters_service.dart';
 import 'create_event/create_event_screen.dart';
+import 'package:flutter/services.dart';
 
 class HomePage extends StatefulWidget {
   // costruttore
@@ -124,7 +126,9 @@ class _HomePageState extends State<HomePage> {
               icon: ImageIcon(const AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
               onPressed: () {
+                HapticFeedback.selectionClick(); // haptic feedback
                 Navigator.pushReplacement(
+
                   context,
                   MaterialPageRoute(builder: (_) => const CreateEvent()),
                 );

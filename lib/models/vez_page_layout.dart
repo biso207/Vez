@@ -1,9 +1,14 @@
+// Developed and Designed by Outly • © 2026
+// Class to manage the UI and template of all the app's screens
+
+// external codes and libraries imports
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:vez/models/vez_event_card.dart';
 import 'package:vez/models/vez_glass.dart';
 import 'package:vez/models/vez_popup.dart';
-
+import 'package:flutter/services.dart';
 import '../services/translation_service.dart';
 
 class VezPageLayout extends StatelessWidget {
@@ -217,6 +222,7 @@ class VezPageLayout extends StatelessWidget {
         VezGlass.circleButton(
           assetIcon: filterIconPath,
           onTap: () {
+            HapticFeedback.mediumImpact(); // haptic feedback
             VezPopup.show(
               context: context,
               width: width,

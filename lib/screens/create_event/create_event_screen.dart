@@ -1,9 +1,7 @@
 // Developed and Designed by Outly • © 2026
 // Screen to create an event
 
-// TODO: improve UI of the popup setters
-// todo: fix the bug related the display of the location name (is not display when selected from the map)
-
+// external codes and libraries imports
 import 'package:flutter/material.dart';
 import 'package:vez/screens/profile_screen.dart';
 import 'package:vez/screens/create_event/vez_map_picker.dart';
@@ -19,6 +17,7 @@ import '../../services/user_session.dart';
 import '../home_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 
 class CreateEvent extends StatefulWidget {
   // constructor
@@ -416,7 +415,10 @@ class _CreateEventState extends State<CreateEvent> {
   // --- SUPPORT WIDGETS ---
   Widget _buildTopButton(String iconPath, VoidCallback onTap, {bool isBlue = false}) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.mediumImpact(); // haptic feedback
+        onTap();
+      },
       child: ClipOval(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -638,7 +640,12 @@ class _CreateEventState extends State<CreateEvent> {
             IconButton(
               icon: const ImageIcon(AssetImage("assets/icons/nav_bar/go_to_home_page.png"), color: Colors.white),
               iconSize: 30,
-              onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage())),
+              onPressed: () => {
+                HapticFeedback.selectionClick(), // haptic feedback
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HomePage()))
+              },
             ),
             SizedBox(width: 20 * s),
 
@@ -872,8 +879,11 @@ class _CreateEventState extends State<CreateEvent> {
                         // save Button
                         GestureDetector(
                           onTap: _isEventValid() // clickable only if all the data are set
-                              ? () => _showConfirmationPopup(StringRes.at("save_event"), saveEvent)
-                              : null,
+                            ? () => {
+                              HapticFeedback.mediumImpact(), // haptic feedback
+                              _showConfirmationPopup(StringRes.at("save_event"), saveEvent)
+                            }
+                          : null,
                           child: ClipOval(
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -901,8 +911,11 @@ class _CreateEventState extends State<CreateEvent> {
                         // delete Button
                         GestureDetector(
                           onTap: _isEventValid() // clickable only if all the data are set
-                              ? () => _showConfirmationPopup(StringRes.at("delete_data"), _resetEventData)
-                              : null,
+                            ? () => {
+                              HapticFeedback.mediumImpact(), // haptic feedback
+                              _showConfirmationPopup(StringRes.at("delete_data"), _resetEventData)
+                            }
+                            : null,
                           child: ClipOval(
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),

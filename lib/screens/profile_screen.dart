@@ -2,6 +2,7 @@
 // Screen to manage the user profile page
 // When a logged user views a profile or wants to see his profile, this screen is opened.
 
+// external codes and libraries imports
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../models/vez_glass.dart';
@@ -16,6 +17,7 @@ import 'create_event/create_event_screen.dart';
 import 'home_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 
 class ProfilePage extends StatefulWidget {
   // costruttore
@@ -359,6 +361,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Switch(
                       value: _showBadge,
                       onChanged: (val) {
+                        HapticFeedback.selectionClick(); // haptic feedback
                         setPopupState(() => _showBadge = val);
                         setState(() => _showBadge = val);
                       },
@@ -429,6 +432,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     // button save (green)
                     GestureDetector(
                       onTap: () async {
+                        HapticFeedback.mediumImpact(); // haptic feedback
                         popupError=null; // resetting errors
 
                         // update the db with the new data
@@ -461,6 +465,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     // button discard (red)
                     GestureDetector(
                       onTap: () {
+                        HapticFeedback.mediumImpact(); // haptic feedback
                         Navigator.pop(context);
 
                         // cleaning controllers
@@ -591,6 +596,7 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: const ImageIcon(AssetImage("assets/icons/nav_bar/go_to_home_page.png"), color: Colors.white),
               iconSize: 30,
               onPressed: () {
+                HapticFeedback.selectionClick(); // haptic feedback
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => const HomePage()),
@@ -604,6 +610,7 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: const ImageIcon(AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
               iconSize: 30,
               onPressed: () {
+                HapticFeedback.selectionClick(); // haptic feedback
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => const CreateEvent()),
@@ -630,7 +637,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
             // --- USER DATA CARD ---
             GestureDetector(
-              onTap: () => _showEditProfilePopup(s), // opening the popup to edit the profile
+              onTap: () => {
+                HapticFeedback.mediumImpact(), // haptic feedback
+                _showEditProfilePopup(s), // opening the popup to edit the profile
+              },
               child: Container(
                 width: double.infinity, // Occupa tutta la larghezza concessa dal layout
                 padding: const EdgeInsets.all(16),
