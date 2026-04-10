@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vez/screens/auth/loading_screen.dart';
@@ -14,9 +15,10 @@ void main() {
     DeviceOrientation.portraitDown,
   ]).then((_) {
 
-    //debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS; // comment before release build
+
     runApp(DevicePreview(
-      enabled: false, // Puoi disattivarlo per le build finali
+      enabled: true, // set true to enable the device preview (iPhones) • set false before release build
       builder: (context) => MyApp(),
     ),
     );

@@ -1,336 +1,291 @@
-// Developed and Designed by Outly • © 2026
-// Screen to create an event
+// developed and designed by outly • © 2026
+// create event screen — zone-2 content: a single full-height event card
+// where the user configures all event details before saving.
+//
+// layout zones used:
+//   zone 1 — background  : kBgColor from VezPageLayout
+//   zone 2 — body        : Center → event creation card (fixed ratio)
+//   zone 3 — blur veil   : handled by VezPageLayout
+//   zone 4 — navbars     : top bar (profile/search/type) + bottom pill nav
 
-// external codes and libraries imports
-import 'package:flutter/material.dart';
-import 'package:vez/screens/profile_screen.dart';
-import 'package:vez/screens/create_event/vez_map_picker.dart';
+import 'dart:io';
 import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+
 import '../../models/vez_glass.dart';
 import '../../models/vez_page_layout.dart';
 import '../../models/vez_popup.dart';
-import '../../services/auth_service.dart';
 import '../../services/getters_service.dart';
 import '../../services/setters_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/user_session.dart';
 import '../home_screen.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter/services.dart';
+import '../profile_screen.dart';
+import 'vez_map_picker.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// stateful widget wrapper
+// ─────────────────────────────────────────────────────────────────────────────
 
 class CreateEvent extends StatefulWidget {
-  // constructor
-  const CreateEvent({
-    super.key,
-  });
+  const CreateEvent({super.key});
 
   @override
   State<CreateEvent> createState() => _CreateEventState();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// state
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _CreateEventState extends State<CreateEvent> {
-  final TextEditingController searchController = TextEditingController();
-  final ImagePicker picker = ImagePicker();
 
-  // --- EVENT CREATION STATE ---
-  String eventBackgroundImage = "assets/images/bg/default_create_event_bg.jpg";
-  String selectedCategoryName = "cinema";
-  String selectedCategoryIcon = "assets/icons/categories/cinema.png";
-  String selectedTypeName = "Public";
-  String selectedTypeIcon = "assets/icons/event/public.png";
+  // ── controllers & services ─────────────────────────────────────────────────
 
-  final TextEditingController titleController = TextEditingController();
-  final FocusNode _titleFocusNode = FocusNode();
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _titleController  = TextEditingController();
+  final FocusNode             _titleFocus       = FocusNode();
+  final ImagePicker           _picker           = ImagePicker();
 
-  // --- GRID VARIABLES ---
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
-  String? _location;
-  String? _description;
-  String? _maxGuests;
-  String? _price;
+  late final GetDBService _dbGet;
+  late final SetDBService _dbSet;
 
-  String _locationName = "";
-  String _locationAddress = "";
+  // ── event creation state ───────────────────────────────────────────────────
+
+  String _bgImage          = 'assets/images/bg/default_create_event_bg.jpg';
+  String _categoryName     = 'cinema';
+  String _categoryIcon     = 'assets/icons/categories/cinema.png';
+  String _typeName         = 'Public';
+  String _typeIcon         = 'assets/icons/event/public.png';
+
+  DateTime?  _date;
+  TimeOfDay? _time;
+  String?    _description;
+  String?    _maxGuests;
+  String?    _price;
+
+  String  _locationName    = '';
+  String  _locationAddress = '';
   double? _locationLat;
   double? _locationLng;
-  bool _isLocationPrecise = false;
+  bool    _locationPrecise = false;
 
-  // category list
-  final List<Map<String, String>> categoriesList = [
-    {"name": "cinema", "icon": "assets/icons/categories/cinema.png"},
-    {"name": "concert", "icon": "assets/icons/categories/concert.png"},
-    {"name": "disco", "icon": "assets/icons/categories/disco.png"},
-    {"name": "gaming", "icon": "assets/icons/categories/gaming.png"},
-    {"name": "hang_out", "icon": "assets/icons/categories/hang_out.png"},
-    {"name": "journey", "icon": "assets/icons/categories/journey.png"},
-    {"name": "kids_and_family", "icon": "assets/icons/categories/kids_and_family.png"},
-    {"name": "museum", "icon": "assets/icons/categories/museum.png"},
-    {"name": "outdoor", "icon": "assets/icons/categories/outdoor.png"},
-    {"name": "party", "icon": "assets/icons/categories/party.png"},
-    {"name": "pub", "icon": "assets/icons/categories/pub.png"},
-    {"name": "restaurant", "icon": "assets/icons/categories/restaurant.png"},
-    {"name": "shopping", "icon": "assets/icons/categories/shopping.png"},
-    {"name": "sport", "icon": "assets/icons/categories/sport.png"},
-    {"name": "theatre", "icon": "assets/icons/categories/theatre.png"},
-    {"name": "wellness", "icon": "assets/icons/categories/wellness.png"},
-    {"name": "workshop", "icon": "assets/icons/categories/workshop.png"},
-  ];
-  // type list
-  final List<Map<String, String>> eventTypesList = [
-    {"name": "Exclusive", "icon": "assets/icons/event/exclusive.png"},
-    {"name": "Private", "icon": "assets/icons/event/private.png"},
-    {"name": "Public", "icon": "assets/icons/event/public.png"},
+  // ── user state ─────────────────────────────────────────────────────────────
+
+  String _profilePhoto = '';
+
+  // ── static data ────────────────────────────────────────────────────────────
+
+  static const List<Map<String, String>> _categories = [
+    {'name': 'cinema',         'icon': 'assets/icons/categories/cinema.png'},
+    {'name': 'concert',        'icon': 'assets/icons/categories/concert.png'},
+    {'name': 'disco',          'icon': 'assets/icons/categories/disco.png'},
+    {'name': 'gaming',         'icon': 'assets/icons/categories/gaming.png'},
+    {'name': 'hang_out',       'icon': 'assets/icons/categories/hang_out.png'},
+    {'name': 'journey',        'icon': 'assets/icons/categories/journey.png'},
+    {'name': 'kids_and_family','icon': 'assets/icons/categories/kids_and_family.png'},
+    {'name': 'museum',         'icon': 'assets/icons/categories/museum.png'},
+    {'name': 'outdoor',        'icon': 'assets/icons/categories/outdoor.png'},
+    {'name': 'party',          'icon': 'assets/icons/categories/party.png'},
+    {'name': 'pub',            'icon': 'assets/icons/categories/pub.png'},
+    {'name': 'restaurant',     'icon': 'assets/icons/categories/restaurant.png'},
+    {'name': 'shopping',       'icon': 'assets/icons/categories/shopping.png'},
+    {'name': 'sport',          'icon': 'assets/icons/categories/sport.png'},
+    {'name': 'theatre',        'icon': 'assets/icons/categories/theatre.png'},
+    {'name': 'wellness',       'icon': 'assets/icons/categories/wellness.png'},
+    {'name': 'workshop',       'icon': 'assets/icons/categories/workshop.png'},
   ];
 
-  late GetDBService _dbServiceGet;
-  late SetDBService _dbServiceSet;
-  String _profilePhoto = "";
+  static const List<Map<String, String>> _eventTypes = [
+    {'name': 'Exclusive', 'icon': 'assets/icons/event/exclusive.png'},
+    {'name': 'Private',   'icon': 'assets/icons/event/private.png'},
+    {'name': 'Public',    'icon': 'assets/icons/event/public.png'},
+  ];
+
+  // ── lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    final currentID = UserSession().userID;
-
-    if (currentID.isNotEmpty) {
-      _dbServiceGet = GetDBService(userID: currentID);
-      _dbServiceSet = SetDBService(userID: currentID);
-      getUserProfilePhoto();
+    final String uid = UserSession().userID;
+    if (uid.isNotEmpty) {
+      _dbGet = GetDBService(userID: uid);
+      _dbSet = SetDBService(userID: uid);
+      _loadProfilePhoto();
     }
-  }
-
-  void getUserProfilePhoto() async {
-    String? photo = await _dbServiceGet.getUserData("profile_photo");
-    if (!mounted) return;
-    setState(() {
-      _profilePhoto = photo?.trim() ?? "";
-    });
+    // rebuild when title-field focus changes (for counter / alignment)
+    _titleFocus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    searchController.dispose();
-    titleController.dispose();
-    _titleFocusNode.dispose();
+    _searchController.dispose();
+    _titleController.dispose();
+    _titleFocus.dispose();
     super.dispose();
   }
 
-  // --- EVENT LOGIC ---
-  // method to pick a background image
-  Future<void> _pickBackgroundImage() async {
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        eventBackgroundImage = image.path;
-      });
-    }
+  // ── data loading ───────────────────────────────────────────────────────────
+
+  Future<void> _loadProfilePhoto() async {
+    final String? photo = await _dbGet.getUserData('profile_photo');
+    if (!mounted) return;
+    setState(() => _profilePhoto = photo?.trim() ?? '');
   }
 
-  // method to reset the event data
-  void _resetEventData() {
-    setState(() {
-      eventBackgroundImage = "assets/images/bg/default_create_event_bg.jpg";
-      selectedCategoryName = "cinema";
-      selectedCategoryIcon = "assets/icons/categories/cinema.png";
-      selectedTypeName = "Public";
-      selectedTypeIcon = "assets/icons/event/public.png";
-      titleController.clear();
-      _selectedDate = null;
-      _selectedTime = null;
-      _location = null;
-      _description = null;
-      _maxGuests = null;
-      _price = null;
-    });
-  }
+  // ── validation ─────────────────────────────────────────────────────────────
 
-  // method to save the event in the db
-  Future<void> saveEvent() async {
-    // --- VALIDATION: all fields are required ---
-    final String title = titleController.text.trim();
+  /// returns true when all mandatory fields are filled
+  bool get _isValid =>
+      _titleController.text.isNotEmpty &&
+      _date != null &&
+      _time != null &&
+      _locationName.isNotEmpty;
 
-    // --- STEP 1: Create the Place ---
-    final String? placeId = await _dbServiceSet.storePlace(
-      name: _locationName,
-      address: _locationAddress.isNotEmpty ? _locationAddress : null,
-      isPrecise: _isLocationPrecise,
-      latitude: _locationLat,
+  // ── event save / reset ─────────────────────────────────────────────────────
+
+  Future<void> _saveEvent() async {
+    // step 1: persist the place
+    final String? placeId = await _dbSet.storePlace(
+      name:      _locationName,
+      address:   _locationAddress.isNotEmpty ? _locationAddress : null,
+      isPrecise: _locationPrecise,
+      latitude:  _locationLat,
       longitude: _locationLng,
     );
 
     if (placeId == null) {
-      _showErrorSnackBar(StringRes.at("event_place_save_failed"));
+      _showSnackBar(StringRes.at('event_place_save_failed'), isError: true);
       return;
     }
 
-    // --- STEP 2: Create the Event with the place_id ---
-    Map<String, dynamic> eventData = {
-      "title": title,
-      "category": selectedCategoryName,
-      "type": selectedTypeName,
-      "date": "${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}",
-      "time": "${_selectedTime!.hour}:${_selectedTime!.minute}",
-      "max_guests": _maxGuests,
-      "price": _price,
-      "description": _description,
-      "background_image": eventBackgroundImage,
-    };
-
-    final int response = await _dbServiceSet.storeEvent(eventData, placeId: placeId);
-
-    if (!mounted) return;
-
-    if (response == 200 || response == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(StringRes.at("event_saved_success")),
-          backgroundColor: const Color.fromARGB(200, 8, 157, 13),
-        ),
-      );
-      // Reset and go back to home
-      _resetEventData();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
-    } else {
-      _showErrorSnackBar("${StringRes.at("event_save_failed")} ($response)");
-    }
-  }
-
-  // check if all the fields are set
-  bool _isEventValid() {
-    if (titleController.text.isNotEmpty &&
-        selectedCategoryName.isNotEmpty &&
-        selectedTypeName.isNotEmpty &&
-        _selectedDate != null &&
-        _selectedTime != null &&
-        _locationName.isNotEmpty) {
-      return true;
-    }
-
-    return false;
-  }
-
-  // todo: remove
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: const Color.fromARGB(200, 255, 49, 49),
-      ),
+    // step 2: persist the event
+    final int res = await _dbSet.storeEvent(
+      {
+        'title':            _titleController.text.trim(),
+        'category':         _categoryName,
+        'type':             _typeName,
+        'date':             '${_date!.year}-${_date!.month}-${_date!.day}',
+        'time':             '${_time!.hour}:${_time!.minute}',
+        'max_guests':       _maxGuests,
+        'price':            _price,
+        'description':      _description,
+        'background_image': _bgImage,
+      },
+      placeId: placeId,
     );
+
+    if (!mounted) return;
+
+    if (res == 200 || res == 201) {
+      _showSnackBar(StringRes.at('event_saved_success'));
+      _resetFields();
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
+    } else {
+      _showSnackBar('${StringRes.at("event_save_failed")} ($res)', isError: true);
+    }
   }
 
-  // --- INTERACTIVE GRID LOGIC ---
-  Future<void> _selectDate() async {
-    _titleFocusNode.unfocus();
+  void _resetFields() {
+    setState(() {
+      _bgImage      = 'assets/images/bg/default_create_event_bg.jpg';
+      _categoryName = 'cinema';
+      _categoryIcon = 'assets/icons/categories/cinema.png';
+      _typeName     = 'Public';
+      _typeIcon     = 'assets/icons/event/public.png';
+      _titleController.clear();
+      _date = _time = null;
+      _description = _maxGuests = _price = null;
+      _locationName = _locationAddress = '';
+      _locationLat = _locationLng = null;
+      _locationPrecise = false;
+    });
+  }
+
+  // ── pickers ────────────────────────────────────────────────────────────────
+
+  Future<void> _pickBackground() async {
+    final XFile? file = await _picker.pickImage(source: ImageSource.gallery);
+    if (file != null) setState(() => _bgImage = file.path);
+  }
+
+  Future<void> _pickDate() async {
+    _titleFocus.unfocus();
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2101),
+      initialDate: _date ?? DateTime.now(),
+      firstDate:   DateTime.now(),
+      lastDate:    DateTime(2101),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
+    if (picked != null) setState(() => _date = picked);
   }
 
-  Future<void> _selectTime() async {
-    _titleFocusNode.unfocus();
+  Future<void> _pickTime() async {
+    _titleFocus.unfocus();
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
+      initialTime: _time ?? TimeOfDay.now(),
     );
-    if (picked != null) setState(() => _selectedTime = picked);
+    if (picked != null) setState(() => _time = picked);
   }
 
-  // popup to digit text for a specific event data
-  void _showTextInputPopup(String title, String? currentValue, Function(String) onSave, {bool isNumeric = false, bool isMultiline = false}) {
-    _titleFocusNode.unfocus();
-    final TextEditingController popupController = TextEditingController(text: currentValue);
+  // ── navigation helpers ─────────────────────────────────────────────────────
 
-    VezPopup.show(
-      context: context,
-      width: MediaQuery.of(context).size.width * 0.8,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-          const SizedBox(height: 15),
-          TextField(
-            controller: popupController,
-            style: const TextStyle(color: Colors.white),
-            keyboardType: isNumeric ? TextInputType.number : (isMultiline ? TextInputType.multiline : TextInputType.text),
-            maxLines: isMultiline ? 4 : 1,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white.withOpacity(0.1),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.white24)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.blueAccent)),
-            ),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-            onPressed: () {
-              FocusScope.of(context).unfocus();
-              onSave(popupController.text);
-              Navigator.pop(context);
-            },
-            child: const Text("Save"),
-          )
-        ],
-      ),
-    );
+  void _goToHome() {
+    HapticFeedback.selectionClick();
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
   }
 
-  // --- POPUPS ---
-  // todo: improve the UI
-  // category popup
+  void _goToProfile() => Navigator.pushReplacement(
+    context, MaterialPageRoute(builder: (_) => ProfilePage()),
+  );
+
+  // ── snack bar helper ───────────────────────────────────────────────────────
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: isError
+          ? const Color.fromARGB(200, 255, 49, 49)
+          : const Color.fromARGB(200, 8, 157, 13),
+    ));
+  }
+
+  // ── popups ─────────────────────────────────────────────────────────────────
+
+  /// scrollable list of event categories
   void _showCategoryPopup() {
-    _titleFocusNode.unfocus();
-    final double width = MediaQuery.of(context).size.width * 0.50;
-    final double height = MediaQuery.of(context).size.height * 0.5;
+    _titleFocus.unfocus();
+    final double pw = MediaQuery.of(context).size.width  * 0.50;
+    final double ph = MediaQuery.of(context).size.height * 0.50;
 
     VezPopup.show(
       context: context,
-      width: width,
-      height: height,
+      width:  pw, height: ph,
       backgroundColor: const Color.fromARGB(128, 6, 0, 92),
-      borderColor: const Color.fromARGB(128, 0, 10, 218),
+      borderColor:     const Color.fromARGB(128, 0, 10, 218),
       child: ListView.separated(
-        // fisic in iOS style: scroll more natural and with a bouncing
-        physics: const BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
-        ),
-
-        itemCount: categoriesList.length, // number of items to display
-
-        padding: const EdgeInsets.symmetric(vertical: 0),
-        separatorBuilder: (context, index) => _customDivider(width), // row separator
-
-        itemBuilder: (context, i) => ListTile(
+        physics:    const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding:    EdgeInsets.zero,
+        itemCount:  _categories.length,
+        separatorBuilder: (_, __) => _PopupDivider(width: pw),
+        itemBuilder: (_, i) => ListTile(
           dense: true,
           visualDensity: VisualDensity.compact,
           contentPadding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-          leading: ImageIcon(
-            AssetImage(categoriesList[i]["icon"]!),
-            color: Colors.white,
-            size: 40,
-          ),
+          leading: ImageIcon(AssetImage(_categories[i]['icon']!), color: Colors.white, size: 38),
           title: Text(
-            StringRes.at(categoriesList[i]["name"]!),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
+            StringRes.at(_categories[i]['name']!),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
           ),
           onTap: () {
             setState(() {
-              selectedCategoryName = categoriesList[i]["name"]!;
-              selectedCategoryIcon = categoriesList[i]["icon"]!;
+              _categoryName = _categories[i]['name']!;
+              _categoryIcon = _categories[i]['icon']!;
             });
             Navigator.pop(context);
           },
@@ -339,250 +294,154 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
-  // typology popup -> same UI of the group popup of the home screen
+  /// three event-type options (exclusive / private / public)
   void _showTypePopup() {
-    _titleFocusNode.unfocus();
-    final double width = MediaQuery.of(context).size.width * 0.50;
+    _titleFocus.unfocus();
+    final double pw = MediaQuery.of(context).size.width * 0.50;
 
     VezPopup.show(
       context: context,
-      width: width,
+      width: pw,
       backgroundColor: const Color.fromARGB(200, 14, 14, 14),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildPopupItem(
-            icon: eventTypesList[0]["icon"]!,
-            label: StringRes.at("exclusive"),
-            onTap: () {
-              setState(() {
-                selectedTypeName = eventTypesList[0]["name"]!;
-                selectedTypeIcon = eventTypesList[0]["icon"]!;
-              });
-              Navigator.pop(context);
-            },
-          ),
-          _customDivider(width), // horizontal divider
-          _buildPopupItem(
-            icon: eventTypesList[1]["icon"]!,
-            label: StringRes.at("private"),
-            onTap: () {
-              setState(() {
-                selectedTypeName = eventTypesList[1]["name"]!;
-                selectedTypeIcon = eventTypesList[1]["icon"]!;
-              });
-              Navigator.pop(context);
-            },
-          ),
-          _customDivider(width),
-          _buildPopupItem(
-            icon: eventTypesList[2]["icon"]!,
-            label: StringRes.at("public"),
-            onTap: () {
-              setState(() {
-                selectedTypeName = eventTypesList[2]["name"]!;
-                selectedTypeIcon = eventTypesList[2]["icon"]!;
-              });
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showConfirmationPopup(String title, VoidCallback onConfirm) {
-    _titleFocusNode.unfocus();
-    VezPopup.show(
-      context: context,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text("NO", style: TextStyle(color: Colors.redAccent))),
-              TextButton(onPressed: () { Navigator.pop(context); onConfirm(); }, child: const Text("OK", style: TextStyle(color: Colors.green))),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  // --- SUPPORT WIDGETS ---
-  Widget _buildTopButton(String iconPath, VoidCallback onTap, {bool isBlue = false}) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact(); // haptic feedback
-        onTap();
-      },
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isBlue ? const Color.fromARGB(51, 0, 11, 223) : const Color.fromARGB(51, 0, 0, 0),
-              border: Border.all(color: isBlue ? const Color.fromARGB(128, 0, 11, 223) : const Color.fromARGB(128, 255, 255, 255), width: 2),
-            ),
-            child: Center(child: ImageIcon(AssetImage(iconPath), color: Colors.white, size: 30)), // icon size
-          ),
-        ),
-      ),
-    );
-  }
-
-  // widget to create and manage the grid of the event details
-  Widget _buildGridCell(String title, String iconPath, String? displayValue, VoidCallback onTap, {int flex = 1}) {
-    return Expanded(
-      flex: flex,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          // change 'vertical' to manage the height
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // icon
-              ImageIcon(AssetImage(iconPath), color: Colors.white, size: 20),
-              const SizedBox(height: 0), // space between icon and text
-
-              // text
-              Text(
-                (displayValue != null && displayValue.isNotEmpty) ? displayValue : title,
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // widget to create the row divider
-  Widget _customDivider(double popupWidth) {
-    // proportion of ~70%
-    double calculatedWidth = popupWidth * 0.7;
-    // width of the divider
-    double finalWidth = calculatedWidth.clamp(142.0, popupWidth - 32.0);
-
-    return Center(
-      child: Container(
-        width: finalWidth,
-        height: 2,
-        decoration: BoxDecoration(
-          color: Colors.white54,
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPopupItem({
-    required String icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10), // I 10px di Figma
-        child: Row(
+        children: List.generate(_eventTypes.length, (i) => Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(icon, width: 40, height: 40), // Icona dimensione 40
-            const SizedBox(width: 15),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
+            _PopupListItem(
+              icon:  _eventTypes[i]['icon']!,
+              label: StringRes.at(_eventTypes[i]['name']!.toLowerCase()),
+              onTap: () {
+                setState(() {
+                  _typeName = _eventTypes[i]['name']!;
+                  _typeIcon = _eventTypes[i]['icon']!;
+                });
+                Navigator.pop(context);
+              },
             ),
+            if (i < _eventTypes.length - 1) _PopupDivider(width: pw),
           ],
-        ),
+        )),
       ),
     );
   }
 
-  // --- LOCATION LOGIC ---
+  /// text-input popup for description, guests, price, etc.
+  void _showTextInputPopup(
+    String title,
+    String? current,
+    ValueChanged<String> onSave, {
+    bool isNumeric   = false,
+    bool isMultiline = false,
+  }) {
+    _titleFocus.unfocus();
+    final TextEditingController ctrl = TextEditingController(text: current);
+
+    VezPopup.show(
+      context: context,
+      width: MediaQuery.of(context).size.width * 0.80,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 14),
+          TextField(
+            controller:  ctrl,
+            style:       const TextStyle(color: Colors.white),
+            keyboardType: isNumeric
+                ? TextInputType.number
+                : (isMultiline ? TextInputType.multiline : TextInputType.text),
+            maxLines: isMultiline ? 4 : 1,
+            decoration: InputDecoration(
+              filled:    true,
+              fillColor: Colors.white.withOpacity(0.1),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Colors.white24),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Colors.blueAccent),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+            onPressed: () {
+              FocusScope.of(context).unfocus();
+              onSave(ctrl.text);
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// two-option popup: free-text name OR map picker
   void _showLocationTypeSelector() {
-    _titleFocusNode.unfocus();
+    _titleFocus.unfocus();
     VezPopup.show(
       context: context,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(StringRes.at("set_location"), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+          Text(StringRes.at('set_location'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 14),
 
-          // 1) simple name -> "marco's house"
+          // option 1: simple name
           GestureDetector(
             onTap: () {
               Navigator.pop(context);
-              _showTextInputPopup("Location Name", _locationName, (val) {
-                setState(() {
-                  _locationName = val;
-                  _isLocationPrecise = false;
-                  _locationAddress = "";
-                  _locationLat = null;
-                  _locationLng = null;
-                });
-              });
+              _showTextInputPopup('Location Name', _locationName, (val) => setState(() {
+                _locationName    = val;
+                _locationPrecise = false;
+                _locationAddress = '';
+                _locationLat = _locationLng = null;
+              }));
             },
             child: VezGlass.container(
-              padding: const EdgeInsets.all(15),
-              child: const Row(
-                children: [
-                  Icon(Icons.edit, color: Colors.white),
-                  SizedBox(width: 15),
-                  Expanded(child: Text("Simple Name (e.g. Casa Marco)", style: TextStyle(color: Colors.white, fontSize: 16))),
-                ],
-              ),
+              padding: const EdgeInsets.all(14),
+              child: const Row(children: [
+                Icon(Icons.edit, color: Colors.white),
+                SizedBox(width: 14),
+                Expanded(child: Text('Simple name (e.g. Marco\'s place)',
+                    style: TextStyle(color: Colors.white, fontSize: 15))),
+              ]),
             ),
           ),
 
-          const SizedBox(height: 15),
+          const SizedBox(height: 12),
 
-          // 2) precise map location -> open the map -> set the place -> everything perfect
+          // option 2: map picker
           GestureDetector(
             onTap: () async {
               Navigator.pop(context);
-              // Apriamo la pagina della mappa (che creeremo al passo 3)
-              final result = await Navigator.push(
+              final result = await Navigator.push<Map<String, dynamic>>(
                 context,
-                MaterialPageRoute(builder: (context) => const VezMapPicker()),
+                MaterialPageRoute(builder: (_) => const VezMapPicker()),
               );
-
-              // Se l'utente ha salvato un luogo dalla mappa, aggiorniamo i dati
-              if (result != null && result is Map<String, dynamic>) {
+              if (result != null) {
                 setState(() {
-                  _locationName = result['name'] ?? "Selected Location";
-                  _locationAddress = result['address'];
-                  _locationLat = result['latitude'];
-                  _locationLng = result['longitude'];
-                  _isLocationPrecise = result['is_precise'];
+                  _locationName    = result['name']      ?? 'Selected Location';
+                  _locationAddress = result['address']   ?? '';
+                  _locationLat     = result['latitude']  as double?;
+                  _locationLng     = result['longitude'] as double?;
+                  _locationPrecise = result['is_precise'] as bool? ?? false;
                 });
               }
             },
             child: VezGlass.container(
-              padding: const EdgeInsets.all(15),
-              child: const Row(
-                children: [
-                  Icon(Icons.map, color: Colors.white),
-                  SizedBox(width: 15),
-                  Expanded(child: Text("Precise Location (Map)", style: TextStyle(color: Colors.white, fontSize: 16))),
-                ],
-              ),
+              padding: const EdgeInsets.all(14),
+              child: const Row(children: [
+                Icon(Icons.map, color: Colors.white),
+                SizedBox(width: 14),
+                Expanded(child: Text('Precise location (Map)',
+                    style: TextStyle(color: Colors.white, fontSize: 15))),
+              ]),
             ),
           ),
         ],
@@ -590,360 +449,702 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
-  // --- PAGE LAYOUT ---
+  /// yes / no confirmation before saving or deleting
+  void _showConfirmation(String title, VoidCallback onConfirm) {
+    _titleFocus.unfocus();
+    VezPopup.show(
+      context: context,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('NO', style: TextStyle(color: Colors.redAccent, fontSize: 16)),
+              ),
+              TextButton(
+                onPressed: () { Navigator.pop(context); onConfirm(); },
+                child: const Text('OK', style: TextStyle(color: Colors.green, fontSize: 16)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── build ──────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    String? formattedDate = _selectedDate != null ? "${_selectedDate!.day}/${_selectedDate!.month}" : null;
-    String? formattedTime = _selectedTime?.format(context);
+    final double sh = MediaQuery.of(context).size.height;
+    final double sw = MediaQuery.of(context).size.width;
+    final double s  = (sw / 390).clamp(0.8, 1.2);
 
-    // defining size based on the screen size
-    final double screenHeight = MediaQuery.of(context).size.height;
-    final double screenWidth = MediaQuery.of(context).size.width;
-    // height at 65% of the screen, width at 85%
-    final double cardHeight = screenHeight * 0.65;
-    final double cardWidth = screenWidth * 0.85;
-    // this is for the SizedBoxes
-    final double s = (screenWidth / 390).clamp(0.8, 1.2);
+    // event card occupies 65 % of screen height and 85 % of width
+    final double cardH = sh * 0.65;
+    final double cardW = sw * 0.85;
 
-    final double rOuter = 40 * s; // Raggio responsivo card
-    final double rInner = 30 * s; // Raggio responsivo grid componente
+    // responsive corner radii
+    final double rOuter = 40 * s;
+    final double rInner = 30 * s;
+
+    final String? fmtDate = _date != null ? '${_date!.day}/${_date!.month}' : null;
+    final String? fmtTime = _time?.format(context);
 
     return VezPageLayout(
-      // --- TOP NAVBAR (PARAMETERS) ---
-      searchController: searchController,
+      // ── top navbar ──────────────────────────────────────────────────────
+      searchController: _searchController,
+      searchHint:       StringRes.at('search'),
+      profileIconPath:  _profilePhoto,
+      isProfileAvatar:  true,
+      onProfileTap:     _goToProfile,
+      filterIconPath:   'assets/icons/profile_page/following_requests.png',
+      onFilterSelected: (_) {},
 
-      // user profile photo
-      profileIconPath: _profilePhoto,
-      isProfileAvatar: true,
-      // tapping on the profile photo to open the user profile
-      onProfileTap: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => ProfilePage()),
-        );
-      },
-      searchHint: StringRes.at("search"),
-      filterIconPath: "assets/icons/profile_page/following_requests.png",
-      onFilterSelected: (index) {
-        setState(() {
-        });
-        // TODO: will this do something? idk
-      },
-
-      // --- BOTTOM NAVBAR ---
-      bottomNavBar: VezGlass.container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-        radius: BorderRadius.circular(40),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const ImageIcon(AssetImage("assets/icons/nav_bar/go_to_home_page.png"), color: Colors.white),
-              iconSize: 30,
-              onPressed: () => {
-                HapticFeedback.selectionClick(), // haptic feedback
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomePage()))
-              },
-            ),
-            SizedBox(width: 20 * s),
-
-            IconButton(
-              icon: const ImageIcon(AssetImage("assets/icons/nav_bar/create_event.png"), color: Colors.white),
-              iconSize: 30,
-              onPressed: () {}, // nothing, user is already in the home screen
-            ),
-
-            SizedBox(width: 20 * s),
-
-            IconButton(
-              icon: const ImageIcon(AssetImage("assets/icons/nav_bar/notifications.png"), color: Colors.white),
-              iconSize: 30,
-              onPressed: () {},
-            ),
-          ],
-        ),
+      // ── bottom navbar ────────────────────────────────────────────────────
+      bottomNavBar: _BottomNavPill(
+        s: s,
+        activeIndex:        1,   // create-event tab is active
+        onHomeTap:          _goToHome,
+        onCreateEventTap:   () {},   // already on this screen
+        onNotificationsTap: () {},
       ),
 
-      // --- CENTRE (EVENT CREATION CARD) ---
+      // ── zone-2 body: centered event creation card ────────────────────────
       body: Center(
-        child: Container(
-          width: cardWidth,
-          height: cardHeight,
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.5), // Sfondo fumé card
-            borderRadius: BorderRadius.circular(rOuter),
+        child: _EventCard(
+          width:   cardW,
+          height:  cardH,
+          rOuter:  rOuter,
+          rInner:  rInner,
+          s:       s,
+          bgImage: _bgImage,
 
-            // --- 1. FIGMA SPEC: NO BORDERS (BORDER: NULL) ---
-            border: null,
+          // card content passed as callbacks / values
+          categoryIcon:  _categoryIcon,
+          typeIcon:      _typeIcon,
+          titleController: _titleController,
+          titleFocus:    _titleFocus,
 
-            // --- 2. FIGMA SPEC: DROP SHADOW BIANCA 50% (Spread 5, Blur ~15-20) ---
-            boxShadow: [
-              BoxShadow(
-                color: const Color.fromARGB(128, 255, 255, 255),
-                blurRadius: 5.0, // dispersione
-                spreadRadius: 0, // spread
-                offset: const Offset(0.0, 0.0), // offset position x and y
-              ),
-            ],
+          formattedDate: fmtDate,
+          formattedTime: fmtTime,
+          locationName:  _locationName.isNotEmpty ? _locationName : null,
+          description:   _description,
+          maxGuests:     _maxGuests,
+          price:         _price != null ? '$_price€' : null,
+
+          isValid:       _isValid,
+
+          onPickBackground:       _pickBackground,
+          onCategoryTap:          _showCategoryPopup,
+          onTypeTap:              _showTypePopup,
+          onDateTap:              _pickDate,
+          onTimeTap:              _pickTime,
+          onLocationTap:          _showLocationTypeSelector,
+          onDescriptionTap:       () => _showTextInputPopup(
+              StringRes.at('set_details'), _description,
+              (v) => setState(() => _description = v), isMultiline: true),
+          onMaxGuestsTap:         () => _showTextInputPopup(
+              StringRes.at('set_max_guests'), _maxGuests,
+              (v) => setState(() => _maxGuests = v), isNumeric: true),
+          onPriceTap:             () => _showTextInputPopup(
+              StringRes.at('set_price'), _price,
+              (v) => setState(() => _price = v), isNumeric: true),
+          onSaveTap:              () => _showConfirmation(StringRes.at('save_event'), _saveEvent),
+          onDeleteTap:            () => _showConfirmation(StringRes.at('delete_data'), _resetFields),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _EventCard — the full create-event card (zone-2 centre element)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EventCard extends StatelessWidget {
+  final double width, height, rOuter, rInner, s;
+  final String bgImage, categoryIcon, typeIcon;
+  final TextEditingController titleController;
+  final FocusNode titleFocus;
+
+  final String? formattedDate, formattedTime, locationName, description, maxGuests, price;
+  final bool isValid;
+
+  final VoidCallback onPickBackground;
+  final VoidCallback onCategoryTap, onTypeTap;
+  final VoidCallback onDateTap, onTimeTap, onLocationTap;
+  final VoidCallback onDescriptionTap, onMaxGuestsTap, onPriceTap;
+  final VoidCallback onSaveTap, onDeleteTap;
+
+  const _EventCard({
+    required this.width, required this.height,
+    required this.rOuter, required this.rInner, required this.s,
+    required this.bgImage, required this.categoryIcon, required this.typeIcon,
+    required this.titleController, required this.titleFocus,
+    required this.formattedDate, required this.formattedTime,
+    required this.locationName, required this.description,
+    required this.maxGuests, required this.price,
+    required this.isValid,
+    required this.onPickBackground,
+    required this.onCategoryTap, required this.onTypeTap,
+    required this.onDateTap, required this.onTimeTap, required this.onLocationTap,
+    required this.onDescriptionTap, required this.onMaxGuestsTap, required this.onPriceTap,
+    required this.onSaveTap, required this.onDeleteTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width, height: height,
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(128, 0, 0, 0),
+        borderRadius: BorderRadius.circular(rOuter),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromARGB(100, 255, 255, 255),
+            blurRadius: 6, spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // ── dynamic background image ────────────────────────────────────
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(rOuter),
+              child: Stack(children: [
+                Positioned.fill(
+                  child: bgImage.startsWith('assets')
+                      ? Image.asset(bgImage, fit: BoxFit.cover)
+                      : Image.file(File(bgImage), fit: BoxFit.cover),
+                ),
+                // dark overlay for text legibility
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(80, 0, 0, 0),
+                      borderRadius: BorderRadius.circular(rOuter),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
           ),
 
-          // centre of the card
-          child: Stack(
-            children: [
-              // 1. dynamic background (Avvolto in ClipRRect per angoli perfetti)
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(rOuter),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: eventBackgroundImage.startsWith('assets')
-                          ? Image.asset(eventBackgroundImage, fit: BoxFit.cover)
-                          : Image.file(File(eventBackgroundImage), fit: BoxFit.cover),
-                      ),
-                      // Overlay scuro per contrasto
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: const Color.fromARGB(80, 0, 0, 0), // Un filo più scuro (80 invece di 51)
-                            borderRadius: BorderRadius.circular(rOuter),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                )
-              ),
-
-              // 2. card content
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
+          // ── card content ────────────────────────────────────────────────
+          Padding(
+            padding: EdgeInsets.all(14 * s),
+            child: Column(
+              children: [
+                // top row: category + type buttons  |  preview badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // top buttons
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(children: [
-                          _buildTopButton(selectedCategoryIcon, _showCategoryPopup, isBlue: true),
-
-                          SizedBox(width: 15 * s),
-
-                          _buildTopButton(selectedTypeIcon, _showTypePopup),
-                        ]),
-                        // Preview Badge with Blur
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                  color: const Color.fromARGB(128, 255, 195, 0), // Yellow Preview
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: const Color.fromARGB(204, 255, 195, 0), width: 2)
-                              ),
-                              child: Text(StringRes.at("preview"), style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const Spacer(),
-
-                    // Edit Background Button
-                    GestureDetector(
-                      onTap: _pickBackgroundImage,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(51, 255, 255, 255),
-                              border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(StringRes.at("edit_bg"), style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 20 * s),
-
-                    // main info grid (Title + Grid)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Color.fromARGB(51, 0, 0, 0),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Color.fromARGB(128, 255, 255, 255), width: 2),
-                          ),
-                          child: Column(
-                            children: [
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  TextField(
-                                    controller: titleController,
-                                    focusNode: _titleFocusNode,
-                                    maxLength: 15,
-                                    // SE ha il focus allinea a sinistra, ALTRIMENTI al centro
-                                    textAlign: _titleFocusNode.hasFocus ? TextAlign.left : TextAlign.center,
-                                    onChanged: (value) => setState(() {}),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "Title",
-                                      hintStyle: const TextStyle(color: Colors.white54),
-                                      border: InputBorder.none,
-                                      counterText: "",
-                                      // Padding condizionale:
-                                      // Quando scrivi (focus) lasciamo spazio a destra per il numero.
-                                      // Quando non scrivi, mettiamo 0 per una centratura perfetta.
-                                      contentPadding: EdgeInsets.only(
-                                        left: _titleFocusNode.hasFocus ? 20 : 0,
-                                        right: _titleFocusNode.hasFocus ? 80 : 0,
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Il contatore appare solo durante la scrittura
-                                  if (_titleFocusNode.hasFocus)
-                                    Positioned(
-                                      right: 20,
-                                      child: Text(
-                                        "${titleController.text.length}/15",
-                                        style: const TextStyle(
-                                          color: Colors.white54,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-
-                              const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 2),
-
-                              // Grid Row 1
-                              IntrinsicHeight(
-                                child: Row(
-                                  children: [
-                                    _buildGridCell(StringRes.at("date"), "assets/icons/event/calendar.png", formattedDate, _selectDate),
-                                    const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
-                                    _buildGridCell(StringRes.at("time"), "assets/icons/event/time.png", formattedTime, _selectTime),
-                                    const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
-                                    _buildGridCell(StringRes.at("location"), "assets/icons/event/location.png", _locationName.isNotEmpty ? _locationName : null, _showLocationTypeSelector),
-                                    const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
-                                    _buildGridCell(StringRes.at("details"), "assets/icons/event/description.png", _description, () => _showTextInputPopup(StringRes.at("set_details"), _description, (val) => setState(() => _description = val), isMultiline: true)),
-                                  ],
-                                ),
-                              ),
-
-                              const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 2),
-
-                              // Grid Row 2
-                              IntrinsicHeight(
-                                child: Row(
-                                  children: [
-                                    _buildGridCell(StringRes.at("max_guests"), "assets/icons/event/guests.png", _maxGuests, () => _showTextInputPopup(StringRes.at("set_max_guests"), _maxGuests, (val) => setState(() => _maxGuests = val), isNumeric: true)),
-                                    const VerticalDivider(color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2),
-                                    _buildGridCell(StringRes.at("price"), "assets/icons/event/price.png", _price != null ? "$_price€" : null, () => _showTextInputPopup(StringRes.at("set_price"), _price, (val) => setState(() => _price = val), isNumeric: true)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 20 * s),
-
-                    // action buttons (save & delete)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // save Button
-                        GestureDetector(
-                          onTap: _isEventValid() // clickable only if all the data are set
-                            ? () => {
-                              HapticFeedback.mediumImpact(), // haptic feedback
-                              _showConfirmationPopup(StringRes.at("save_event"), saveEvent)
-                            }
-                          : null,
-                          child: ClipOval(
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: _isEventValid()
-                                    ? const Color.fromARGB(128, 8, 157, 13) // original green
-                                    : const Color.fromARGB(128, 0, 0, 0),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: _isEventValid()
-                                      ? const Color.fromARGB(204, 8, 157, 13)
-                                      : Colors.grey,
-                                    width: 2),
-                                ),
-                                child: const ImageIcon(AssetImage("assets/icons/profile_page/save.png"), color: Colors.white, size: 30),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(width: 30 * s),
-
-                        // delete Button
-                        GestureDetector(
-                          onTap: _isEventValid() // clickable only if all the data are set
-                            ? () => {
-                              HapticFeedback.mediumImpact(), // haptic feedback
-                              _showConfirmationPopup(StringRes.at("delete_data"), _resetEventData)
-                            }
-                            : null,
-                          child: ClipOval(
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: _isEventValid()
-                                    ? const Color.fromARGB(128, 255, 49, 49) // original red
-                                    : const Color.fromARGB(128, 0, 0, 0),
-                                shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: _isEventValid()
-                                      ? const Color.fromARGB(204, 255, 49, 49)
-                                      : Colors.grey,
-                                    width: 2),
-                                ),
-                                child: const ImageIcon(AssetImage("assets/icons/profile_page/delete.png"), color: Colors.white, size: 30),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    Row(children: [
+                      _GlassCircleButton(icon: categoryIcon, onTap: onCategoryTap, isBlue: true, s: s),
+                      SizedBox(width: 12 * s),
+                      _GlassCircleButton(icon: typeIcon, onTap: onTypeTap, s: s),
+                    ]),
+                    _PreviewBadge(label: 'Preview'), // todo: wire to real preview
                   ],
                 ),
+
+                const Spacer(),
+
+                // "edit background" button
+                _EditBgButton(onTap: onPickBackground, s: s),
+
+                SizedBox(height: 14 * s),
+
+                // info grid: title + date/time/location/details + guests/price
+                _InfoGrid(
+                  rInner:          rInner,
+                  s:               s,
+                  titleController: titleController,
+                  titleFocus:      titleFocus,
+                  formattedDate:   formattedDate,
+                  formattedTime:   formattedTime,
+                  locationName:    locationName,
+                  description:     description,
+                  maxGuests:       maxGuests,
+                  price:           price,
+                  onDateTap:       onDateTap,
+                  onTimeTap:       onTimeTap,
+                  onLocationTap:   onLocationTap,
+                  onDescriptionTap:onDescriptionTap,
+                  onMaxGuestsTap:  onMaxGuestsTap,
+                  onPriceTap:      onPriceTap,
+                ),
+
+                SizedBox(height: 14 * s),
+
+                // save / delete action buttons
+                _ActionButtons(
+                  s: s,
+                  isValid:     isValid,
+                  onSaveTap:   onSaveTap,
+                  onDeleteTap: onDeleteTap,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _GlassCircleButton — blur-backed circle icon button used inside the card
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GlassCircleButton extends StatelessWidget {
+  final String icon;
+  final VoidCallback onTap;
+  final bool isBlue;
+  final double s;
+
+  const _GlassCircleButton({
+    required this.icon,
+    required this.onTap,
+    this.isBlue = false,
+    required this.s,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color fill   = isBlue
+        ? const Color.fromARGB(51, 0, 11, 223)
+        : const Color.fromARGB(51, 0, 0, 0);
+    final Color border = isBlue
+        ? const Color.fromARGB(128, 0, 11, 223)
+        : const Color.fromARGB(128, 255, 255, 255);
+
+    return GestureDetector(
+      onTap: () { HapticFeedback.mediumImpact(); onTap(); },
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: EdgeInsets.all(6 * s),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle, color: fill,
+              border: Border.all(color: border, width: 2),
+            ),
+            child: ImageIcon(AssetImage(icon), color: Colors.white, size: 28),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _PreviewBadge — yellow pill in the top-right of the card
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PreviewBadge extends StatelessWidget {
+  final String label;
+
+  const _PreviewBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(128, 255, 195, 0),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color.fromARGB(204, 255, 195, 0), width: 2),
+          ),
+          child: Text(label,
+              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _EditBgButton — "Edit Background" frosted pill
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EditBgButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final double s;
+
+  const _EditBgButton({required this.onTap, required this.s});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16 * s, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(51, 255, 255, 255),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+            ),
+            child: Text(StringRes.at('edit_bg'),
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _InfoGrid — blur-backed container with title field + two rows of cells
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _InfoGrid extends StatelessWidget {
+  final double rInner, s;
+  final TextEditingController titleController;
+  final FocusNode titleFocus;
+  final String? formattedDate, formattedTime, locationName, description, maxGuests, price;
+  final VoidCallback onDateTap, onTimeTap, onLocationTap;
+  final VoidCallback onDescriptionTap, onMaxGuestsTap, onPriceTap;
+
+  const _InfoGrid({
+    required this.rInner, required this.s,
+    required this.titleController, required this.titleFocus,
+    required this.formattedDate, required this.formattedTime,
+    required this.locationName, required this.description,
+    required this.maxGuests, required this.price,
+    required this.onDateTap, required this.onTimeTap, required this.onLocationTap,
+    required this.onDescriptionTap, required this.onMaxGuestsTap, required this.onPriceTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(rInner),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(51, 0, 0, 0),
+            borderRadius: BorderRadius.circular(rInner),
+            border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+          ),
+          child: Column(
+            children: [
+              // editable title with live character counter
+              _TitleField(controller: titleController, focus: titleFocus),
+
+              const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 2),
+
+              // row 1: date / time / location / description
+              IntrinsicHeight(
+                child: Row(children: [
+                  _GridCell(label: StringRes.at('date'),     icon: 'assets/icons/event/calendar.png',    value: formattedDate, onTap: onDateTap),
+                  _vDivider,
+                  _GridCell(label: StringRes.at('time'),     icon: 'assets/icons/event/time.png',        value: formattedTime, onTap: onTimeTap),
+                  _vDivider,
+                  _GridCell(label: StringRes.at('location'), icon: 'assets/icons/event/location.png',    value: locationName,  onTap: onLocationTap),
+                  _vDivider,
+                  _GridCell(label: StringRes.at('details'),  icon: 'assets/icons/event/description.png', value: description,   onTap: onDescriptionTap),
+                ]),
+              ),
+
+              const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 2),
+
+              // row 2: max guests / price
+              IntrinsicHeight(
+                child: Row(children: [
+                  _GridCell(label: StringRes.at('max_guests'), icon: 'assets/icons/event/guests.png', value: maxGuests, onTap: onMaxGuestsTap),
+                  _vDivider,
+                  _GridCell(label: StringRes.at('price'),      icon: 'assets/icons/event/price.png',  value: price,     onTap: onPriceTap),
+                ]),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  static const Widget _vDivider = VerticalDivider(
+    color: Color.fromARGB(128, 255, 255, 255),
+    width: 2, thickness: 2,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _TitleField — center-aligned title with focus-aware counter
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TitleField extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focus;
+
+  const _TitleField({required this.controller, required this.focus});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        TextField(
+          controller: controller,
+          focusNode:  focus,
+          maxLength:  15,
+          onChanged:  (_) {},   // rebuilds handled by the parent via focus listener
+          textAlign:  focus.hasFocus ? TextAlign.left : TextAlign.center,
+          style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+          decoration: InputDecoration(
+            hintText: 'Title',
+            hintStyle: const TextStyle(color: Colors.white),
+            border: InputBorder.none,
+            counterText: '',
+            contentPadding: EdgeInsets.only(
+              left:  focus.hasFocus ? 18 : 0,
+              right: focus.hasFocus ? 72 : 0,
+            ),
+          ),
+        ),
+        // character counter — visible only while editing
+        if (focus.hasFocus)
+          Positioned(
+            right: 18,
+            child: Text(
+              '${controller.text.length}/15',
+              style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _GridCell — one cell of the event-details grid (icon + label or value)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GridCell extends StatelessWidget {
+  final String label, icon;
+  final String? value;
+  final VoidCallback onTap;
+
+  const _GridCell({
+    required this.label, required this.icon,
+    required this.value, required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+          child: Column(
+            mainAxisSize:      MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ImageIcon(AssetImage(icon), color: Colors.white, size: 20),
+              Text(
+                (value != null && value!.isNotEmpty) ? value! : label,
+                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _ActionButtons — save (green) / delete (red) buttons at the bottom of the card
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ActionButtons extends StatelessWidget {
+  final double s;
+  final bool isValid;
+  final VoidCallback onSaveTap;
+  final VoidCallback onDeleteTap;
+
+  const _ActionButtons({
+    required this.s,
+    required this.isValid,
+    required this.onSaveTap,
+    required this.onDeleteTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _CardActionCircle(
+          icon:        'assets/icons/profile_page/save.png',
+          active:      isValid,
+          activeColor: const Color.fromARGB(128, 8, 157, 13),
+          activeBorder:const Color.fromARGB(204, 8, 157, 13),
+          onTap:       isValid ? onSaveTap : null,
+        ),
+        SizedBox(width: 28 * s),
+        _CardActionCircle(
+          icon:        'assets/icons/profile_page/delete.png',
+          active:      isValid,
+          activeColor: const Color.fromARGB(128, 255, 49, 49),
+          activeBorder:const Color.fromARGB(204, 255, 49, 49),
+          onTap:       isValid ? onDeleteTap : null,
+        ),
+      ],
+    );
+  }
+}
+
+class _CardActionCircle extends StatelessWidget {
+  final String icon;
+  final bool active;
+  final Color activeColor, activeBorder;
+  final VoidCallback? onTap;
+
+  const _CardActionCircle({
+    required this.icon, required this.active,
+    required this.activeColor, required this.activeBorder,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap != null
+          ? () { HapticFeedback.mediumImpact(); onTap!(); }
+          : null,
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color:  active ? activeColor : const Color.fromARGB(128, 0, 0, 0),
+              border: Border.all(
+                color: active ? activeBorder : Colors.grey,
+                width: 2,
+              ),
+            ),
+            child: ImageIcon(AssetImage(icon), color: Colors.white, size: 28),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _BottomNavPill — identical pill used on every screen (see home_screen.dart).
+// todo: move to a shared vez_bottom_nav.dart once the project grows.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BottomNavPill extends StatelessWidget {
+  final double s;
+  final int activeIndex;
+  final VoidCallback onHomeTap, onCreateEventTap, onNotificationsTap;
+
+  const _BottomNavPill({
+    required this.s, required this.activeIndex,
+    required this.onHomeTap, required this.onCreateEventTap,
+    required this.onNotificationsTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return VezGlass.container(
+      padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 0),
+      radius:  BorderRadius.circular(40),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: ImageIcon(const AssetImage('assets/icons/nav_bar/go_to_home_page.png'),
+                color: activeIndex == 0 ? Colors.white : Colors.white54),
+            iconSize: 30, onPressed: onHomeTap,
+          ),
+          SizedBox(width: 16 * s),
+          IconButton(
+            icon: ImageIcon(const AssetImage('assets/icons/nav_bar/create_event.png'),
+                color: activeIndex == 1 ? Colors.white : Colors.white54),
+            iconSize: 30, onPressed: onCreateEventTap,
+          ),
+          SizedBox(width: 16 * s),
+          IconButton(
+            icon: ImageIcon(const AssetImage('assets/icons/nav_bar/notifications.png'),
+                color: activeIndex == 2 ? Colors.white : Colors.white54),
+            iconSize: 30, onPressed: onNotificationsTap,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// popup helper sub-widgets (reused inside this screen)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── _PopupListItem — icon + label row used in type / category popups ─────────
+
+class _PopupListItem extends StatelessWidget {
+  final String icon, label;
+  final VoidCallback onTap;
+
+  const _PopupListItem({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+        child: Row(children: [
+          Image.asset(icon, width: 38, height: 38),
+          const SizedBox(width: 14),
+          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── _PopupDivider — thin horizontal rule between popup list items ─────────────
+
+class _PopupDivider extends StatelessWidget {
+  final double width;
+
+  const _PopupDivider({required this.width});
+
+  @override
+  Widget build(BuildContext context) {
+    final double w = (width * 0.7).clamp(120.0, width - 32.0);
+    return Center(
+      child: Container(
+        width: w, height: 2,
+        decoration: BoxDecoration(
+          color: Colors.white38,
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
     );
