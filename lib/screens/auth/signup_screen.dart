@@ -179,7 +179,7 @@ class _SignupPageState extends State<SignupPage> {
                   _navigation(),
                   const SizedBox(height: 60),
                   VezGlass.pillButton(
-                    text: StringRes.at("signup"),
+                    text: StringRes.at("login"),
                     color: Colors.white38,
                     onTap: () => Navigator.pop(context),
                   ),

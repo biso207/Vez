@@ -20,6 +20,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:vez/screens/auth/login_screen.dart';
 
 import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
@@ -326,7 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // ── section: language ────────────────────────────────────────
               _SettingsSection(
                 label: StringRes.at('select_language'),
-                icon:  Icons.language_outlined,
+                iconPath:  'assets/icons/profile_page/language.png',
                 child: Column(
                   children: [
                     _LanguageOption(
@@ -347,7 +348,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // ── section: display preferences ─────────────────────────────
               _SettingsSection(
                 label: StringRes.at('display'),
-                icon:  Icons.tune_outlined,
+                iconPath:  'assets/icons/profile_page/general_settings.png',
                 child: _BadgeToggleRow(
                   s:         s,
                   value:     _showBadge,
@@ -365,7 +366,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // ── section: account ─────────────────────────────────────────
               _SettingsSection(
                 label: StringRes.at('account'),
-                icon:  Icons.manage_accounts_outlined,
+                iconPath:  'assets/icons/profile_page/account.png',
                 child: _AccountActions(
                   s: s,
                   onLogout: () {
@@ -775,11 +776,11 @@ class _PastEventsGrid extends StatelessWidget {
 
 class _SettingsSection extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final String iconPath;
   final Widget child;
 
   const _SettingsSection({
-    required this.label, required this.icon, required this.child,
+    required this.label, required this.iconPath, required this.child,
   });
 
   @override
@@ -800,7 +801,7 @@ class _SettingsSection extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
               child: Row(
                 children: [
-                  Icon(icon, color: Colors.white54, size: 18),
+                  ImageIcon(AssetImage(iconPath), color: Colors.white54, size: 18), // <-- Usato ImageIcon
                   const SizedBox(width: 8),
                   Text(
                     label.toUpperCase(),
@@ -938,7 +939,7 @@ class _AccountActions extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.logout, color: Color(0xFFFF3131), size: 22),
+            const ImageIcon(AssetImage('assets/icons/profile_page/logout.png'), color: Color(0xFFFF3131), size: 22),
             const SizedBox(width: 12),
             Text(
               StringRes.at('logout'),

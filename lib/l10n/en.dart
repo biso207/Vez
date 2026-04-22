@@ -1,7 +1,7 @@
 const Map<String, String> en = {
   // authentication (login & signup) //
-  "login": "I'M NEW",
-  "signup": "I'M BACK",
+  "login": "I'M BACK",
+  "signup": "I'M NEW",
   "top_title_signup": "Welcome to Vez",
   "under_title_signup": "Create and Enjoy real life events",
   "top_title_login": "Hey!",
@@ -47,6 +47,11 @@ const Map<String, String> en = {
   "category_badge": "Category Badge",
   "city": "City",
 
+  // settings
+  "settings": "Settings",
+  "logout": "Logout",
+  "close": "Close",
+
   // event creation page //
   "event_title": "Title",
   "date": "Date",
@@ -64,6 +69,8 @@ const Map<String, String> en = {
   "set_details": "Any Details?",
   "set_max_guests": "Max number of Guests",
   "set_price": "Event Price",
+  "location_simple_name": "Location Name",
+  "location_map": "Set on the Map",
   // event typologies
   "exclusive": "Exclusive",
   "private": "Private",

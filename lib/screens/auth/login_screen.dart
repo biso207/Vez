@@ -175,7 +175,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 60),
                       VezGlass.pillButton(
-                        text: StringRes.at("login"),
+                        text: StringRes.at("signup"),
                         color: Colors.white.withOpacity(0.5),
                         onTap: () {
                           // 1. Rimuove il banner di errore
