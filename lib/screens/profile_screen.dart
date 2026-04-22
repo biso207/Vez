@@ -324,6 +324,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
               SizedBox(height: 20 * s),
 
+              /// when there will be more languages, this will be a button
+              /// to open a list of languages like the category popup
+              /// in the event creation screen
               // ── section: language ────────────────────────────────────────
               _SettingsSection(
                 label: StringRes.at('select_language'),
@@ -332,12 +335,18 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     _LanguageOption(
                       flag: '🇬🇧', label: StringRes.at('lang_en'), code: 'en',
-                      onTap: () => setPopupState(() => StringRes.setLocale('en')),
+                      onTap: () {
+                        setPopupState(() => StringRes.setLocale('en'));
+                        _dbSet.updateUserData('language', 'en');
+                      },
                     ),
                     const SizedBox(height: 6),
                     _LanguageOption(
                       flag: '🇮🇹', label: StringRes.at('lang_it'), code: 'it',
-                      onTap: () => setPopupState(() => StringRes.setLocale('it')),
+                      onTap: () {
+                        setPopupState(() => StringRes.setLocale('it'));
+                        _dbSet.updateUserData('language', 'it');
+                      }
                     ),
                   ],
                 ),
@@ -356,7 +365,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     HapticFeedback.selectionClick();
                     setPopupState(() => _showBadge = val);
                     setState(()  => _showBadge = val);
-                    _dbSet.updateUserData('category_badge', val);
+                    _dbSet.updateUserData('category_badge', val); // changing value in the db
                   },
                 ),
               ),
@@ -867,7 +876,8 @@ class _LanguageOption extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            if (selected) const Icon(Icons.check_circle, color: Colors.white, size: 18),
+            if (selected) const ImageIcon(AssetImage('assets/icons/profile_page/confirm.png'),
+                color: Colors.white, size: 18)
           ],
         ),
       ),

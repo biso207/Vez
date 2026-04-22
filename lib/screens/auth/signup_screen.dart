@@ -1,20 +1,47 @@
-// Developed and Designed by Outly • © 2026
-// Signup screen with 3-step navigation based on design mocks
+// developed and designed by outly • © 2026
+// signup screen — 3-step flow: (1) avatar + username, (2) email + password,
+//                               (3) date of birth + city.
+//
+// layout notes:
+//   the bottom section (error slot → step-dots → action button → pill)
+//   uses the EXACT same fixed heights as login_screen.dart so that
+//   "action button" and "pill button" land at the same vertical position
+//   on both screens regardless of screen size.
 
-// external codes and libraries imports
-import 'package:intl/intl.dart';
-import 'package:flutter/material.dart';
+import 'dart:io';
 import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 import '../../models/vez_glass.dart';
 import '../../models/vez_popup.dart';
 import '../../services/auth_service.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import '../../services/translation_service.dart';
 import '../home_screen.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// layout constants — keep in sync with login_screen.dart
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// height always reserved for the error banner (visible or not)
+const double _kErrorSlotH = 56.0;
+/// height always reserved for the step-dots row
+const double _kDotsSlotH  = 24.0;
+/// vertical gap between fixed bottom items
+const double _kGapH       = 20.0;
+/// gap between the action button and the pill button
+const double _kBelowBtnH  = 50.0;
+/// bottom padding below the pill button
+const double _kBottomPadH = 36.0;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// stateful widget wrapper
+// ─────────────────────────────────────────────────────────────────────────────
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -23,703 +50,739 @@ class SignupPage extends StatefulWidget {
   State<SignupPage> createState() => _SignupPageState();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// state
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _SignupPageState extends State<SignupPage> {
-  final RemoteDbService _dbService = RemoteDbService();
 
-  // Controllers for each form field
-  final TextEditingController emailController    = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController cityController     = TextEditingController();
-  DateTime? selectedDate;
+  // ── controllers & services ─────────────────────────────────────────────────
 
-  String? errorMessage;
-  bool isLoading = false;
-  bool _showPassword = false;
-  File? _profileImage;
-  final ImagePicker _picker = ImagePicker();
+  final TextEditingController _emailCtrl    = TextEditingController();
+  final TextEditingController _passwordCtrl = TextEditingController();
+  final TextEditingController _usernameCtrl = TextEditingController();
+  final TextEditingController _cityCtrl     = TextEditingController();
 
-  // Page navigation
-  final PageController _pageController = PageController();
-  int page = 0;
+  final PageController _pageCtrl = PageController();
+  final ImagePicker    _picker   = ImagePicker();
+  final RemoteDbService _db      = RemoteDbService();
 
-  bool _isLocatingCity = false;
+  // ── form data ──────────────────────────────────────────────────────────────
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  DateTime? _dob;            // date of birth
+  File?     _profileImage;
+
+  // ── ui state ───────────────────────────────────────────────────────────────
+
+  int     _page         = 0;
+  String? _error;
+  bool    _loading      = false;
+  bool    _showPassword = false;
+  bool    _locatingCity = false;
+
+  // ── lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void dispose() {
-    _pageController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    usernameController.dispose();
-    cityController.dispose();
+    _pageCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _usernameCtrl.dispose();
+    _cityCtrl.dispose();
     super.dispose();
   }
 
-  /// Advances to the next signup step
-  void next() => _pageController.nextPage(
-    duration: const Duration(milliseconds: 350),
-    curve: Curves.easeInOut,
+  // ── step navigation ────────────────────────────────────────────────────────
+
+  void _next() => _pageCtrl.nextPage(
+    duration: const Duration(milliseconds: 300),
+    curve:    Curves.easeInOut,
   );
 
-  /// Goes back to the previous signup step
-  void back() => _pageController.previousPage(
-    duration: const Duration(milliseconds: 350),
-    curve: Curves.easeInOut,
+  void _back() => _pageCtrl.previousPage(
+    duration: const Duration(milliseconds: 300),
+    curve:    Curves.easeInOut,
   );
 
-  // --- PAGE LAYOUT ---
+  // ── build ──────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
+    final double sw = MediaQuery.of(context).size.width;
+    final double sh = MediaQuery.of(context).size.height;
+    final double pt = MediaQuery.of(context).padding.top;
+    final double kb = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.black,
       body: Stack(
         children: [
 
-          /// ================= BACKGROUND =================
+          // ── background image ───────────────────────────────────────────
           Positioned.fill(
-            child: Image.asset(
-              "assets/images/bg/bg_signup.jpg",
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/bg/bg_signup.jpg', fit: BoxFit.cover),
           ),
 
-          /// ================= STATIC CONTENT =================
+          // ── main content ───────────────────────────────────────────────
           SafeArea(
             child: SizedBox(
-              height:
-                (MediaQuery.of(context).size.height -
-                MediaQuery.of(context).padding.top) +
-                (MediaQuery.of(context).viewInsets.bottom > 0 ? 300 : 0),
+              // extend height when keyboard is open so content stays visible
+              height: (sh - pt) + (kb > 0 ? 300 : 0),
               child: Column(
                 children: [
-                  /// ====== 1) TOP: TITLE ======
+
+                  // ── title block ─────────────────────────────────────────
                   const Spacer(flex: 2),
-                  Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          StringRes.at("top_title_signup"),
-                          style: TextStyle(
-                            fontFamily: 'InstagramSans',
-                            color: Colors.white,
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          StringRes.at("under_title_signup"),
-                          style: TextStyle(
-                            fontFamily: 'InstagramSans',
-                            color: Colors.white,
-                            fontSize: 25,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
+                  _TitleBlock(
+                    top:    StringRes.at('top_title_signup'),
+                    bottom: StringRes.at('under_title_signup'),
                   ),
 
-                  /// ====== 2) CENTRE: FORM ======
+                  // ── form area (fixed height, same as login) ─────────────
                   const Spacer(flex: 3),
                   SizedBox(
                     height: 300,
                     child: PageView(
-                      controller: _pageController,
+                      controller: _pageCtrl,
+                      // disable manual swipe — navigation is controlled via buttons
                       physics: const NeverScrollableScrollPhysics(),
-                      onPageChanged: (i) {
-                        setState(() {
-                          page = i;
-                          errorMessage = null; // Clear errors on step change
-                        });
-                      },
+                      onPageChanged: (i) => setState(() {
+                        _page  = i;
+                        _error = null;   // clear errors when changing step
+                      }),
                       children: [
-                        _stepOne(),
-                        _stepTwo(),
-                        _stepThree(),
+                        _StepOne(
+                          sw:           sw,
+                          profileImage: _profileImage,
+                          ctrl:         _usernameCtrl,
+                          onPickImage:  _pickImage,
+                          onChanged:    () => setState(() {}),
+                        ),
+                        _StepTwo(
+                          sw:           sw,
+                          emailCtrl:    _emailCtrl,
+                          passwordCtrl: _passwordCtrl,
+                          showPassword: _showPassword,
+                          onTogglePass: () => setState(() => _showPassword = !_showPassword),
+                        ),
+                        _StepThree(
+                          sw:           sw,
+                          dob:          _dob,
+                          cityCtrl:     _cityCtrl,
+                          locating:     _locatingCity,
+                          onPickDate:   () => _pickDate(),
+                          onFetchCity:  _fetchCity,
+                        ),
                       ],
                     ),
                   ),
 
-                  /// ================= ERROR BANNER =================
-                  /// Fix: replaced the fixed-height [SizedBox] (which clipped
-                  /// multi-line messages) with [AnimatedSize] so the area
-                  /// grows/shrinks smoothly to fit the full banner content.
-                  /// [AnimatedOpacity] handles the fade-in/out independently.
-                  const Spacer(flex: 3),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      child: AnimatedOpacity(
-                        opacity: errorMessage != null ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOut,
-                        // When null: zero-size placeholder so the layout stays
-                        // stable while the opacity animation plays out.
-                        child: errorMessage != null
-                            ? VezErrorBanner(message: errorMessage!)
-                            : const SizedBox.shrink(),
-                      ),
-                    ),
+                  // ── elastic spacer fills the remaining vertical room ─────
+                  const Spacer(),
+
+                  // ═══════════════════════════════════════════════════════
+                  // FIXED BOTTOM BLOCK — identical structure to login_screen
+                  // so action button + pill button land at the same Y position
+                  // ═══════════════════════════════════════════════════════
+
+                  // error banner slot — always the same height; only opacity changes
+                  _ErrorSlot(message: _error),
+
+                  const SizedBox(height: _kGapH),
+
+                  // step-dots row — fixed height matches login's placeholder
+                  SizedBox(
+                    height: _kDotsSlotH,
+                    child: _StepDots(currentPage: _page, total: 3),
                   ),
 
-                  /// ====== 3) BOTTOM: ACTIONS ======
-                  const Spacer(flex: 3),
-                  _StepDots(currentPage: page, total: 3),
-                  const Spacer(flex: 3),
-                  _navigation(),
-                  const SizedBox(height: 60),
-                  VezGlass.pillButton(
-                    text: StringRes.at("login"),
-                    color: Colors.white38,
+                  const SizedBox(height: _kGapH),
+
+                  // action button — next / submit depending on current step
+                  _StepNavButtons(
+                    page:    _page,
+                    onBack:  _back,
+                    onNext:  _handleNext,
+                  ),
+
+                  const SizedBox(height: _kBelowBtnH),
+
+                  // navigate pill — go back to login
+                  _AuthPillButton(
+                    text:  StringRes.at('login'),
                     onTap: () => Navigator.pop(context),
                   ),
-                  const SizedBox(height: 48),
+
+                  const SizedBox(height: _kBottomPadH),
                 ],
               ),
             ),
           ),
 
-          /// ================= LANGUAGE SELECTOR =================
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 10, right: 16),
-                child: GestureDetector(
-                  onTap: _showLanguagePopup,
-                  child: ClipOval(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.15),
-                          border: Border.all(color: Colors.white24, width: 1.5),
-                        ),
-                        child: Text(
-                          StringRes.locale == 'it' ? '🇮🇹' : '🇬🇧',
-                          style: const TextStyle(fontSize: 22),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          /// ================= LOADING OVERLAY =================
-          if (isLoading) const VezLoadingOverlay(),
+          // ── loading overlay ────────────────────────────────────────────
+          if (_loading) const VezLoadingOverlay(),
         ],
       ),
     );
   }
 
-  // ── Step widgets ────────────────────────────────────────────────────────────
+  // ── step validation & progression ─────────────────────────────────────────
 
-  // First page: avatar + username
-  Widget _stepOne() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          /// Avatar picker
-          GestureDetector(
-            onTap: _pickImage,
-            child: SizedBox(
-              width: 100,
-              height: 100,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Glass circle background
-                  VezGlass.circleButton(
-                    assetIcon: "assets/icons/auth/icon_camera_90x90.png",
-                    onTap: _pickImage,
-                    size: 100,
-                    iconSize: 50
-                  ),
+  void _handleNext() {
+    // clear any previous error first
+    setState(() => _error = null);
 
-                  // Profile photo on top when selected
-                  if (_profileImage != null)
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white10,
-                          width: 3,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: Image.file(
-                          _profileImage!,
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
+    final String username = _usernameCtrl.text.trim();
+    final String email    = _emailCtrl.text.trim();
+    final String password = _passwordCtrl.text;
+    final String city     = _cityCtrl.text.trim();
 
-          const SizedBox(height: 20),
+    switch (_page) {
+      case 0:
+        if (username.isEmpty) {
+          setState(() => _error = StringRes.at('choose_username'));
+          return;
+        }
+        if (_profileImage == null) {
+          setState(() => _error = StringRes.at('choose_profile_photo'));
+          return;
+        }
+        if (username.length < 3) {
+          setState(() => _error = StringRes.at('username_too_short'));
+          return;
+        }
+        _next();
 
-          VezGlass.textField(
-            controller: usernameController,
-            hint: StringRes.at("username"),
-            color: Colors.white54,
-            width: MediaQuery.of(context).size.width * 0.75,
-            maxLength: 15,
-            onChanged: (value) => setState(() {}),
-            suffixIcon: Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: Text(
-                "${usernameController.text.length}/15",
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+      case 1:
+        if (email.isEmpty || password.isEmpty) {
+          setState(() => _error = StringRes.at('fill_all_fields'));
+          return;
+        }
+        if (!_isValidEmail(email)) {
+          setState(() => _error = StringRes.at('invalid_email'));
+          return;
+        }
+        final String? pswError = _validatePassword(password);
+        if (pswError != null) {
+          setState(() => _error = pswError);
+          return;
+        }
+        _next();
+
+      case 2:
+        if (city.isEmpty || _dob == null) {
+          setState(() => _error = StringRes.at('fill_all_fields'));
+          return;
+        }
+        _signup();
+
+      default:
+        setState(() => _error = StringRes.at('something_went_wrong'));
+    }
   }
 
-  // Second page: email + password
-  Widget _stepTwo() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          VezGlass.textField(
-            controller: emailController,
-            hint: StringRes.at("email"),
-            width: MediaQuery.of(context).size.width * 0.75,
-            color: Colors.white54,
-          ),
+  // ── logic ──────────────────────────────────────────────────────────────────
 
-          const SizedBox(height: 20),
-
-          VezGlass.textField(
-            controller: passwordController,
-            hint: StringRes.at("password"),
-            obscure: !_showPassword, // icon show/not show psw
-            width: MediaQuery.of(context).size.width * 0.75,
-            color: Colors.white54,
-
-            // Detector for the tap on the eye icon
-            suffixIcon: GestureDetector(
-              onTap: () => setState(
-                      () => _showPassword = !_showPassword),
-              child: Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: Icon(
-                  !_showPassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: Colors.white54,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  /// returns true if the device has an active internet connection
+  Future<bool> _hasInternet() async {
+    final result = await Connectivity().checkConnectivity();
+    return !result.contains(ConnectivityResult.none);
   }
 
-  // Third page: date of birth + city
-  Widget _stepThree() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            onTap: () => _selectDate(context),
-            child: AbsorbPointer(
-              child: VezGlass.textField(
-                controller: TextEditingController(
-                  text: selectedDate == null
-                      ? ""
-                      : DateFormat.yMd(Localizations.localeOf(context).toString()).format(selectedDate!),
-                ),
-                hint: StringRes.at("date_of_birth"),
-                width: MediaQuery.of(context).size.width * 0.75,
-                color: Colors.white54,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: _fetchUserCity, // Tapping starts GPS lookup
-            child: AbsorbPointer(
-              // AbsorbPointer blocks inner taps so the keyboard never opens
-              child: Stack(
-                alignment: Alignment.centerRight,
-                children: [
-                  VezGlass.textField(
-                    controller: cityController,
-                    // Hint changes while locating
-                    hint: _isLocatingCity ? StringRes.at("locating_the_city") : StringRes.at("set_city"),
-                    width: MediaQuery.of(context).size.width * 0.75,
-                    color: Colors.white54,
-                  ),
-                  // Show a spinner inside the field while locating
-                  if (_isLocatingCity)
-                    const Padding(
-                      padding: EdgeInsets.only(right: 15.0),
-                      child: SizedBox(
-                        width: 20, height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  // Buttons to navigate through the steps
-  Widget _navigation() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Back button — only visible from step 2 onwards
-        if (page > 0)
-          VezGlass.circleButton(
-            assetIcon: "assets/icons/auth/icon_next.png",
-            rotation: 3.1416,
-            onTap: back,
-          ),
-        if (page > 0) const SizedBox(width: 40),
-        VezGlass.circleButton(
-          assetIcon: page == 2
-              ? "assets/icons/auth/icon_save.png"
-              : "assets/icons/auth/icon_next.png",
-          onTap: () {
-              // Clear any previous error
-              setState(() => errorMessage = null);
-
-              final username = usernameController.text.trim();
-              final email    = emailController.text.trim();
-              final password = passwordController.text;
-              final city     = cityController.text.trim();
-
-              switch (page) {
-                case 0:
-                  // username not digitated
-                  if (username.isEmpty) {
-                    setState(() => errorMessage = StringRes.at("choose_username"));
-                    return;
-                  }
-
-                  if (_profileImage == null) {
-                    setState(() => errorMessage = StringRes.at("choose_profile_photo"));
-                    return;
-                  }
-
-                  // Username must be at least 3 characters
-                  if (username.length < 3) {
-                    setState(() => errorMessage = StringRes.at("username_too_short"));
-                    return;
-                  }
-
-                  next();
-                  break;
-
-                case 1:
-                  // Check that all fields on step 2 are filled
-                  if (page == 1 && (password.isEmpty || email.isEmpty)) {
-                    setState(() => errorMessage = StringRes.at("fill_all_fields"));
-                    return;
-                  }
-
-                  // Validate email format
-                  if (!_isValidEmail(email)) {
-                    setState(() => errorMessage = StringRes.at("invalid_email"));
-                    return;
-                  }
-
-                  // Validate password strength
-                  final String? passwordError = _validatePassword(password);
-                  if (passwordError != null) {
-                    setState(() => errorMessage = passwordError);
-                    return;
-                  }
-
-                  next();
-                  break;
-
-                case 2:
-                  // Check that all fields on step 3 are filled
-                  if (city.isEmpty || selectedDate == null) {
-                    setState(() => errorMessage = StringRes.at("fill_all_fields"));
-                    return;
-                  }
-
-                  signup();
-                  break;
-
-                default:
-                  setState(() => errorMessage = StringRes.at("something_went_wrong"));
-            }
-          },
-        ),
-      ],
-    );
-  }
-
-  // ── Logic ───────────────────────────────────────────────────────────────────
-
-  void _showLanguagePopup() {
-    VezPopup.show(
-      context: context,
-      width: MediaQuery.of(context).size.width * 0.55,
-      backgroundColor: const Color.fromARGB(200, 14, 14, 14),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            StringRes.at("select_language"),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          const SizedBox(height: 15),
-          _buildLanguageOption('🇬🇧', StringRes.at("lang_en"), 'en'),
-          const SizedBox(height: 8),
-          _buildLanguageOption('🇮🇹', StringRes.at("lang_it"), 'it'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLanguageOption(String flag, String label, String localeCode) {
-    final bool isSelected = StringRes.locale == localeCode;
-    return GestureDetector(
-      onTap: () {
-        StringRes.setLocale(localeCode);
-        Navigator.pop(context);
-        setState(() {}); // rebuild UI with new language
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(15),
-          border: isSelected ? Border.all(color: Colors.white24, width: 1.5) : null,
-        ),
-        child: Row(
-          children: [
-            Text(flag, style: const TextStyle(fontSize: 24)),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            const Spacer(),
-            if (isSelected)
-              const Icon(Icons.check_circle, color: Colors.white, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // method to check internet connection
-  Future<bool> hasInternet() async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    // Se la lista contiene 'none', non c'è connessione
-    return !connectivityResult.contains(ConnectivityResult.none);
-  }
-
-  void signup() async {
-    final username = usernameController.text.trim();
-    final email    = emailController.text.trim();
-    final password = passwordController.text;
-    final city     = cityController.text.trim();
-
-    // checking internet connection
-    if (!(await hasInternet())) {
-      setState(() => errorMessage = StringRes.at("no_internet_connection"));
+  Future<void> _signup() async {
+    if (!await _hasInternet()) {
+      setState(() => _error = StringRes.at('no_internet_connection'));
       return;
     }
 
-    setState(() => isLoading = true);
+    setState(() => _loading = true);
 
     try {
-      final int response = await _dbService.signup(
-        email: email,
-        password: password,
-        username: username,
-        dateOfBirth: selectedDate!,
-        city: city,
+      final int res = await _db.signup(
+        email:       _emailCtrl.text.trim(),
+        password:    _passwordCtrl.text,
+        username:    _usernameCtrl.text.trim(),
+        dateOfBirth: _dob!,
+        city:        _cityCtrl.text.trim(),
         profileImage: _profileImage,
       );
 
       if (!mounted) return;
-      setState(() => isLoading = false);
+      setState(() => _loading = false);
 
-      if (response == 200 || response == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(StringRes.at("signup_successful"))),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => HomePage()),
-        );
-      } else if (response == 409) {
-        setState(() => errorMessage = StringRes.at("user_already_exists"));
+      if (res == 200 || res == 201) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(StringRes.at('signup_successful'))));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomePage()));
+      } else if (res == 409) {
+        setState(() => _error = StringRes.at('user_already_exists'));
       } else {
-        setState(() =>
-        errorMessage =
-        "${StringRes.at("signup_failed")}\n${response.toString()}");
+        setState(() => _error = '${StringRes.at("signup_failed")}\n$res');
       }
-    } catch (e) {
-      // probable connection error
+    } catch (_) {
       if (!mounted) return;
-      setState(() {
-        isLoading = false;
-        errorMessage = StringRes.at("no_internet_connection");
-      });
+      setState(() { _loading = false; _error = StringRes.at('no_internet_connection'); });
     }
   }
 
-  /// Returns a formatted error string if the password does not meet the rules,
-  /// or null if the password is valid.
-  String? _validatePassword(String password) {
-    if (!_isValidPsw(password)) {
-      return StringRes.at("invalid_password");
-    }
-    return null;
-  }
+  /// validates password strength; returns a localized error string or null
+  String? _validatePassword(String password) =>
+      _isValidPsw(password) ? null : StringRes.at('invalid_password');
 
-  /// Returns true only if [password] satisfies all strength requirements.
-  bool _isValidPsw(String password) {
-    if (password.length < 8 ||
-        !RegExp(r'[A-Z]').hasMatch(password) ||
-        !RegExp(r'[a-z]').hasMatch(password) ||
-        !RegExp(r'[0-9]').hasMatch(password) ||
-        !RegExp(r'[!@#$&*~£€?§+]').hasMatch(password)
-    ) { return false; }
-    return true;
-  }
+  bool _isValidPsw(String p) =>
+      p.length >= 8 &&
+      RegExp(r'[A-Z]').hasMatch(p) &&
+      RegExp(r'[a-z]').hasMatch(p) &&
+      RegExp(r'[0-9]').hasMatch(p) &&
+      RegExp(r'[!@#$&*~£€?§+]').hasMatch(p);
 
-  /// Returns true if [email] matches a standard email pattern.
-  bool _isValidEmail(String email) =>
-      RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  bool _isValidEmail(String e) =>
+      RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(e);
 
-  /// Opens the system date picker and stores the selected date.
-  Future<void> _selectDate(BuildContext context) async {
+  /// opens the system date picker and stores the selected date of birth
+  Future<void> _pickDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      firstDate:   DateTime(1900),
+      lastDate:    DateTime.now(),
     );
-    if (picked != null) setState(() => selectedDate = picked);
+    if (picked != null) setState(() => _dob = picked);
   }
 
-  /// Opens the gallery to let the user pick a profile photo.
+  /// opens the gallery so the user can pick a profile photo
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
+    final XFile? file = await _picker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 75,
+      maxWidth: 512, maxHeight: 512, imageQuality: 75,
     );
-    if (pickedFile != null) {
-      setState(() => _profileImage = File(pickedFile.path));
-    }
+    if (file != null) setState(() => _profileImage = File(file.path));
   }
 
-  /// Uses the device GPS to automatically fill the city field.
-  Future<void> _fetchUserCity() async {
-    // Show the user that we are searching
-    setState(() {
-      _isLocatingCity = true;
-      errorMessage = null; // Clear any previous error
-    });
+  /// uses device GPS + reverse geocoding to auto-fill the city field
+  Future<void> _fetchCity() async {
+    setState(() { _locatingCity = true; _error = null; });
 
     try {
-      // 1. Check whether the device location service is enabled
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        throw Exception(StringRes.at("enable_location_services"));
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        throw Exception(StringRes.at('enable_location_services'));
       }
 
-      // 2. Check and request location permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          throw Exception(StringRes.at("location_permissions_denied"));
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+        if (perm == LocationPermission.denied) {
+          throw Exception(StringRes.at('location_permissions_denied'));
         }
       }
-      if (permission == LocationPermission.deniedForever) {
-        throw Exception(StringRes.at("location_permissions_permanently_denied"));
+      if (perm == LocationPermission.deniedForever) {
+        throw Exception(StringRes.at('location_permissions_permanently_denied'));
       }
 
-      // 3. Obtain the precise coordinates
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high
+      final Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
       );
 
-      // 4. Reverse geocoding: coordinates → city name
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-          position.latitude, position.longitude
-      );
+      final List<Placemark> marks =
+          await placemarkFromCoordinates(pos.latitude, pos.longitude);
 
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks.first;
-        // 'locality' is usually the main city; fall back to sub-administrative area
-        String cityName = place.locality ?? place.subAdministrativeArea ?? StringRes.at("unknown_city");
-
-        setState(() {
-          cityController.text = cityName; // Auto-fill the field
-        });
+      if (marks.isNotEmpty) {
+        final String city =
+            marks.first.locality ??
+            marks.first.subAdministrativeArea ??
+            StringRes.at('unknown_city');
+        setState(() => _cityCtrl.text = city);
       }
     } catch (e) {
-      // Show any error in the banner
-      setState(() {
-        errorMessage = e.toString().replaceAll("Exception: ", "");
-      });
+      setState(() => _error = e.toString().replaceAll('Exception: ', ''));
     } finally {
-      // Always stop the loading indicator
-      setState(() {
-        _isLocatingCity = false;
-      });
+      setState(() => _locatingCity = false);
     }
   }
 }
 
-// ── Step dots indicator ──────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// step widgets (stateless, receive all data + callbacks from the parent state)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── step 1: avatar picker + username field ────────────────────────────────────
+
+class _StepOne extends StatelessWidget {
+  final double sw;
+  final File?  profileImage;
+  final TextEditingController ctrl;
+  final VoidCallback onPickImage;
+  final VoidCallback onChanged;
+
+  const _StepOne({
+    required this.sw,
+    required this.profileImage,
+    required this.ctrl,
+    required this.onPickImage,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // avatar picker circle
+          GestureDetector(
+            onTap: onPickImage,
+            child: SizedBox(
+              width: 100, height: 100,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  VezGlass.circleButton(
+                    assetIcon: 'assets/icons/auth/icon_camera_90x90.png',
+                    onTap: onPickImage,
+                    size: 100, iconSize: 50,
+                  ),
+                  // overlay selected photo when available
+                  if (profileImage != null)
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white10, width: 3),
+                      ),
+                      child: ClipOval(
+                        child: Image.file(
+                          profileImage!,
+                          width: 100, height: 100, fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // username field with live character counter
+          VezGlass.textField(
+            controller: ctrl,
+            hint:  StringRes.at('username'),
+            color: Colors.white54,
+            width: sw * 0.75,
+            maxLength: 15,
+            onChanged: (_) => onChanged(),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Text(
+                '${ctrl.text.length}/15',
+                style: const TextStyle(
+                  color: Colors.white54, fontWeight: FontWeight.bold, fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── step 2: email + password ──────────────────────────────────────────────────
+
+class _StepTwo extends StatelessWidget {
+  final double sw;
+  final TextEditingController emailCtrl;
+  final TextEditingController passwordCtrl;
+  final bool showPassword;
+  final VoidCallback onTogglePass;
+
+  const _StepTwo({
+    required this.sw,
+    required this.emailCtrl,
+    required this.passwordCtrl,
+    required this.showPassword,
+    required this.onTogglePass,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          VezGlass.textField(
+            controller: emailCtrl,
+            hint:  StringRes.at('email'),
+            width: sw * 0.75,
+            color: Colors.white54,
+          ),
+          const SizedBox(height: 20),
+          VezGlass.textField(
+            controller: passwordCtrl,
+            hint:    StringRes.at('password'),
+            obscure: !showPassword,
+            width:   sw * 0.75,
+            color:   Colors.white54,
+            suffixIcon: GestureDetector(
+              onTap: onTogglePass,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Icon(
+                  showPassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: Colors.white54, size: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── step 3: date of birth + city (with GPS auto-fill) ────────────────────────
+
+class _StepThree extends StatelessWidget {
+  final double sw;
+  final DateTime?  dob;
+  final TextEditingController cityCtrl;
+  final bool locating;
+  final VoidCallback onPickDate;
+  final VoidCallback onFetchCity;
+
+  const _StepThree({
+    required this.sw,
+    required this.dob,
+    required this.cityCtrl,
+    required this.locating,
+    required this.onPickDate,
+    required this.onFetchCity,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // date of birth field — tapping opens the date picker
+          InkWell(
+            onTap: onPickDate,
+            child: AbsorbPointer(
+              child: VezGlass.textField(
+                controller: TextEditingController(
+                  text: dob == null
+                      ? ''
+                      : DateFormat.yMd(
+                          Localizations.localeOf(context).toString(),
+                        ).format(dob!),
+                ),
+                hint:  StringRes.at('date_of_birth'),
+                width: sw * 0.75,
+                color: Colors.white54,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // city field — tapping triggers GPS lookup instead of keyboard
+          GestureDetector(
+            onTap: onFetchCity,
+            child: AbsorbPointer(
+              child: Stack(
+                alignment: Alignment.centerRight,
+                children: [
+                  VezGlass.textField(
+                    controller: cityCtrl,
+                    hint:  locating
+                        ? StringRes.at('locating_the_city')
+                        : StringRes.at('set_city'),
+                    width: sw * 0.75,
+                    color: Colors.white54,
+                  ),
+                  // spinner shown while the GPS is working
+                  if (locating)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 15),
+                      child: SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── _StepNavButtons — back arrow (from step 2+) + next/save arrow ────────────
+
+class _StepNavButtons extends StatelessWidget {
+  final int page;
+  final VoidCallback onBack;
+  final VoidCallback onNext;
+
+  const _StepNavButtons({
+    required this.page,
+    required this.onBack,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // back button — hidden on step 0 so it doesn't shift the "next" button
+        if (page > 0) ...[
+          VezGlass.circleButton(
+            assetIcon: 'assets/icons/auth/icon_next.png',
+            rotation:  3.1416,   // flip the arrow icon to point left
+            onTap:     onBack,
+          ),
+          const SizedBox(width: 40),
+        ],
+
+        // next / save button
+        VezGlass.circleButton(
+          assetIcon: page == 2
+              ? 'assets/icons/auth/icon_save.png'
+              : 'assets/icons/auth/icon_next.png',
+          onTap: onNext,
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// shared auth-screen sub-widgets
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── _TitleBlock — large bold title + lighter subtitle ────────────────────────
+
+class _TitleBlock extends StatelessWidget {
+  final String top;
+  final String bottom;
+
+  const _TitleBlock({required this.top, required this.bottom});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          top,
+          style: const TextStyle(
+            fontFamily: 'InstagramSans',
+            color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          bottom,
+          style: const TextStyle(
+            fontFamily: 'InstagramSans',
+            color: Colors.white, fontSize: 25, fontWeight: FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── _ErrorSlot — fixed-height container; content fades in/out via opacity ─────
+//
+// using a fixed SizedBox instead of AnimatedSize prevents the error banner
+// from shifting the action button and pill button when it appears or disappears.
+
+class _ErrorSlot extends StatelessWidget {
+  final String? message;
+
+  const _ErrorSlot({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30),
+      child: SizedBox(
+        height: _kErrorSlotH,
+        child: AnimatedOpacity(
+          opacity:  message != null ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 250),
+          curve:    Curves.easeOut,
+          child: message != null
+              ? VezErrorBanner(message: message!)
+              : const SizedBox.shrink(),
+        ),
+      ),
+    );
+  }
+}
+
+// ── _AuthPillButton — frosted-glass pill button where text scales to fit ──────
+//
+// ClipRRect + BackdropFilter creates the blur effect against the background.
+// FittedBox with BoxFit.scaleDown shrinks the label when translations are long.
+
+class _AuthPillButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+
+  const _AuthPillButton({required this.text, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final double w = MediaQuery.of(context).size.width * 0.40;
+    return GestureDetector(
+      onTap: onTap,
+      // ClipRRect must wrap BackdropFilter so the blur is clipped to the pill shape
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(40),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            width: w,
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.20),
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(color: Colors.white54, width: 1.5),
+            ),
+            // FittedBox scales the text down if wider than available space
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontFamily: 'InstagramSans',
+                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── _StepDots — animated progress indicator for the 3 signup steps ────────────
 
 class _StepDots extends StatelessWidget {
   final int currentPage;
   final int total;
+
   const _StepDots({required this.currentPage, required this.total});
 
   @override
@@ -729,15 +792,13 @@ class _StepDots extends StatelessWidget {
       children: List.generate(total, (i) {
         final bool active = i == currentPage;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          margin: const EdgeInsets.symmetric(horizontal: 5),
-          width: active ? 22 : 8,
-          height: 8,
+          duration: const Duration(milliseconds: 280),
+          curve:    Curves.easeInOut,
+          margin:   const EdgeInsets.symmetric(horizontal: 5),
+          width:    active ? 22 : 8,
+          height:   8,
           decoration: BoxDecoration(
-            color: active
-                ? Colors.white
-                : Colors.white.withOpacity(0.35),
+            color: active ? Colors.white : Colors.white.withOpacity(0.35),
             borderRadius: BorderRadius.circular(4),
           ),
         );
