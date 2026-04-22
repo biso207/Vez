@@ -5,14 +5,21 @@
 //   zone 1 — background  : kBgColor from VezPageLayout
 //   zone 2 — body        : SingleChildScrollView anchored from top
 //   zone 3 — blur veil   : handled by VezPageLayout
-//   zone 4 — navbars     : settings button / search / follow-requests + bottom pill
+//   zone 4 — navbars     : settings / search / follow-requests + bottom pill
+//
+// top-bar left button = settings icon → opens _SettingsPopup (full glass panel)
+//   the settings popup replaces the old standalone language popup and groups
+//   all user preferences (language, badge toggle, etc.) in one place.
+//
+// top-bar left button on profile screen is intentionally NOT a profile avatar;
+// the settings icon is used instead since the user is already viewing their profile.
 
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:ui';
 
 import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
@@ -44,13 +51,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ── controllers & services ─────────────────────────────────────────────────
 
-  final TextEditingController _searchController      = TextEditingController();
-  final TextEditingController _usernameCtrl          = TextEditingController();
-  final TextEditingController _passwordCtrl          = TextEditingController();
-  final TextEditingController _cityAkaNameCtrl       = TextEditingController();
-  final TextEditingController _bioCtrl               = TextEditingController();
+  final TextEditingController _searchController  = TextEditingController();
+  final TextEditingController _usernameCtrl      = TextEditingController();
+  final TextEditingController _passwordCtrl      = TextEditingController();
+  final TextEditingController _cityAkaNameCtrl   = TextEditingController();
+  final TextEditingController _bioCtrl           = TextEditingController();
 
-  final ImagePicker _picker     = ImagePicker();
+  final ImagePicker     _picker = ImagePicker();
   final RemoteDbService _remote = RemoteDbService();
 
   late final GetDBService _dbGet;
@@ -58,19 +65,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ── user data state ────────────────────────────────────────────────────────
 
-  String _profilePhoto         = '';
-  String _username             = '';
-  String _city                 = '';
-  String _cityAkaName          = '';
-  String _bio                  = '';
-  int    _numFollowers         = 0;
-  int    _numFollowing         = 0;
+  String _profilePhoto          = '';
+  String _username              = '';
+  String _city                  = '';
+  String _cityAkaName           = '';
+  String _bio                   = '';
+  int    _numFollowers          = 0;
+  int    _numFollowing          = 0;
   int    _numParticipatedEvents = 0;
 
   // ── ui flags ───────────────────────────────────────────────────────────────
 
-  bool   _showBadge            = true;
-  bool   _showPassword         = false;
+  bool   _showBadge      = true;
+  bool   _showPassword   = false;
   File?  _newProfileImage;
   String? _popupError;
 
@@ -100,45 +107,43 @@ class _ProfilePageState extends State<ProfilePage> {
   // ── data loading ───────────────────────────────────────────────────────────
 
   Future<void> _loadUserData() async {
-    final photo      = await _dbGet.getUserData('profile_photo');
-    final username   = await _dbGet.getUserData('username');
-    final city       = await _dbGet.getUserData('city');
-    final akaName    = await _dbGet.getUserData('city_aka_name');
-    final bio        = await _dbGet.getUserData('bio');
-    final eventsStr  = await _dbGet.getUserData('num_participated_events');
-    final badge      = await _dbGet.getUserData('category_badge');
-    final followers  = await _dbGet.getFollowersCount();
-    final following  = await _dbGet.getFollowing();
+    final photo     = await _dbGet.getUserData('profile_photo');
+    final username  = await _dbGet.getUserData('username');
+    final city      = await _dbGet.getUserData('city');
+    final akaName   = await _dbGet.getUserData('city_aka_name');
+    final bio       = await _dbGet.getUserData('bio');
+    final eventsStr = await _dbGet.getUserData('num_participated_events');
+    final badge     = await _dbGet.getUserData('category_badge');
+    final followers = await _dbGet.getFollowersCount();
+    final following = await _dbGet.getFollowing();
 
     if (!mounted) return;
     setState(() {
-      _profilePhoto          = photo?.trim()                     ?? '';
-      _username              = username                          ?? 'Username';
-      _city                  = city                              ?? StringRes.at('city');
-      _cityAkaName           = akaName                           ?? StringRes.at('city_aka_name');
-      _bio                   = bio                               ?? StringRes.at('bio');
-      _numParticipatedEvents = int.tryParse(eventsStr ?? '0')    ?? 0;
-      _showBadge             = bool.tryParse(badge ?? 'true')    ?? true;
+      _profilePhoto          = photo?.trim()                   ?? '';
+      _username              = username                        ?? 'Username';
+      _city                  = city                            ?? StringRes.at('city');
+      _cityAkaName           = akaName                         ?? StringRes.at('city_aka_name');
+      _bio                   = bio                             ?? StringRes.at('bio');
+      _numParticipatedEvents = int.tryParse(eventsStr ?? '0')  ?? 0;
+      _showBadge             = bool.tryParse(badge ?? 'true')  ?? true;
       _numFollowers          = followers;
       _numFollowing          = (following as List).length;
     });
   }
 
-  // ── save profile data ──────────────────────────────────────────────────────
+  // ── save profile edits ─────────────────────────────────────────────────────
 
   Future<void> _saveProfileData(StateSetter setPopupState) async {
-    final String uName    = _usernameCtrl.text.trim();
-    final String psw      = _passwordCtrl.text;
-    final String akaName  = _cityAkaNameCtrl.text.trim();
-    final String bio      = _bioCtrl.text.trim();
+    final String uName   = _usernameCtrl.text.trim();
+    final String psw     = _passwordCtrl.text;
+    final String akaName = _cityAkaNameCtrl.text.trim();
+    final String bio     = _bioCtrl.text.trim();
 
-    // username validation
     if (uName.isNotEmpty && uName.length < 3) {
       setPopupState(() => _popupError = StringRes.at('username_too_short'));
       return;
     }
 
-    // password validation
     if (psw.isNotEmpty) {
       final bool valid = psw.length >= 8 &&
           RegExp(r'[A-Z]').hasMatch(psw) &&
@@ -151,13 +156,9 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
 
-    // save fields that changed
     if (uName.isNotEmpty) {
       final int res = await _dbSet.updateUserData('username', uName);
-      if (res == 409) {
-        setPopupState(() => _popupError = StringRes.at('user_already_exists'));
-        return;
-      }
+      if (res == 409) { setPopupState(() => _popupError = StringRes.at('user_already_exists')); return; }
       setState(() => _username = uName);
     }
     if (psw.isNotEmpty)      _dbSet.updateUserData('hash_psw', psw);
@@ -165,7 +166,6 @@ class _ProfilePageState extends State<ProfilePage> {
     if (bio.isNotEmpty)      _dbSet.updateUserData('bio', bio);
     _dbSet.updateUserData('category_badge', _showBadge);
 
-    // profile photo upload
     if (_newProfileImage != null) {
       final String? url = await _remote.uploadProfilePhoto(_newProfileImage!, _username);
       if (url != null) {
@@ -174,7 +174,6 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
 
-    // update local display values
     setState(() {
       if (akaName.isNotEmpty) _cityAkaName = akaName;
       if (bio.isNotEmpty)     _bio = bio;
@@ -193,6 +192,13 @@ class _ProfilePageState extends State<ProfilePage> {
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CreateEvent()));
   }
 
+  void _clearPopupControllers() {
+    _usernameCtrl.clear();
+    _passwordCtrl.clear();
+    _cityAkaNameCtrl.clear();
+    _bioCtrl.clear();
+  }
+
   // ── build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -204,18 +210,18 @@ class _ProfilePageState extends State<ProfilePage> {
       // ── top navbar ──────────────────────────────────────────────────────
       searchController: _searchController,
       searchHint:       StringRes.at('search'),
-      // left button: settings icon (not an avatar on the profile screen)
+      // left button: settings icon — opens the full settings popup
       profileIconPath:  'assets/icons/profile_page/settings.png',
       isProfileAvatar:  false,
-      onProfileTap:     () => _showLanguagePopup(),
-      // right button: follow-requests icon
+      onProfileTap:     () => _showSettingsPopup(s),
+      // right button: follow-requests
       filterIconPath:   'assets/icons/profile_page/following_requests.png',
-      onFilterSelected: (_) {}, // todo: navigate to follow-requests screen
+      onFilterSelected: (_) {},   // todo: navigate to follow-requests screen
 
       // ── bottom navbar ────────────────────────────────────────────────────
       bottomNavBar: _BottomNavPill(
-        s: s,
-        activeIndex:        -1,           // no tab is active on the profile screen
+        s:                  s,
+        activeIndex:        -1,
         onHomeTap:          _goToHome,
         onCreateEventTap:   _goToCreateEvent,
         onNotificationsTap: () {},
@@ -227,10 +233,10 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // top spacer so content clears the top blur veil + navbar
+            // top spacer to clear the navbar + blur veil
             SizedBox(height: 130 * s),
 
-            // ── user info card ─────────────────────────────────────────────
+            // ── user info card (tap to edit) ───────────────────────────────
             GestureDetector(
               onTap: () {
                 HapticFeedback.mediumImpact();
@@ -253,10 +259,10 @@ class _ProfilePageState extends State<ProfilePage> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 30 * s),
               child: _StatsPill(
-                s:                    s,
-                numFollowers:         _numFollowers,
-                numEvents:            _numParticipatedEvents,
-                numFollowing:         _numFollowing,
+                s:            s,
+                numFollowers: _numFollowers,
+                numEvents:    _numParticipatedEvents,
+                numFollowing: _numFollowing,
               ),
             ),
 
@@ -265,7 +271,6 @@ class _ProfilePageState extends State<ProfilePage> {
             // ── past-events grid ───────────────────────────────────────────
             _PastEventsGrid(s: s),
 
-            // bottom spacer so content clears the bottom blur veil + navbar
             SizedBox(height: 120 * s),
           ],
         ),
@@ -273,7 +278,137 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // ── popup: settings ────────────────────────────────────────────────────────
+  //
+  // this is the full settings panel opened by the gear icon in the top-bar.
+  // it groups all user preferences together:
+  //   • language selection
+  //   • category badge toggle
+  //   • (future: notifications, privacy, etc.)
+  //
+  // the language section replaces the old standalone language popup.
+
+  void _showSettingsPopup(double s) {
+    VezPopup.show(
+      context: context,
+      width: MediaQuery.of(context).size.width * 0.85,
+      child: StatefulBuilder(
+        builder: (ctx, setPopupState) => SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: 20 * s),
+
+              // ── settings title ───────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    const ImageIcon(AssetImage('assets/icons/profile_page/settings.png'),
+                        color: Colors.white, size: 26),
+                    const SizedBox(width: 12),
+                    Text(
+                      StringRes.at('settings'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 20 * s),
+
+              // ── section: language ────────────────────────────────────────
+              _SettingsSection(
+                label: StringRes.at('select_language'),
+                icon:  Icons.language_outlined,
+                child: Column(
+                  children: [
+                    _LanguageOption(
+                      flag: '🇬🇧', label: StringRes.at('lang_en'), code: 'en',
+                      onTap: () => setPopupState(() => StringRes.setLocale('en')),
+                    ),
+                    const SizedBox(height: 6),
+                    _LanguageOption(
+                      flag: '🇮🇹', label: StringRes.at('lang_it'), code: 'it',
+                      onTap: () => setPopupState(() => StringRes.setLocale('it')),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 14 * s),
+
+              // ── section: display preferences ─────────────────────────────
+              _SettingsSection(
+                label: StringRes.at('display'),
+                icon:  Icons.tune_outlined,
+                child: _BadgeToggleRow(
+                  s:         s,
+                  value:     _showBadge,
+                  onChanged: (val) {
+                    HapticFeedback.selectionClick();
+                    setPopupState(() => _showBadge = val);
+                    setState(()  => _showBadge = val);
+                    _dbSet.updateUserData('category_badge', val);
+                  },
+                ),
+              ),
+
+              SizedBox(height: 14 * s),
+
+              // ── section: account ─────────────────────────────────────────
+              _SettingsSection(
+                label: StringRes.at('account'),
+                icon:  Icons.manage_accounts_outlined,
+                child: _AccountActions(
+                  s: s,
+                  onLogout: () {
+                    HapticFeedback.mediumImpact();
+                    Navigator.pop(context);
+                    // todo: call auth service logout and redirect to login screen
+                  },
+                ),
+              ),
+
+              SizedBox(height: 20 * s),
+
+              // close button
+              Center(
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: Colors.white24, width: 2),
+                    ),
+                    child: Text(
+                      StringRes.at('close'),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 20 * s),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── popup: edit profile ────────────────────────────────────────────────────
+  //
+  // opened by tapping the user info card.
+  // fields: username, password, city aka-name, bio, profile photo.
 
   void _showEditProfilePopup(double s) {
     VezPopup.show(
@@ -295,10 +430,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   );
                   if (file != null) setPopupState(() => _newProfileImage = File(file.path));
                 },
-                child: _AvatarPicker(
-                  newImage:     _newProfileImage,
-                  networkPhoto: _profilePhoto,
-                ),
+                child: _AvatarPicker(newImage: _newProfileImage, networkPhoto: _profilePhoto),
               ),
 
               SizedBox(height: 24 * s),
@@ -345,20 +477,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 onChanged:  (v) => setPopupState(() {}),
               ),
 
-              // category badge toggle
-              _BadgeToggle(
-                s:          s,
-                value:      _showBadge,
-                onChanged:  (val) {
-                  HapticFeedback.selectionClick();
-                  setPopupState(() => _showBadge = val);
-                  setState(()  => _showBadge = val);
-                },
-              ),
-
               SizedBox(height: 24 * s),
 
-              // error banner (animated, only visible when _popupError is set)
+              // error banner
               AnimatedSize(
                 duration: const Duration(milliseconds: 250),
                 curve:    Curves.easeOut,
@@ -397,62 +518,20 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
-  // ── popup: language selection ──────────────────────────────────────────────
-
-  void _showLanguagePopup() {
-    VezPopup.show(
-      context: context,
-      width: MediaQuery.of(context).size.width * 0.55,
-      backgroundColor: const Color.fromARGB(200, 14, 14, 14),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            StringRes.at('select_language'),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 12),
-          _LanguageOption(flag: '🇬🇧', label: StringRes.at('lang_en'), code: 'en', onTap: _rebuildAfterLocale),
-          const SizedBox(height: 6),
-          _LanguageOption(flag: '🇮🇹', label: StringRes.at('lang_it'), code: 'it', onTap: _rebuildAfterLocale),
-        ],
-      ),
-    );
-  }
-
-  void _rebuildAfterLocale() {
-    Navigator.pop(context);
-    setState(() {});
-  }
-
-  // ── helpers ────────────────────────────────────────────────────────────────
-
-  void _clearPopupControllers() {
-    _usernameCtrl.clear();
-    _passwordCtrl.clear();
-    _cityAkaNameCtrl.clear();
-    _bioCtrl.clear();
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _BottomNavPill — re-export from home_screen for this file's use.
-// in a real project, move this to a shared vez_bottom_nav.dart.
+// _BottomNavPill
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _BottomNavPill extends StatelessWidget {
   final double s;
   final int activeIndex;
-  final VoidCallback onHomeTap;
-  final VoidCallback onCreateEventTap;
-  final VoidCallback onNotificationsTap;
+  final VoidCallback onHomeTap, onCreateEventTap, onNotificationsTap;
 
   const _BottomNavPill({
-    required this.s,
-    required this.activeIndex,
-    required this.onHomeTap,
-    required this.onCreateEventTap,
+    required this.s,          required this.activeIndex,
+    required this.onHomeTap,  required this.onCreateEventTap,
     required this.onNotificationsTap,
   });
 
@@ -488,26 +567,21 @@ class _BottomNavPill extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _UserCard — the rounded card with photo, name, city and bio
+// zone-2 sub-widgets
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ── _UserCard ─────────────────────────────────────────────────────────────────
 
 class _UserCard extends StatelessWidget {
   final double s;
-  final String profilePhoto;
-  final String username;
-  final String cityAkaName;
-  final String city;
-  final String bio;
+  final String profilePhoto, username, cityAkaName, city, bio;
   final bool   showBadge;
 
   const _UserCard({
     required this.s,
-    required this.profilePhoto,
-    required this.username,
-    required this.cityAkaName,
-    required this.city,
-    required this.bio,
-    required this.showBadge,
+    required this.profilePhoto, required this.username,
+    required this.cityAkaName,  required this.city,
+    required this.bio,          required this.showBadge,
   });
 
   @override
@@ -519,51 +593,34 @@ class _UserCard extends StatelessWidget {
         color: const Color(0xFF0E0E0E),
         borderRadius: BorderRadius.circular(40),
         border: Border.all(color: Colors.white38, width: 2),
-        boxShadow: const [
-          BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6),
-        ],
+        boxShadow: const [BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6)],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // avatar with optional category badge
           _AvatarWithBadge(photo: profilePhoto, showBadge: showBadge, size: 75),
-
           SizedBox(width: 16 * s),
-
-          // username / city / bio
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   username,
-                  style: const TextStyle(
-                    fontFamily: 'InstagramSans',
-                    fontSize: 30, fontWeight: FontWeight.bold,
-                    color: Colors.white, height: 1.0,
-                  ),
+                  style: const TextStyle(fontFamily: 'InstagramSans', fontSize: 30,
+                      fontWeight: FontWeight.bold, color: Colors.white, height: 1.0),
                 ),
                 SizedBox(height: 4 * s),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontFamily: 'InstagramSans', color: Colors.white, fontSize: 14),
-                    children: [
-                      TextSpan(text: cityAkaName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      TextSpan(text: ' • $city',  style: const TextStyle(fontWeight: FontWeight.w300)),
-                    ],
-                  ),
-                ),
+                RichText(text: TextSpan(
+                  style: const TextStyle(fontFamily: 'InstagramSans', color: Colors.white, fontSize: 14),
+                  children: [
+                    TextSpan(text: cityAkaName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(text: ' • $city',  style: const TextStyle(fontWeight: FontWeight.w300)),
+                  ],
+                )),
                 SizedBox(height: 4 * s),
-                Text(
-                  bio,
-                  style: const TextStyle(
-                    fontFamily: 'InstagramSans',
-                    fontSize: 14, color: Colors.white,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(bio,
+                    style: const TextStyle(fontFamily: 'InstagramSans', fontSize: 14, color: Colors.white),
+                    maxLines: 3, overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -573,9 +630,7 @@ class _UserCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _AvatarWithBadge — circular photo with an optional category badge overlay
-// ─────────────────────────────────────────────────────────────────────────────
+// ── _AvatarWithBadge ──────────────────────────────────────────────────────────
 
 class _AvatarWithBadge extends StatelessWidget {
   final String photo;
@@ -602,7 +657,6 @@ class _AvatarWithBadge extends StatelessWidget {
             ),
           ),
         ),
-        // category badge (top-right)
         if (showBadge)
           Positioned(
             top: -4, right: -4,
@@ -628,21 +682,15 @@ class _AvatarWithBadge extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _StatsPill — rounded pill with followers / events / following counts
-// ─────────────────────────────────────────────────────────────────────────────
+// ── _StatsPill ────────────────────────────────────────────────────────────────
 
 class _StatsPill extends StatelessWidget {
   final double s;
-  final int numFollowers;
-  final int numEvents;
-  final int numFollowing;
+  final int numFollowers, numEvents, numFollowing;
 
   const _StatsPill({
     required this.s,
-    required this.numFollowers,
-    required this.numEvents,
-    required this.numFollowing,
+    required this.numFollowers, required this.numEvents, required this.numFollowing,
   });
 
   @override
@@ -653,9 +701,7 @@ class _StatsPill extends StatelessWidget {
         color: const Color(0xFF0E0E0E),
         borderRadius: BorderRadius.circular(50),
         border: Border.all(color: Colors.white38, width: 2),
-        boxShadow: const [
-          BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6),
-        ],
+        boxShadow: const [BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6)],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -670,9 +716,7 @@ class _StatsPill extends StatelessWidget {
 }
 
 class _StatItem extends StatelessWidget {
-  final String icon;
-  final String value;
-
+  final String icon, value;
   const _StatItem({required this.icon, required this.value});
 
   @override
@@ -682,32 +726,23 @@ class _StatItem extends StatelessWidget {
       children: [
         Image.asset(icon, width: 28, height: 28, color: Colors.white),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(
-            fontFamily: 'InstagramSans',
-            fontWeight: FontWeight.bold,
-            fontSize: 18, color: Colors.white,
-          ),
-        ),
+        Text(value, style: const TextStyle(
+          fontFamily: 'InstagramSans', fontWeight: FontWeight.bold,
+          fontSize: 18, color: Colors.white,
+        )),
       ],
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _PastEventsGrid — 3-column grid of past event thumbnails
-// ─────────────────────────────────────────────────────────────────────────────
+// ── _PastEventsGrid ───────────────────────────────────────────────────────────
 
 class _PastEventsGrid extends StatelessWidget {
   final double s;
-
   const _PastEventsGrid({required this.s});
 
   @override
   Widget build(BuildContext context) {
-    // fixed height; fade top+bottom edges with a ShaderMask so content
-    // blends smoothly with the blur veil above / below
     return SizedBox(
       height: 400,
       child: ShaderMask(
@@ -722,13 +757,9 @@ class _PastEventsGrid extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.only(top: 10, bottom: 80),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount:   3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing:  8,
-            childAspectRatio: 0.7,
+            crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8, childAspectRatio: 0.7,
           ),
-          // todo: replace 0 with the real event count and provide real data
-          itemCount:   0,
+          itemCount:   0,   // todo: replace with real event count
           itemBuilder: (_, __) => const SizedBox.shrink(),
         ),
       ),
@@ -737,10 +768,194 @@ class _PastEventsGrid extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// popup sub-widgets  (contained here to avoid polluting the screen file)
+// settings popup sub-widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── _AvatarPicker: tappable circle that previews the chosen photo ────────────
+// ── _SettingsSection — glass pill wrapping a labelled group of settings ───────
+
+class _SettingsSection extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Widget child;
+
+  const _SettingsSection({
+    required this.label, required this.icon, required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white24, width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // section header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+              child: Row(
+                children: [
+                  Icon(icon, color: Colors.white54, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    label.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // section content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: child,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── _LanguageOption — single tappable language row inside the settings panel ──
+
+class _LanguageOption extends StatelessWidget {
+  final String flag, label, code;
+  final VoidCallback onTap;
+
+  const _LanguageOption({
+    required this.flag, required this.label,
+    required this.code,  required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool selected = StringRes.locale == code;
+    return GestureDetector(
+      onTap: () {
+        StringRes.setLocale(code);
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white.withOpacity(0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: selected ? Border.all(color: Colors.white24, width: 1.5) : null,
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 20)),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            const Spacer(),
+            if (selected) const Icon(Icons.check_circle, color: Colors.white, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── _BadgeToggleRow — category badge on/off switch ────────────────────────────
+
+class _BadgeToggleRow extends StatelessWidget {
+  final double s;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _BadgeToggleRow({required this.s, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(51, 6, 0, 92),
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color.fromARGB(128, 0, 10, 218), width: 2),
+          ),
+          padding: const EdgeInsets.all(5),
+          child: ImageIcon(const AssetImage('assets/icons/categories/hang_out.png'),
+              color: Colors.white, size: 20),
+        ),
+        SizedBox(width: 12 * s),
+        Expanded(
+          child: Text(
+            StringRes.at('category_badge'),
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+        Switch(
+          value:              value,
+          onChanged:          onChanged,
+          activeThumbColor:   Colors.black,
+          activeTrackColor:   Colors.white,
+          inactiveThumbColor: Colors.white54,
+          inactiveTrackColor: Colors.white24,
+        ),
+      ],
+    );
+  }
+}
+
+// ── _AccountActions — logout (and future account actions) ─────────────────────
+
+class _AccountActions extends StatelessWidget {
+  final double s;
+  final VoidCallback onLogout;
+
+  const _AccountActions({required this.s, required this.onLogout});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onLogout,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(40, 255, 49, 49),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color.fromARGB(100, 255, 49, 49), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.logout, color: Color(0xFFFF3131), size: 22),
+            const SizedBox(width: 12),
+            Text(
+              StringRes.at('logout'),
+              style: const TextStyle(color: Color(0xFFFF3131), fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// edit-profile popup sub-widgets
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── _AvatarPicker — tappable circle that previews the new profile photo ───────
 
 class _AvatarPicker extends StatelessWidget {
   final File?  newImage;
@@ -767,7 +982,7 @@ class _AvatarPicker extends StatelessWidget {
   }
 }
 
-// ── _PopupInput: glass-style rounded text field for the edit popup ───────────
+// ── _PopupInput — glass pill text field ──────────────────────────────────────
 
 class _PopupInput extends StatelessWidget {
   final String hint;
@@ -781,11 +996,9 @@ class _PopupInput extends StatelessWidget {
   const _PopupInput({
     required this.hint,
     required this.controller,
-    this.maxLength,
-    this.maxLines = 1,
-    this.obscure  = false,
-    this.onChanged,
-    this.suffixIcon,
+    this.maxLength, this.maxLines = 1,
+    this.obscure = false,
+    this.onChanged, this.suffixIcon,
   });
 
   @override
@@ -803,16 +1016,13 @@ class _PopupInput extends StatelessWidget {
         maxLength:   maxLength,
         maxLines:    maxLines,
         obscureText: obscure,
-        style: const TextStyle(
-          color: Colors.white, fontFamily: 'InstagramSans',
-          fontWeight: FontWeight.bold, fontSize: 18,
-        ),
+        style: const TextStyle(color: Colors.white, fontFamily: 'InstagramSans',
+            fontWeight: FontWeight.bold, fontSize: 18),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(color: Colors.white54),
           border: InputBorder.none,
           counterText: '',
-          // show a live character counter when maxLength is set
           suffixText: maxLength != null ? '${controller.text.length}/$maxLength' : null,
           suffixIcon: suffixIcon,
           suffixIconConstraints: const BoxConstraints(),
@@ -822,58 +1032,11 @@ class _PopupInput extends StatelessWidget {
   }
 }
 
-// ── _BadgeToggle: row with icon + label + switch ─────────────────────────────
-
-class _BadgeToggle extends StatelessWidget {
-  final double s;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _BadgeToggle({required this.s, required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(51, 6, 0, 92),
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color.fromARGB(128, 0, 10, 218), width: 2),
-          ),
-          padding: const EdgeInsets.all(5),
-          child: ImageIcon(const AssetImage('assets/icons/categories/hang_out.png'),
-              color: Colors.white, size: 20),
-        ),
-        SizedBox(width: 16 * s),
-        Text(
-          StringRes.at('category_badge'),
-          style: const TextStyle(
-            color: Colors.white54, fontSize: 18,
-            fontWeight: FontWeight.bold, fontFamily: 'InstagramSans',
-          ),
-        ),
-        SizedBox(width: 16 * s),
-        Switch(
-          value:               value,
-          onChanged:           onChanged,
-          activeThumbColor:    Colors.black,
-          activeTrackColor:    Colors.white,
-          inactiveThumbColor:  Colors.white54,
-          inactiveTrackColor:  Colors.white24,
-        ),
-      ],
-    );
-  }
-}
-
-// ── _SaveDiscardRow: green save + red discard circle buttons ─────────────────
+// ── _SaveDiscardRow — green save + red discard circle buttons ─────────────────
 
 class _SaveDiscardRow extends StatelessWidget {
   final double s;
-  final VoidCallback onSave;
-  final VoidCallback onDiscard;
+  final VoidCallback onSave, onDiscard;
 
   const _SaveDiscardRow({required this.s, required this.onSave, required this.onDiscard});
 
@@ -883,17 +1046,17 @@ class _SaveDiscardRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _ActionCircle(
-          icon:        'assets/icons/profile_page/save.png',
-          color:       const Color.fromARGB(128, 8, 157, 13),
+          icon: 'assets/icons/profile_page/save.png',
+          color: const Color.fromARGB(128, 8, 157, 13),
           borderColor: const Color.fromARGB(200, 8, 157, 13),
-          onTap:       onSave,
+          onTap: onSave,
         ),
         SizedBox(width: 28 * s),
         _ActionCircle(
-          icon:        'assets/icons/profile_page/delete.png',
-          color:       const Color.fromARGB(128, 255, 49, 49),
+          icon: 'assets/icons/profile_page/delete.png',
+          color: const Color.fromARGB(128, 255, 49, 49),
           borderColor: const Color.fromARGB(200, 255, 49, 49),
-          onTap:       onDiscard,
+          onTap: onDiscard,
         ),
       ],
     );
@@ -902,15 +1065,12 @@ class _SaveDiscardRow extends StatelessWidget {
 
 class _ActionCircle extends StatelessWidget {
   final String icon;
-  final Color  color;
-  final Color  borderColor;
+  final Color  color, borderColor;
   final VoidCallback onTap;
 
   const _ActionCircle({
-    required this.icon,
-    required this.color,
-    required this.borderColor,
-    required this.onTap,
+    required this.icon, required this.color,
+    required this.borderColor, required this.onTap,
   });
 
   @override
@@ -924,57 +1084,6 @@ class _ActionCircle extends StatelessWidget {
           border: Border.all(color: borderColor, width: 2),
         ),
         child: ImageIcon(AssetImage(icon), color: Colors.white, size: 30),
-      ),
-    );
-  }
-}
-
-// ── _LanguageOption: single tappable row in the language popup ───────────────
-
-class _LanguageOption extends StatelessWidget {
-  final String flag;
-  final String label;
-  final String code;
-  final VoidCallback onTap;
-
-  const _LanguageOption({
-    required this.flag,
-    required this.label,
-    required this.code,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bool selected = StringRes.locale == code;
-    return GestureDetector(
-      onTap: () {
-        StringRes.setLocale(code);
-        onTap();
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          border: selected ? Border.all(color: Colors.white24, width: 1.5) : null,
-        ),
-        child: Row(
-          children: [
-            Text(flag, style: const TextStyle(fontSize: 22)),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white, fontSize: 16,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            const Spacer(),
-            if (selected) const Icon(Icons.check_circle, color: Colors.white, size: 18),
-          ],
-        ),
       ),
     );
   }
