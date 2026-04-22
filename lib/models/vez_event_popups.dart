@@ -98,7 +98,7 @@ class VezEventPopups {
 
           // option 1: simple text name
           _VezPopupRow(
-            icon:  Icons.edit_outlined,
+            iconPath:  'assets/icons/event/known_place.png',
             label: StringRes.at('location_simple_name'),
             onTap: () {
               Navigator.pop(context);
@@ -110,7 +110,7 @@ class VezEventPopups {
 
           // option 2: precise map picker
           _VezPopupRow(
-            icon:  Icons.map_outlined,
+            iconPath:  'assets/icons/event/precise_spot.png',
             label: StringRes.at('location_map'),
             onTap: () {
               Navigator.pop(context);
@@ -153,7 +153,7 @@ class VezEventPopups {
 
           // confirm row (green accent)
           _VezPopupRow(
-            icon:       Icons.check_circle_outline,
+            iconPath:       'assets/icons/event/confirm.png',
             label:      confirmLabel,
             accentColor: const Color(0xFF089D0D),
             onTap: () {
@@ -167,7 +167,7 @@ class VezEventPopups {
 
           // cancel row (red accent)
           _VezPopupRow(
-            icon:       Icons.cancel_outlined,
+            iconPath:       'assets/icons/event/cancel.png',
             label:      cancelLabel,
             accentColor: const Color(0xFFFF3131),
             onTap: () => Navigator.pop(context),
@@ -239,14 +239,14 @@ class _TextInputContentState extends State<_TextInputContent> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _VezPopupActionCircle(
-                    icon:        Icons.check,
+                    iconPath:        'assets/icons/event/check.png',
                     color:       const Color.fromARGB(128, 8, 157, 13),
                     borderColor: const Color.fromARGB(200, 8, 157, 13),
                     onTap:       () => widget.onSave(widget.controller.text),
                   ),
                   const SizedBox(width: 28),
                   _VezPopupActionCircle(
-                    icon:        Icons.close,
+                    iconPath:        'assets/icons/event/close.png',
                     color:       const Color.fromARGB(128, 255, 49, 49),
                     borderColor: const Color.fromARGB(200, 255, 49, 49),
                     onTap:       widget.onDiscard,
@@ -305,13 +305,13 @@ class _VezPopupHeader extends StatelessWidget {
 // ── _VezPopupRow — icon + label tappable row (matches category/type popup rows)
 
 class _VezPopupRow extends StatelessWidget {
-  final IconData   icon;
+  final String   iconPath;
   final String     label;
   final Color?     accentColor;  // optional tint for icon and label
   final VoidCallback onTap;
 
   const _VezPopupRow({
-    required this.icon,
+    required this.iconPath,
     required this.label,
     required this.onTap,
     this.accentColor,
@@ -327,7 +327,7 @@ class _VezPopupRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
           children: [
-            Icon(icon, color: c, size: 28),
+            ImageIcon(AssetImage(iconPath), color: c, size: 28),
             const SizedBox(width: 14),
             Text(
               label,
@@ -421,13 +421,13 @@ class _VezPopupInput extends StatelessWidget {
 // ── _VezPopupActionCircle — circle icon button (green save / red discard) ─────
 
 class _VezPopupActionCircle extends StatelessWidget {
-  final IconData icon;
+  final String iconPath;
   final Color    color;
   final Color    borderColor;
   final VoidCallback onTap;
 
   const _VezPopupActionCircle({
-    required this.icon,
+    required this.iconPath,
     required this.color,
     required this.borderColor,
     required this.onTap,
@@ -446,7 +446,7 @@ class _VezPopupActionCircle extends StatelessWidget {
               color: color, shape: BoxShape.circle,
               border: Border.all(color: borderColor, width: 2),
             ),
-            child: Icon(icon, color: Colors.white, size: 26),
+            child: ImageIcon(AssetImage(iconPath), color: Colors.white, size: 26),
           ),
         ),
       ),

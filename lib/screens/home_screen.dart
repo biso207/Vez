@@ -88,6 +88,13 @@ class _HomePageState extends State<HomePage> {
     setState(() => _profilePhoto = photo?.trim() ?? '');
   }
 
+  /// fetches the user's language
+  Future<void> _loadUserLanguage() async {
+    final String? lan = await _db.getUserData('language');
+    if (!mounted) return;
+    StringRes.setLocale(lan!);
+  }
+
   // ── navigation helpers ─────────────────────────────────────────────────────
 
   void _goToProfile() => Navigator.pushReplacement(

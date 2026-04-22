@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:io'; // library to manage files
 import 'package:http/http.dart' as http; // http packet (standard in Dart/Flutter).
 import 'package:crypto/crypto.dart'; // library for the hashing of the psw
+import 'package:vez/services/translation_service.dart';
 import 'package:vez/services/user_session.dart';
 import 'api_keys.dart'; // private key to connect to the remote db
 
@@ -55,6 +56,7 @@ class RemoteDbService {
         'account_state': 'active',
         'num_created_events': 0,
         'num_participated_events': 0,
+        'language': StringRes.locale,
       };
 
       // 3. POST request

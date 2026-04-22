@@ -14,7 +14,7 @@ class StringRes {
   /// Auto-detect device language and set locale.
   /// Call this once at app startup (e.g. in main or loading screen).
   static void initLocale() {
-    // Get the device's primary language code (e.g. "it", "en", "fr")
+    // get the device's primary language code (e.g. "it", "en", "fr")
     String deviceLang = ui.PlatformDispatcher.instance.locale.languageCode;
     if (_localizedValues.containsKey(deviceLang)) {
       locale = deviceLang;
@@ -24,15 +24,16 @@ class StringRes {
     UserSession().locale = locale;
   }
 
-  // Funzione magica per ottenere la traduzione
+  // function to get the translation for each text displayed in the app
   static String at(String key) {
     return _localizedValues[locale]?[key] ?? key;
   }
 
+  // to set the user language for his session
   static void setLocale(String newLocale) {
     if (_localizedValues.containsKey(newLocale)) {
       locale = newLocale;
       UserSession().locale = newLocale;
     }
   }
-}
+}

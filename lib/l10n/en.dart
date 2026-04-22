@@ -71,6 +71,8 @@ const Map<String, String> en = {
   "set_price": "Event Price",
   "location_simple_name": "Location Name",
   "location_map": "Set on the Map",
+  "confirm": "YES",
+  "cancel": "NO",
   // event typologies
   "exclusive": "Exclusive",
   "private": "Private",
