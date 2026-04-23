@@ -122,6 +122,11 @@ class RemoteDbService {
 
           // reading from the db the userID
           UserSession().userID = data[0]['user_id']!.toString();
+
+          // setting the user language
+          String lan = data[0]['language']!.toString();
+          StringRes.setLocale(lan);
+
           return 200;
         }
         else { return 401; } // Unauthorized
