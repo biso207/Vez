@@ -49,6 +49,9 @@ const Map<String, String> en = {
 
   // settings
   "settings": "Settings",
+  "display": "Display",
+  "account": "Account",
+  "click_to_change": "Tap to change",
   "logout": "Logout",
   "close": "Close",
 
@@ -71,6 +74,11 @@ const Map<String, String> en = {
   "set_price": "Event Price",
   "location_simple_name": "Location Name",
   "location_map": "Set on the Map",
+  "move_map_to_select_place": "Move the map to select a place",
+  "unknown_place": "Unknown Place",
+  "address_not_found": "Address not found",
+  "network_error_try_again": "Network error. Try again.",
+  "confirm_location": "CONFIRM LOCATION",
   "confirm": "YES",
   "cancel": "NO",
   // event typologies
@@ -99,5 +107,9 @@ const Map<String, String> en = {
   // language selection //
   "select_language": "Select Language",
   "lang_en": "English",
-  "lang_it": "Italiano",
+  "lang_it": "Italian",
+  "lang_zh": "Chinese",
+  "lang_fr": "French",
+  "lang_de": "Deutsch",
+  "lang_es": "Spanish",
 };

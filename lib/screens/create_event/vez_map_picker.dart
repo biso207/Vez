@@ -10,6 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import '../../models/vez_glass.dart';
+import '../../services/translation_service.dart';
 
 class VezMapPicker extends StatefulWidget {
   const VezMapPicker({super.key});
@@ -22,7 +23,7 @@ class _VezMapPickerState extends State<VezMapPicker> {
   final MapController _mapController = MapController();
   LatLng _centerPoint = const LatLng(45.4642, 9.1900); // Default: Milano (puoi usare la posizione dell'utente se la hai)
   bool _isLoading = false;
-  String _currentAddress = "Move the map to select a place";
+  String _currentAddress = StringRes.at('move_map_to_select_place');
   String _currentName = "";
 
   @override
@@ -81,19 +82,19 @@ class _VezMapPickerState extends State<VezMapPicker> {
         final data = json.decode(response.body);
         setState(() {
           // Se ha un nome proprio (es. "Pizzeria Da Michele") prende quello, altrimenti usa la via
-          _currentName = data['name'] ?? data['address']['road'] ?? "Unknown Place";
-          _currentAddress = data['display_name'] ?? "Address not found";
+          _currentName = data['name'] ?? data['address']['road'] ?? StringRes.at('unknown_place');
+          _currentAddress = data['display_name'] ?? StringRes.at('address_not_found');
         });
       }
     } catch (e) {
-      setState(() => _currentAddress = "Network error. Try again.");
+      setState(() => _currentAddress = StringRes.at('network_error_try_again'));
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
   void _confirmLocation() {
-    if (_currentAddress == "Move the map to select a place" || _currentAddress.isEmpty) return;
+    if (_currentAddress == StringRes.at('move_map_to_select_place') || _currentAddress.isEmpty) return;
 
     // Ritorna i dati strutturati al CreateEvent screen
     Navigator.pop(context, {
@@ -179,8 +180,8 @@ class _VezMapPickerState extends State<VezMapPicker> {
                         color: _isLoading ? Colors.grey : const Color.fromARGB(255, 8, 157, 13), // Il tuo verde
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Center(
-                        child: Text("CONFIRM LOCATION", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                      child: Center(
+                        child: Text(StringRes.at('confirm_location'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                       ),
                     ),
                   ),

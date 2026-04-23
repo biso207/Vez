@@ -16,11 +16,11 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../models/vez_event_card.dart';
 import '../models/vez_glass.dart';
 import '../models/vez_popup.dart';
+import '../services/haptic_service.dart';
 import '../services/translation_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -305,7 +305,7 @@ class _TopNavBar extends StatelessWidget {
           size: 45,
           iconSize: 28,
           onTap: () {
-            HapticFeedback.mediumImpact();
+            HapticService.tap();
             _showFilterPopup(context, popupWidth);
           },
         ),

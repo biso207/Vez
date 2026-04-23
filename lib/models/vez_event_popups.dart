@@ -16,9 +16,9 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../models/vez_popup.dart';
+import '../services/haptic_service.dart';
 import '../services/translation_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ class VezEventPopups {
             label:      confirmLabel,
             accentColor: const Color(0xFF089D0D),
             onTap: () {
-              HapticFeedback.mediumImpact();
+              HapticService.success();
               Navigator.pop(context);
               onConfirm();
             },
@@ -436,7 +436,7 @@ class _VezPopupActionCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () { HapticFeedback.mediumImpact(); onTap(); },
+      onTap: () { HapticService.tap(); onTap(); },
       child: ClipOval(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),

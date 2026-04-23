@@ -18,15 +18,14 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:vez/screens/auth/login_screen.dart';
 
 import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
 import '../models/vez_popup.dart';
 import '../services/auth_service.dart';
 import '../services/getters_service.dart';
+import '../services/haptic_service.dart';
 import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
@@ -82,6 +81,17 @@ class _ProfilePageState extends State<ProfilePage> {
   File?  _newProfileImage;
   String? _popupError;
 
+  // ── static data ────────────────────────────────────────────────────────────
+
+  static const List<Map<String, String>> _languages = [
+    {'code': 'en', 'name': 'lang_en', 'icon': 'assets/icons/profile_page/en_flag.png'},
+    {'code': 'de', 'name': 'lang_de', 'icon': 'assets/icons/profile_page/de_flag.png'},
+    {'code': 'fr', 'name': 'lang_fr', 'icon': 'assets/icons/profile_page/fr_flag.png'},
+    {'code': 'it', 'name': 'lang_it', 'icon': 'assets/icons/profile_page/it_flag.png'},
+    {'code': 'es', 'name': 'lang_es', 'icon': 'assets/icons/profile_page/es_flag.png'},
+    {'code': 'zh', 'name': 'lang_zh', 'icon': 'assets/icons/profile_page/zh_flag.png'},
+  ];
+
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
   @override
@@ -128,7 +138,7 @@ class _ProfilePageState extends State<ProfilePage> {
       _numParticipatedEvents = int.tryParse(eventsStr ?? '0')  ?? 0;
       _showBadge             = bool.tryParse(badge ?? 'true')  ?? true;
       _numFollowers          = followers;
-      _numFollowing          = (following as List).length;
+      _numFollowing          = (following).length;
     });
   }
 
@@ -184,12 +194,12 @@ class _ProfilePageState extends State<ProfilePage> {
   // ── navigation helpers ─────────────────────────────────────────────────────
 
   void _goToHome() {
-    HapticFeedback.selectionClick();
+    HapticService.tap();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
   }
 
   void _goToCreateEvent() {
-    HapticFeedback.selectionClick();
+    HapticService.tap();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CreateEvent()));
   }
 
@@ -240,7 +250,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // ── user info card (tap to edit) ───────────────────────────────
             GestureDetector(
               onTap: () {
-                HapticFeedback.mediumImpact();
+                HapticService.emphasis();
                 _showEditProfilePopup(s);
               },
               child: _UserCard(
@@ -330,25 +340,73 @@ class _ProfilePageState extends State<ProfilePage> {
               // ── section: language ────────────────────────────────────────
               _SettingsSection(
                 label: StringRes.at('select_language'),
-                iconPath:  'assets/icons/profile_page/language.png',
-                child: Column(
-                  children: [
-                    _LanguageOption(
-                      flag: '🇬🇧', label: StringRes.at('lang_en'), code: 'en',
-                      onTap: () {
-                        setPopupState(() => StringRes.setLocale('en'));
-                        _dbSet.updateUserData('language', 'en');
-                      },
-                    ),
-                    const SizedBox(height: 6),
-                    _LanguageOption(
-                      flag: '🇮🇹', label: StringRes.at('lang_it'), code: 'it',
-                      onTap: () {
-                        setPopupState(() => StringRes.setLocale('it'));
-                        _dbSet.updateUserData('language', 'it');
-                      }
-                    ),
-                  ],
+                iconPath: 'assets/icons/profile_page/language.png',
+                child: Builder(
+                  builder: (context) {
+                    // Troviamo i dati della lingua corrente nella lista _languages
+                    final currentLang = _languages.firstWhere(
+                          (lang) => lang['code'] == StringRes.locale,
+                      orElse: () => _languages.first, // Fallback sulla prima lingua se non trova il codice
+                    );
+
+                    return GestureDetector(
+                      onTap: () => _showLanguageSelector(
+                        onLanguageChanged: () {
+                          setPopupState(() {});
+                          if (mounted) setState(() {});
+                        },
+                      ), // Apre il popup che abbiamo creato prima
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05), // Un leggero sfondo per far capire che è interattivo
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: Row(
+                          children: [
+                            // Icona della lingua corrente
+                            ImageIcon(
+                              AssetImage(currentLang['icon']!),
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 15),
+                            // Testo: Lingua + Sottotitolo
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  StringRes.at(currentLang['name']!),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  StringRes.at('click_to_change'), // Assicurati di avere questa chiave in StringRes
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.5),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            // Una piccola freccetta o icona edit per suggerire l'azione
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.white.withOpacity(0.3),
+                              size: 14,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
 
@@ -362,7 +420,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   s:         s,
                   value:     _showBadge,
                   onChanged: (val) {
-                    HapticFeedback.selectionClick();
+                    HapticService.selection();
                     setPopupState(() => _showBadge = val);
                     setState(()  => _showBadge = val);
                     _dbSet.updateUserData('category_badge', val); // changing value in the db
@@ -379,7 +437,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: _AccountActions(
                   s: s,
                   onLogout: () {
-                    HapticFeedback.mediumImpact();
+                    HapticService.emphasis();
                     Navigator.pop(context);
                     // todo: call auth service logout and redirect to login screen
                   },
@@ -507,14 +565,14 @@ class _ProfilePageState extends State<ProfilePage> {
               _SaveDiscardRow(
                 s: s,
                 onSave: () async {
-                  HapticFeedback.mediumImpact();
+                  HapticService.success();
                   await _saveProfileData(setPopupState);
                   if (!mounted) return;
                   Navigator.pop(context);
                   _clearPopupControllers();
                 },
                 onDiscard: () {
-                  HapticFeedback.mediumImpact();
+                  HapticService.emphasis();
                   Navigator.pop(context);
                   _clearPopupControllers();
                   setState(() => _popupError = null);
@@ -525,6 +583,110 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // ── popup: language selector ───────────────────────────────────────────────
+  //
+  // opened by tapping the language in the settings.
+
+  /// scrollable list of languages
+  void _showLanguageSelector({VoidCallback? onLanguageChanged}) {
+    final double pw = MediaQuery.of(context).size.width  * 0.50;
+    final double totalHeight = (_languages.length * 57.0);
+    final double ph = totalHeight.clamp(100.0, MediaQuery.of(context).size.height * 0.8);
+
+    VezPopup.show(
+      context: context,
+      width:  pw,
+      height: ph,
+      backgroundColor: const Color.fromARGB(128, 6, 0, 92),
+      borderColor:     const Color.fromARGB(128, 0, 10, 218),
+      child: ListView.separated(
+        physics:    const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding:    EdgeInsets.zero,
+        itemCount:  _languages.length,
+        separatorBuilder: (_, _) => _PopupDivider(width: pw),
+        itemBuilder: (context, i) {
+          final String code = _languages[i]['code']!;
+          final String name = _languages[i]['name']!;
+          final String iconPath = _languages[i]['icon']!;
+          final bool isSelected = StringRes.locale == code;
+
+          return GestureDetector(
+            onTap: () async {
+              final navigator = Navigator.of(context);
+              final int res = await _dbSet.updateUserData('language', code);
+
+              if (res == 200 || res == 204) {
+                HapticService.selection();
+                StringRes.setLocale(code);
+                onLanguageChanged?.call();
+                if (mounted) setState(() {});
+              }
+
+              if (navigator.canPop()) navigator.pop();
+            },
+            child: Container(
+              // Padding interno per simulare il ListTile del category popup
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start, // Forza l'allineamento a sinistra
+                children: [
+                  // Icona leading (stesse dimensioni del category popup)
+                  ImageIcon(
+                    AssetImage(iconPath),
+                    color: Colors.white,
+                    size: 38,
+                  ),
+
+                  const SizedBox(width: 12), // Spazio fisso tra icona e testo
+
+                  // Testo della lingua
+                  Text(
+                    StringRes.at(name),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  // confirm icon
+                  if (isSelected)
+                    const ImageIcon(
+                      AssetImage('assets/icons/profile_page/confirm.png'),
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _PopupDivider
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PopupDivider extends StatelessWidget {
+  final double width;
+  const _PopupDivider({required this.width});
+
+  @override
+  Widget build(BuildContext context) {
+    final double w = (width * 0.70).clamp(100.0, width - 32.0);
+    return Center(
+      child: Container(
+        width: w, height: 2,
+        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -580,7 +742,7 @@ class _BottomNavPill extends StatelessWidget {
 // zone-2 sub-widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── _UserCard ─────────────────────────────────────────────────────────────────
+// ── _UserCard ────────────────────────────────────────────────────────────────
 
 class _UserCard extends StatelessWidget {
   final double s;
@@ -837,54 +999,6 @@ class _SettingsSection extends StatelessWidget {
   }
 }
 
-// ── _LanguageOption — single tappable language row inside the settings panel ──
-
-class _LanguageOption extends StatelessWidget {
-  final String flag, label, code;
-  final VoidCallback onTap;
-
-  const _LanguageOption({
-    required this.flag, required this.label,
-    required this.code,  required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bool selected = StringRes.locale == code;
-    return GestureDetector(
-      onTap: () {
-        StringRes.setLocale(code);
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white.withOpacity(0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          border: selected ? Border.all(color: Colors.white24, width: 1.5) : null,
-        ),
-        child: Row(
-          children: [
-            Text(flag, style: const TextStyle(fontSize: 20)),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            const Spacer(),
-            if (selected) const ImageIcon(AssetImage('assets/icons/profile_page/confirm.png'),
-                color: Colors.white, size: 18)
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ── _BadgeToggleRow — category badge on/off switch ────────────────────────────
 
 class _BadgeToggleRow extends StatelessWidget {
@@ -966,7 +1080,7 @@ class _AccountActions extends StatelessWidget {
 // edit-profile popup sub-widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── _AvatarPicker — tappable circle that previews the new profile photo ───────
+// ── _AvatarPicker — tappable circle that previews the new profile photo ──────
 
 class _AvatarPicker extends StatelessWidget {
   final File?  newImage;
@@ -1043,7 +1157,7 @@ class _PopupInput extends StatelessWidget {
   }
 }
 
-// ── _SaveDiscardRow — green save + red discard circle buttons ─────────────────
+// ── _SaveDiscardRow — green save + red discard circle buttons ────────────────
 
 class _SaveDiscardRow extends StatelessWidget {
   final double s;

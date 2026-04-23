@@ -49,6 +49,9 @@ const Map<String, String> it = {
 
   // settings
   "settings": "Impostazioni",
+  "display": "Aspetto",
+  "account": "Account",
+  "click_to_change": "Tocca per cambiare",
   "logout": "Esci",
   "close": "Chiudi",
 
@@ -71,6 +74,11 @@ const Map<String, String> it = {
   "set_price": "Prezzo Evento",
   "location_simple_name": "Nome Luogo",
   "location_map": "Seleziona sulla Mappa",
+  "move_map_to_select_place": "Muovi la mappa per selezionare un luogo",
+  "unknown_place": "Luogo sconosciuto",
+  "address_not_found": "Indirizzo non trovato",
+  "network_error_try_again": "Errore di rete. Riprova.",
+  "confirm_location": "CONFERMA POSIZIONE",
   "confirm": "SI",
   "cancel": "NO",
   // event typologies
@@ -98,6 +106,10 @@ const Map<String, String> it = {
 
   // language selection //
   "select_language": "Seleziona Lingua",
-  "lang_en": "English",
+  "lang_en": "Inglese",
   "lang_it": "Italiano",
+  "lang_zh": "Cinese",
+  "lang_fr": "Francese",
+  "lang_de": "Tedesco",
+  "lang_es": "Spagnolo"
 };

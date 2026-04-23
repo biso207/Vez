@@ -15,7 +15,6 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/vez_glass.dart';
@@ -23,6 +22,7 @@ import '../../models/vez_page_layout.dart';
 import '../../models/vez_popup.dart';
 import '../../models/vez_event_popups.dart';
 import '../../services/getters_service.dart';
+import '../../services/haptic_service.dart';
 import '../../services/setters_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/user_session.dart';
@@ -236,7 +236,7 @@ class _CreateEventState extends State<CreateEvent> {
   // ── navigation helpers ─────────────────────────────────────────────────────
 
   void _goToHome() {
-    HapticFeedback.selectionClick();
+    HapticService.tap();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
   }
 
@@ -268,13 +268,13 @@ class _CreateEventState extends State<CreateEvent> {
       context: context,
       width:  pw,
       height: ph,
-      backgroundColor: const Color.fromARGB(128, 6, 0, 92),
-      borderColor:     const Color.fromARGB(128, 0, 10, 218),
+      backgroundColor: const Color.fromARGB(128, 6, 0, 92), // todo: change
+      borderColor:     const Color.fromARGB(128, 0, 10, 218), // todo: change
       child: ListView.separated(
         physics:    const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding:    EdgeInsets.zero,
         itemCount:  _categories.length,
-        separatorBuilder: (_, __) => _PopupDivider(width: pw),
+        separatorBuilder: (_, _) => _PopupDivider(width: pw),
         itemBuilder: (_, i) => ListTile(
           dense: true,
           visualDensity: VisualDensity.compact,
@@ -590,7 +590,7 @@ class _EventCard extends StatelessWidget {
                       SizedBox(width: 12 * s),
                       _GlassCircleButton(icon: typeIcon, onTap: onTypeTap, s: s),
                     ]),
-                    _PreviewBadge(label: 'Preview'),
+                    _PreviewBadge(label: StringRes.at('preview')),
                   ],
                 ),
 
@@ -653,7 +653,7 @@ class _GlassCircleButton extends StatelessWidget {
     final Color border = isBlue ? const Color.fromARGB(128, 0, 11, 223) : const Color.fromARGB(128, 255, 255, 255);
 
     return GestureDetector(
-      onTap: () { HapticFeedback.mediumImpact(); onTap(); },
+      onTap: () { HapticService.tap(); onTap(); },
       child: ClipOval(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -830,7 +830,7 @@ class _TitleField extends StatelessWidget {
           textAlign:  focus.hasFocus ? TextAlign.left : TextAlign.center,
           style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
           decoration: InputDecoration(
-            hintText: 'Title',
+            hintText: StringRes.at('event_title'),
             hintStyle: const TextStyle(color: Colors.white),
             border: InputBorder.none,
             counterText: '',
@@ -946,7 +946,7 @@ class _CardActionCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap != null ? () { HapticFeedback.mediumImpact(); onTap!(); } : null,
+      onTap: onTap != null ? () { HapticService.tap(); onTap!(); } : null,
       child: ClipOval(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),

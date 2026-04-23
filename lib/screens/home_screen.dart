@@ -8,12 +8,12 @@
 //   zone 4 — navbars     : top search bar + bottom pill nav
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../models/vez_event_card.dart';
 import '../models/vez_glass.dart';
 import '../models/vez_page_layout.dart';
 import '../services/getters_service.dart';
+import '../services/haptic_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import 'create_event/create_event_screen.dart';
@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
   );
 
   void _goToCreateEvent() {
-    HapticFeedback.selectionClick();
+    HapticService.tap();
     Navigator.pushReplacement(
       context, MaterialPageRoute(builder: (_) => const CreateEvent()),
     );
