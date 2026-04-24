@@ -175,7 +175,7 @@ class _CreateEventState extends State<CreateEvent> {
       'max_guests': _maxGuests,
       'price': _price,
       'description': _description,
-      'background_image': _bgImage.startsWith('assets/')
+      'bg_photo': _bgImage.startsWith('assets/')
           ? null
           : File(_bgImage),
     }, placeId: placeId);
