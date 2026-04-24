@@ -4,7 +4,8 @@
 // libraries
 import 'dart:convert';
 import 'dart:io'; // library to manage files
-import 'package:http/http.dart' as http; // http packet (standard in Dart/Flutter).
+import 'package:http/http.dart'
+    as http; // http packet (standard in Dart/Flutter).
 import 'package:crypto/crypto.dart'; // library for the hashing of the psw
 import 'package:vez/services/translation_service.dart';
 import 'package:vez/services/user_session.dart';
@@ -27,16 +28,16 @@ class RemoteDbService {
   }) async {
     try {
       String photoUrl = "";
-      if (profileImage != null) photoUrl = await uploadProfilePhoto(profileImage, username) ?? "";
+      if (profileImage != null)
+        photoUrl = await uploadProfilePhoto(profileImage, username) ?? "";
 
       // STEP HASHING PSW //
       // password to byte with salt
-      var bytes = utf8.encode(password+salt);
+      var bytes = utf8.encode(password + salt);
       // hash 256
       var digest = sha256.convert(bytes);
       String hashedPassword = digest.toString();
       // --------------- //
-
 
       // connection to the db
       print('Connecting to $_baseUrl to register user: $username');
@@ -49,7 +50,8 @@ class RemoteDbService {
         'username': username,
         'email': email,
         'hash_psw': hashedPassword, // hashed psw
-        'date_of_birth': '${dateOfBirth.year.toString().padLeft(4, '0')}-${dateOfBirth.month.toString().padLeft(2, '0')}-${dateOfBirth.day.toString().padLeft(2, '0')}', // Date only (YYYY-MM-DD)
+        'date_of_birth':
+            '${dateOfBirth.year.toString().padLeft(4, '0')}-${dateOfBirth.month.toString().padLeft(2, '0')}-${dateOfBirth.day.toString().padLeft(2, '0')}', // Date only (YYYY-MM-DD)
         'city': city,
         'profile_photo': photoUrl,
         'bio': "",
@@ -65,7 +67,7 @@ class RemoteDbService {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_apiKey', // access token
-          'apikey': _apiKey,                 // Supabase wants thi header
+          'apikey': _apiKey, // Supabase wants thi header
           'Prefer': 'return=representation', // return the created record
         },
         body: jsonEncode(userData),
@@ -79,8 +81,12 @@ class RemoteDbService {
       // success
       if (response.statusCode == 201 || response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        // setting the userID
-        if (data.isNotEmpty) UserSession().userID = data[0]['user_id']!.toString();
+        if (data.isNotEmpty) {
+          await UserSession().startSession(
+            userID: data[0]['user_id']!.toString(),
+            locale: StringRes.locale,
+          );
+        }
         return response.statusCode;
       }
 
@@ -91,7 +97,7 @@ class RemoteDbService {
       return 0;
     }
   }
-  
+
   /// Login a user in the remote database
   Future<int> login({
     required String username,
@@ -105,33 +111,35 @@ class RemoteDbService {
 
       // 2. Querying the user with matching username and hashed password
       // PostgresSQL REST syntax for filtering: ?column=eq.value
-      final url = Uri.parse('$_baseUrl/rest/v1/users?username=eq.$username&hash_psw=eq.$hashedPassword&select=*');
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/users?username=eq.$username&hash_psw=eq.$hashedPassword&select=*',
+      );
 
       final response = await http.get(
         url,
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'apikey': _apiKey,
-        },
+        headers: {'Authorization': 'Bearer $_apiKey', 'apikey': _apiKey},
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        
-        if (data.isNotEmpty) { // Success
 
-          // reading from the db the userID
-          UserSession().userID = data[0]['user_id']!.toString();
+        if (data.isNotEmpty) {
+          // Success
 
-          // setting the user language
           String lan = data[0]['language']!.toString();
+          await UserSession().startSession(
+            userID: data[0]['user_id']!.toString(),
+            locale: lan,
+          );
           StringRes.setLocale(lan);
 
           return 200;
-        }
-        else { return 401; } // Unauthorized
+        } else {
+          return 401;
+        } // Unauthorized
+      } else {
+        return response.statusCode;
       }
-      else { return response.statusCode; }
     } catch (e) {
       return 0;
     }
@@ -155,8 +163,7 @@ class RemoteDbService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return '$_baseUrl/storage/v1/object/public/avatars/$fileName';
-      }
-      else {
+      } else {
         // This will tell you if the file was too large (413 Payload Too Large)
         print('Upload failed: ${response.statusCode} - ${response.body}');
         return null;
@@ -165,5 +172,9 @@ class RemoteDbService {
       print('Errore upload: $e');
       return null;
     }
+  }
+
+  Future<void> logout() async {
+    await UserSession().clearSession();
   }
 }

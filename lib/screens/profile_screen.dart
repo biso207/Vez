@@ -1,4 +1,4 @@
-// developed and designed by outly • © 2026
+// developed and designed by Outly • © 2026
 // profile screen — zone-2 content: user info card + stats pill + event grid.
 //
 // layout zones used:
@@ -29,6 +29,7 @@ import '../services/haptic_service.dart';
 import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
+import 'auth/login_screen.dart';
 import 'create_event/create_event_screen.dart';
 import 'home_screen.dart';
 
@@ -48,16 +49,15 @@ class ProfilePage extends StatefulWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ProfilePageState extends State<ProfilePage> {
-
   // ── controllers & services ─────────────────────────────────────────────────
 
-  final TextEditingController _searchController  = TextEditingController();
-  final TextEditingController _usernameCtrl      = TextEditingController();
-  final TextEditingController _passwordCtrl      = TextEditingController();
-  final TextEditingController _cityAkaNameCtrl   = TextEditingController();
-  final TextEditingController _bioCtrl           = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _usernameCtrl = TextEditingController();
+  final TextEditingController _passwordCtrl = TextEditingController();
+  final TextEditingController _cityAkaNameCtrl = TextEditingController();
+  final TextEditingController _bioCtrl = TextEditingController();
 
-  final ImagePicker     _picker = ImagePicker();
+  final ImagePicker _picker = ImagePicker();
   final RemoteDbService _remote = RemoteDbService();
 
   late final GetDBService _dbGet;
@@ -65,31 +65,55 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ── user data state ────────────────────────────────────────────────────────
 
-  String _profilePhoto          = '';
-  String _username              = '';
-  String _city                  = '';
-  String _cityAkaName           = '';
-  String _bio                   = '';
-  int    _numFollowers          = 0;
-  int    _numFollowing          = 0;
-  int    _numParticipatedEvents = 0;
+  String _profilePhoto = '';
+  String _username = '';
+  String _city = '';
+  String _cityAkaName = '';
+  String _bio = '';
+  int _numFollowers = 0;
+  int _numFollowing = 0;
+  int _numParticipatedEvents = 0;
 
   // ── ui flags ───────────────────────────────────────────────────────────────
 
-  bool   _showBadge      = true;
-  bool   _showPassword   = false;
-  File?  _newProfileImage;
+  bool _showBadge = true;
+  bool _showPassword = false;
+  File? _newProfileImage;
   String? _popupError;
 
   // ── static data ────────────────────────────────────────────────────────────
 
   static const List<Map<String, String>> _languages = [
-    {'code': 'en', 'name': 'lang_en', 'icon': 'assets/icons/profile_page/en_flag.png'},
-    {'code': 'de', 'name': 'lang_de', 'icon': 'assets/icons/profile_page/de_flag.png'},
-    {'code': 'fr', 'name': 'lang_fr', 'icon': 'assets/icons/profile_page/fr_flag.png'},
-    {'code': 'it', 'name': 'lang_it', 'icon': 'assets/icons/profile_page/it_flag.png'},
-    {'code': 'es', 'name': 'lang_es', 'icon': 'assets/icons/profile_page/es_flag.png'},
-    {'code': 'zh', 'name': 'lang_zh', 'icon': 'assets/icons/profile_page/zh_flag.png'},
+    {
+      'code': 'en',
+      'name': 'lang_en',
+      'icon': 'assets/icons/profile_page/en_flag.png',
+    },
+    {
+      'code': 'de',
+      'name': 'lang_de',
+      'icon': 'assets/icons/profile_page/de_flag.png',
+    },
+    {
+      'code': 'fr',
+      'name': 'lang_fr',
+      'icon': 'assets/icons/profile_page/fr_flag.png',
+    },
+    {
+      'code': 'it',
+      'name': 'lang_it',
+      'icon': 'assets/icons/profile_page/it_flag.png',
+    },
+    {
+      'code': 'es',
+      'name': 'lang_es',
+      'icon': 'assets/icons/profile_page/es_flag.png',
+    },
+    {
+      'code': 'zh',
+      'name': 'lang_zh',
+      'icon': 'assets/icons/profile_page/zh_flag.png',
+    },
   ];
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
@@ -118,37 +142,37 @@ class _ProfilePageState extends State<ProfilePage> {
   // ── data loading ───────────────────────────────────────────────────────────
 
   Future<void> _loadUserData() async {
-    final photo     = await _dbGet.getUserData('profile_photo');
-    final username  = await _dbGet.getUserData('username');
-    final city      = await _dbGet.getUserData('city');
-    final akaName   = await _dbGet.getUserData('city_aka_name');
-    final bio       = await _dbGet.getUserData('bio');
+    final photo = await _dbGet.getUserData('profile_photo');
+    final username = await _dbGet.getUserData('username');
+    final city = await _dbGet.getUserData('city');
+    final akaName = await _dbGet.getUserData('city_aka_name');
+    final bio = await _dbGet.getUserData('bio');
     final eventsStr = await _dbGet.getUserData('num_participated_events');
-    final badge     = await _dbGet.getUserData('category_badge');
+    final badge = await _dbGet.getUserData('category_badge');
     final followers = await _dbGet.getFollowersCount();
     final following = await _dbGet.getFollowing();
 
     if (!mounted) return;
     setState(() {
-      _profilePhoto          = photo?.trim()                   ?? '';
-      _username              = username                        ?? 'Username';
-      _city                  = city                            ?? StringRes.at('city');
-      _cityAkaName           = akaName                         ?? StringRes.at('city_aka_name');
-      _bio                   = bio                             ?? StringRes.at('bio');
-      _numParticipatedEvents = int.tryParse(eventsStr ?? '0')  ?? 0;
-      _showBadge             = bool.tryParse(badge ?? 'true')  ?? true;
-      _numFollowers          = followers;
-      _numFollowing          = (following).length;
+      _profilePhoto = photo?.trim() ?? '';
+      _username = username ?? 'Username';
+      _city = city ?? StringRes.at('city');
+      _cityAkaName = akaName ?? StringRes.at('city_aka_name');
+      _bio = bio ?? StringRes.at('bio');
+      _numParticipatedEvents = int.tryParse(eventsStr ?? '0') ?? 0;
+      _showBadge = bool.tryParse(badge ?? 'true') ?? true;
+      _numFollowers = followers;
+      _numFollowing = (following).length;
     });
   }
 
   // ── save profile edits ─────────────────────────────────────────────────────
 
   Future<void> _saveProfileData(StateSetter setPopupState) async {
-    final String uName   = _usernameCtrl.text.trim();
-    final String psw     = _passwordCtrl.text;
+    final String uName = _usernameCtrl.text.trim();
+    final String psw = _passwordCtrl.text;
     final String akaName = _cityAkaNameCtrl.text.trim();
-    final String bio     = _bioCtrl.text.trim();
+    final String bio = _bioCtrl.text.trim();
 
     if (uName.isNotEmpty && uName.length < 3) {
       setPopupState(() => _popupError = StringRes.at('username_too_short'));
@@ -156,7 +180,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     if (psw.isNotEmpty) {
-      final bool valid = psw.length >= 8 &&
+      final bool valid =
+          psw.length >= 8 &&
           RegExp(r'[A-Z]').hasMatch(psw) &&
           RegExp(r'[a-z]').hasMatch(psw) &&
           RegExp(r'[0-9]').hasMatch(psw) &&
@@ -169,16 +194,22 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (uName.isNotEmpty) {
       final int res = await _dbSet.updateUserData('username', uName);
-      if (res == 409) { setPopupState(() => _popupError = StringRes.at('user_already_exists')); return; }
+      if (res == 409) {
+        setPopupState(() => _popupError = StringRes.at('user_already_exists'));
+        return;
+      }
       setState(() => _username = uName);
     }
-    if (psw.isNotEmpty)      _dbSet.updateUserData('hash_psw', psw);
-    if (akaName.isNotEmpty)  _dbSet.updateUserData('city_aka_name', akaName);
-    if (bio.isNotEmpty)      _dbSet.updateUserData('bio', bio);
+    if (psw.isNotEmpty) _dbSet.updateUserData('hash_psw', psw);
+    if (akaName.isNotEmpty) _dbSet.updateUserData('city_aka_name', akaName);
+    if (bio.isNotEmpty) _dbSet.updateUserData('bio', bio);
     _dbSet.updateUserData('category_badge', _showBadge);
 
     if (_newProfileImage != null) {
-      final String? url = await _remote.uploadProfilePhoto(_newProfileImage!, _username);
+      final String? url = await _remote.uploadProfilePhoto(
+        _newProfileImage!,
+        _username,
+      );
       if (url != null) {
         _dbSet.updateUserData('profile_photo', url);
         setState(() => _profilePhoto = url);
@@ -187,7 +218,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() {
       if (akaName.isNotEmpty) _cityAkaName = akaName;
-      if (bio.isNotEmpty)     _bio = bio;
+      if (bio.isNotEmpty) _bio = bio;
     });
   }
 
@@ -195,12 +226,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _goToHome() {
     HapticService.tap();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomePage()),
+    );
   }
 
   void _goToCreateEvent() {
     HapticService.tap();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CreateEvent()));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateEvent()),
+    );
   }
 
   void _clearPopupControllers() {
@@ -210,31 +247,46 @@ class _ProfilePageState extends State<ProfilePage> {
     _bioCtrl.clear();
   }
 
+  void _handleLogout() {
+    HapticService.emphasis();
+    Navigator.pop(context);
+    _logoutAndRedirect();
+  }
+
+  Future<void> _logoutAndRedirect() async {
+    await _remote.logout();
+    if (!mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
+
   // ── build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final double sw = MediaQuery.of(context).size.width;
-    final double s  = (sw / 390).clamp(0.8, 1.2);
+    final double s = (sw / 390).clamp(0.8, 1.2);
 
     return VezPageLayout(
       // ── top navbar ──────────────────────────────────────────────────────
       searchController: _searchController,
-      searchHint:       StringRes.at('search'),
+      searchHint: StringRes.at('search'),
       // left button: settings icon — opens the full settings popup
-      profileIconPath:  'assets/icons/profile_page/settings.png',
-      isProfileAvatar:  false,
-      onProfileTap:     () => _showSettingsPopup(s),
+      profileIconPath: 'assets/icons/profile_page/settings.png',
+      isProfileAvatar: false,
+      onProfileTap: () => _showSettingsPopup(s),
       // right button: follow-requests
-      filterIconPath:   'assets/icons/profile_page/following_requests.png',
-      onFilterSelected: (_) {},   // todo: navigate to follow-requests screen
-
+      filterIconPath: 'assets/icons/profile_page/following_requests.png',
+      onFilterSelected: (_) {}, // todo: navigate to follow-requests screen
       // ── bottom navbar ────────────────────────────────────────────────────
       bottomNavBar: _BottomNavPill(
-        s:                  s,
-        activeIndex:        -1,
-        onHomeTap:          _goToHome,
-        onCreateEventTap:   _goToCreateEvent,
+        s: s,
+        activeIndex: -1,
+        onHomeTap: _goToHome,
+        onCreateEventTap: _goToCreateEvent,
         onNotificationsTap: () {},
       ),
 
@@ -254,13 +306,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 _showEditProfilePopup(s);
               },
               child: _UserCard(
-                s:            s,
+                s: s,
                 profilePhoto: _profilePhoto,
-                username:     _username,
-                cityAkaName:  _cityAkaName,
-                city:         _city,
-                bio:          _bio,
-                showBadge:    _showBadge,
+                username: _username,
+                cityAkaName: _cityAkaName,
+                city: _city,
+                bio: _bio,
+                showBadge: _showBadge,
               ),
             ),
 
@@ -270,9 +322,9 @@ class _ProfilePageState extends State<ProfilePage> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 30 * s),
               child: _StatsPill(
-                s:            s,
+                s: s,
                 numFollowers: _numFollowers,
-                numEvents:    _numParticipatedEvents,
+                numEvents: _numParticipatedEvents,
                 numFollowing: _numFollowing,
               ),
             ),
@@ -317,8 +369,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    const ImageIcon(AssetImage('assets/icons/profile_page/settings.png'),
-                        color: Colors.white, size: 26),
+                    const ImageIcon(
+                      AssetImage('assets/icons/profile_page/settings.png'),
+                      color: Colors.white,
+                      size: 26,
+                    ),
                     const SizedBox(width: 12),
                     Text(
                       StringRes.at('settings'),
@@ -345,8 +400,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   builder: (context) {
                     // Troviamo i dati della lingua corrente nella lista _languages
                     final currentLang = _languages.firstWhere(
-                          (lang) => lang['code'] == StringRes.locale,
-                      orElse: () => _languages.first, // Fallback sulla prima lingua se non trova il codice
+                      (lang) => lang['code'] == StringRes.locale,
+                      orElse: () => _languages
+                          .first, // Fallback sulla prima lingua se non trova il codice
                     );
 
                     return GestureDetector(
@@ -358,9 +414,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       ), // Apre il popup che abbiamo creato prima
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05), // Un leggero sfondo per far capire che è interattivo
+                          color: Colors.white.withOpacity(
+                            0.05,
+                          ), // Un leggero sfondo per far capire che è interattivo
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: Colors.white10),
                         ),
@@ -387,7 +448,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  StringRes.at('click_to_change'), // Assicurati di avere questa chiave in StringRes
+                                  StringRes.at(
+                                    'click_to_change',
+                                  ), // Assicurati di avere questa chiave in StringRes
                                   style: TextStyle(
                                     color: Colors.white.withOpacity(0.5),
                                     fontSize: 12,
@@ -415,15 +478,18 @@ class _ProfilePageState extends State<ProfilePage> {
               // ── section: display preferences ─────────────────────────────
               _SettingsSection(
                 label: StringRes.at('display'),
-                iconPath:  'assets/icons/profile_page/general_settings.png',
+                iconPath: 'assets/icons/profile_page/general_settings.png',
                 child: _BadgeToggleRow(
-                  s:         s,
-                  value:     _showBadge,
+                  s: s,
+                  value: _showBadge,
                   onChanged: (val) {
                     HapticService.selection();
                     setPopupState(() => _showBadge = val);
-                    setState(()  => _showBadge = val);
-                    _dbSet.updateUserData('category_badge', val); // changing value in the db
+                    setState(() => _showBadge = val);
+                    _dbSet.updateUserData(
+                      'category_badge',
+                      val,
+                    ); // changing value in the db
                   },
                 ),
               ),
@@ -433,15 +499,8 @@ class _ProfilePageState extends State<ProfilePage> {
               // ── section: account ─────────────────────────────────────────
               _SettingsSection(
                 label: StringRes.at('account'),
-                iconPath:  'assets/icons/profile_page/account.png',
-                child: _AccountActions(
-                  s: s,
-                  onLogout: () {
-                    HapticService.emphasis();
-                    Navigator.pop(context);
-                    // todo: call auth service logout and redirect to login screen
-                  },
-                ),
+                iconPath: 'assets/icons/profile_page/account.png',
+                child: _AccountActions(s: s, onLogout: _handleLogout),
               ),
 
               SizedBox(height: 20 * s),
@@ -451,7 +510,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(30),
@@ -459,7 +521,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     child: Text(
                       StringRes.at('close'),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
@@ -494,36 +560,47 @@ class _ProfilePageState extends State<ProfilePage> {
                 onTap: () async {
                   final XFile? file = await _picker.pickImage(
                     source: ImageSource.gallery,
-                    maxWidth: 512, maxHeight: 512, imageQuality: 75,
+                    maxWidth: 512,
+                    maxHeight: 512,
+                    imageQuality: 75,
                   );
-                  if (file != null) setPopupState(() => _newProfileImage = File(file.path));
+                  if (file != null) {
+                    setPopupState(() => _newProfileImage = File(file.path));
+                  }
                 },
-                child: _AvatarPicker(newImage: _newProfileImage, networkPhoto: _profilePhoto),
+                child: _AvatarPicker(
+                  newImage: _newProfileImage,
+                  networkPhoto: _profilePhoto,
+                ),
               ),
 
               SizedBox(height: 24 * s),
 
               // username field
               _PopupInput(
-                hint:       StringRes.at('new_username'),
+                hint: StringRes.at('new_username'),
                 controller: _usernameCtrl,
-                maxLength:  15,
-                onChanged:  (v) => setPopupState(() {}),
+                maxLength: 15,
+                onChanged: (v) => setPopupState(() {}),
               ),
 
               // password field with visibility toggle
               _PopupInput(
-                hint:       StringRes.at('new_password'),
+                hint: StringRes.at('new_password'),
                 controller: _passwordCtrl,
-                obscure:    !_showPassword,
-                onChanged:  (v) => setPopupState(() {}),
+                obscure: !_showPassword,
+                onChanged: (v) => setPopupState(() {}),
                 suffixIcon: GestureDetector(
-                  onTap: () => setPopupState(() => _showPassword = !_showPassword),
+                  onTap: () =>
+                      setPopupState(() => _showPassword = !_showPassword),
                   child: Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: Icon(
-                      _showPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      color: Colors.white54, size: 20,
+                      _showPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Colors.white54,
+                      size: 20,
                     ),
                   ),
                 ),
@@ -531,18 +608,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // city aka-name field
               _PopupInput(
-                hint:       StringRes.at('city_aka_name'),
+                hint: StringRes.at('city_aka_name'),
                 controller: _cityAkaNameCtrl,
-                maxLength:  10,
-                onChanged:  (v) => setPopupState(() {}),
+                maxLength: 10,
+                onChanged: (v) => setPopupState(() {}),
               ),
 
               // bio field
               _PopupInput(
-                hint:       StringRes.at('bio'),
+                hint: StringRes.at('bio'),
                 controller: _bioCtrl,
-                maxLength:  30,
-                onChanged:  (v) => setPopupState(() {}),
+                maxLength: 30,
+                onChanged: (v) => setPopupState(() {}),
               ),
 
               SizedBox(height: 24 * s),
@@ -550,7 +627,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // error banner
               AnimatedSize(
                 duration: const Duration(milliseconds: 250),
-                curve:    Curves.easeOut,
+                curve: Curves.easeOut,
                 child: _popupError != null
                     ? Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -593,20 +670,25 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// scrollable list of languages
   void _showLanguageSelector({VoidCallback? onLanguageChanged}) {
-    final double pw = MediaQuery.of(context).size.width  * 0.50;
+    final double pw = MediaQuery.of(context).size.width * 0.50;
     final double totalHeight = (_languages.length * 57.0);
-    final double ph = totalHeight.clamp(100.0, MediaQuery.of(context).size.height * 0.8);
+    final double ph = totalHeight.clamp(
+      100.0,
+      MediaQuery.of(context).size.height * 0.8,
+    );
 
     VezPopup.show(
       context: context,
-      width:  pw,
+      width: pw,
       height: ph,
       backgroundColor: const Color.fromARGB(128, 6, 0, 92),
-      borderColor:     const Color.fromARGB(128, 0, 10, 218),
+      borderColor: const Color.fromARGB(128, 0, 10, 218),
       child: ListView.separated(
-        physics:    const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        padding:    EdgeInsets.zero,
-        itemCount:  _languages.length,
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        padding: EdgeInsets.zero,
+        itemCount: _languages.length,
         separatorBuilder: (_, _) => _PopupDivider(width: pw),
         itemBuilder: (context, i) {
           final String code = _languages[i]['code']!;
@@ -642,14 +724,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
 
                   const SizedBox(width: 12), // Spazio fisso tra icona e testo
-
                   // Testo della lingua
                   Text(
                     StringRes.at(name),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
 
@@ -685,8 +768,12 @@ class _PopupDivider extends StatelessWidget {
     final double w = (width * 0.70).clamp(100.0, width - 32.0);
     return Center(
       child: Container(
-        width: w, height: 2,
-        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
+        width: w,
+        height: 2,
+        decoration: BoxDecoration(
+          color: Colors.white24,
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }
@@ -702,8 +789,10 @@ class _BottomNavPill extends StatelessWidget {
   final VoidCallback onHomeTap, onCreateEventTap, onNotificationsTap;
 
   const _BottomNavPill({
-    required this.s,          required this.activeIndex,
-    required this.onHomeTap,  required this.onCreateEventTap,
+    required this.s,
+    required this.activeIndex,
+    required this.onHomeTap,
+    required this.onCreateEventTap,
     required this.onNotificationsTap,
   });
 
@@ -711,26 +800,35 @@ class _BottomNavPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return VezGlass.container(
       padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 0),
-      radius:  BorderRadius.circular(40),
+      radius: BorderRadius.circular(40),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: ImageIcon(const AssetImage('assets/icons/nav_bar/go_to_home_page.png'),
-                color: activeIndex == 0 ? Colors.white : Colors.white54),
-            iconSize: 30, onPressed: onHomeTap,
+            icon: ImageIcon(
+              const AssetImage('assets/icons/nav_bar/go_to_home_page.png'),
+              color: activeIndex == 0 ? Colors.white : Colors.white54,
+            ),
+            iconSize: 30,
+            onPressed: onHomeTap,
           ),
           SizedBox(width: 16 * s),
           IconButton(
-            icon: ImageIcon(const AssetImage('assets/icons/nav_bar/create_event.png'),
-                color: activeIndex == 1 ? Colors.white : Colors.white54),
-            iconSize: 30, onPressed: onCreateEventTap,
+            icon: ImageIcon(
+              const AssetImage('assets/icons/nav_bar/create_event.png'),
+              color: activeIndex == 1 ? Colors.white : Colors.white54,
+            ),
+            iconSize: 30,
+            onPressed: onCreateEventTap,
           ),
           SizedBox(width: 16 * s),
           IconButton(
-            icon: ImageIcon(const AssetImage('assets/icons/nav_bar/notifications.png'),
-                color: activeIndex == 2 ? Colors.white : Colors.white54),
-            iconSize: 30, onPressed: onNotificationsTap,
+            icon: ImageIcon(
+              const AssetImage('assets/icons/nav_bar/notifications.png'),
+              color: activeIndex == 2 ? Colors.white : Colors.white54,
+            ),
+            iconSize: 30,
+            onPressed: onNotificationsTap,
           ),
         ],
       ),
@@ -747,13 +845,16 @@ class _BottomNavPill extends StatelessWidget {
 class _UserCard extends StatelessWidget {
   final double s;
   final String profilePhoto, username, cityAkaName, city, bio;
-  final bool   showBadge;
+  final bool showBadge;
 
   const _UserCard({
     required this.s,
-    required this.profilePhoto, required this.username,
-    required this.cityAkaName,  required this.city,
-    required this.bio,          required this.showBadge,
+    required this.profilePhoto,
+    required this.username,
+    required this.cityAkaName,
+    required this.city,
+    required this.bio,
+    required this.showBadge,
   });
 
   @override
@@ -765,7 +866,9 @@ class _UserCard extends StatelessWidget {
         color: const Color(0xFF0E0E0E),
         borderRadius: BorderRadius.circular(40),
         border: Border.all(color: Colors.white38, width: 2),
-        boxShadow: const [BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6)],
+        boxShadow: const [
+          BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -778,21 +881,45 @@ class _UserCard extends StatelessWidget {
               children: [
                 Text(
                   username,
-                  style: const TextStyle(fontFamily: 'InstagramSans', fontSize: 30,
-                      fontWeight: FontWeight.bold, color: Colors.white, height: 1.0),
+                  style: const TextStyle(
+                    fontFamily: 'InstagramSans',
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1.0,
+                  ),
                 ),
                 SizedBox(height: 4 * s),
-                RichText(text: TextSpan(
-                  style: const TextStyle(fontFamily: 'InstagramSans', color: Colors.white, fontSize: 14),
-                  children: [
-                    TextSpan(text: cityAkaName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: ' • $city',  style: const TextStyle(fontWeight: FontWeight.w300)),
-                  ],
-                )),
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontFamily: 'InstagramSans',
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: cityAkaName,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      TextSpan(
+                        text: ' • $city',
+                        style: const TextStyle(fontWeight: FontWeight.w300),
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 4 * s),
-                Text(bio,
-                    style: const TextStyle(fontFamily: 'InstagramSans', fontSize: 14, color: Colors.white),
-                    maxLines: 3, overflow: TextOverflow.ellipsis),
+                Text(
+                  bio,
+                  style: const TextStyle(
+                    fontFamily: 'InstagramSans',
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
@@ -806,10 +933,14 @@ class _UserCard extends StatelessWidget {
 
 class _AvatarWithBadge extends StatelessWidget {
   final String photo;
-  final bool   showBadge;
+  final bool showBadge;
   final double size;
 
-  const _AvatarWithBadge({required this.photo, required this.showBadge, required this.size});
+  const _AvatarWithBadge({
+    required this.photo,
+    required this.showBadge,
+    required this.size,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -817,34 +948,44 @@ class _AvatarWithBadge extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Container(
-          width: size, height: size,
+          width: size,
+          height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
             image: DecorationImage(
               image: photo.isNotEmpty
                   ? NetworkImage(photo)
-                  : const AssetImage('assets/icons/home_page/profile_photo.png') as ImageProvider,
+                  : const AssetImage('assets/icons/home_page/profile_photo.png')
+                        as ImageProvider,
               fit: BoxFit.cover,
             ),
           ),
         ),
         if (showBadge)
           Positioned(
-            top: -4, right: -4,
+            top: -4,
+            right: -4,
             child: ClipOval(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  width: 28, height: 28,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(51, 0, 10, 218),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color.fromARGB(128, 0, 10, 218), width: 2),
+                    border: Border.all(
+                      color: const Color.fromARGB(128, 0, 10, 218),
+                      width: 2,
+                    ),
                   ),
                   padding: const EdgeInsets.all(5),
                   // todo: replace with the user's most-frequent event category icon
-                  child: Image.asset('assets/icons/categories/pub.png', color: Colors.white),
+                  child: Image.asset(
+                    'assets/icons/categories/pub.png',
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -862,7 +1003,9 @@ class _StatsPill extends StatelessWidget {
 
   const _StatsPill({
     required this.s,
-    required this.numFollowers, required this.numEvents, required this.numFollowing,
+    required this.numFollowers,
+    required this.numEvents,
+    required this.numFollowing,
   });
 
   @override
@@ -873,14 +1016,25 @@ class _StatsPill extends StatelessWidget {
         color: const Color(0xFF0E0E0E),
         borderRadius: BorderRadius.circular(50),
         border: Border.all(color: Colors.white38, width: 2),
-        boxShadow: const [BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6)],
+        boxShadow: const [
+          BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _StatItem(icon: 'assets/icons/profile_page/followers.png',           value: numFollowers.toString()),
-          _StatItem(icon: 'assets/icons/profile_page/participated_events.png', value: numEvents.toString()),
-          _StatItem(icon: 'assets/icons/profile_page/following_requests.png',  value: numFollowing.toString()),
+          _StatItem(
+            icon: 'assets/icons/profile_page/followers.png',
+            value: numFollowers.toString(),
+          ),
+          _StatItem(
+            icon: 'assets/icons/profile_page/participated_events.png',
+            value: numEvents.toString(),
+          ),
+          _StatItem(
+            icon: 'assets/icons/profile_page/following_requests.png',
+            value: numFollowing.toString(),
+          ),
         ],
       ),
     );
@@ -898,10 +1052,15 @@ class _StatItem extends StatelessWidget {
       children: [
         Image.asset(icon, width: 28, height: 28, color: Colors.white),
         const SizedBox(height: 2),
-        Text(value, style: const TextStyle(
-          fontFamily: 'InstagramSans', fontWeight: FontWeight.bold,
-          fontSize: 18, color: Colors.white,
-        )),
+        Text(
+          value,
+          style: const TextStyle(
+            fontFamily: 'InstagramSans',
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.white,
+          ),
+        ),
       ],
     );
   }
@@ -919,19 +1078,27 @@ class _PastEventsGrid extends StatelessWidget {
       height: 400,
       child: ShaderMask(
         shaderCallback: (Rect rect) => const LinearGradient(
-          begin:  Alignment.topCenter,
-          end:    Alignment.bottomCenter,
-          colors: [Colors.black, Colors.transparent, Colors.transparent, Colors.black],
-          stops:  [0.0, 0.05, 0.90, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black,
+            Colors.transparent,
+            Colors.transparent,
+            Colors.black,
+          ],
+          stops: [0.0, 0.05, 0.90, 1.0],
         ).createShader(rect),
         blendMode: BlendMode.dstOut,
         child: GridView.builder(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.only(top: 10, bottom: 80),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8, childAspectRatio: 0.7,
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 0.7,
           ),
-          itemCount:   0,   // todo: replace with real event count
+          itemCount: 0, // todo: replace with real event count
           itemBuilder: (_, __) => const SizedBox.shrink(),
         ),
       ),
@@ -951,7 +1118,9 @@ class _SettingsSection extends StatelessWidget {
   final Widget child;
 
   const _SettingsSection({
-    required this.label, required this.iconPath, required this.child,
+    required this.label,
+    required this.iconPath,
+    required this.child,
   });
 
   @override
@@ -972,7 +1141,11 @@ class _SettingsSection extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
               child: Row(
                 children: [
-                  ImageIcon(AssetImage(iconPath), color: Colors.white54, size: 18), // <-- Usato ImageIcon
+                  ImageIcon(
+                    AssetImage(iconPath),
+                    color: Colors.white54,
+                    size: 18,
+                  ), // <-- Usato ImageIcon
                   const SizedBox(width: 8),
                   Text(
                     label.toUpperCase(),
@@ -1006,7 +1179,11 @@ class _BadgeToggleRow extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  const _BadgeToggleRow({required this.s, required this.value, required this.onChanged});
+  const _BadgeToggleRow({
+    required this.s,
+    required this.value,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1016,24 +1193,34 @@ class _BadgeToggleRow extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color.fromARGB(51, 6, 0, 92),
             shape: BoxShape.circle,
-            border: Border.all(color: const Color.fromARGB(128, 0, 10, 218), width: 2),
+            border: Border.all(
+              color: const Color.fromARGB(128, 0, 10, 218),
+              width: 2,
+            ),
           ),
           padding: const EdgeInsets.all(5),
-          child: ImageIcon(const AssetImage('assets/icons/categories/hang_out.png'),
-              color: Colors.white, size: 20),
+          child: ImageIcon(
+            const AssetImage('assets/icons/categories/hang_out.png'),
+            color: Colors.white,
+            size: 20,
+          ),
         ),
         SizedBox(width: 12 * s),
         Expanded(
           child: Text(
             StringRes.at('category_badge'),
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         Switch(
-          value:              value,
-          onChanged:          onChanged,
-          activeThumbColor:   Colors.black,
-          activeTrackColor:   Colors.white,
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: Colors.black,
+          activeTrackColor: Colors.white,
           inactiveThumbColor: Colors.white54,
           inactiveTrackColor: Colors.white24,
         ),
@@ -1059,15 +1246,26 @@ class _AccountActions extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color.fromARGB(40, 255, 49, 49),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color.fromARGB(100, 255, 49, 49), width: 1.5),
+          border: Border.all(
+            color: const Color.fromARGB(100, 255, 49, 49),
+            width: 1.5,
+          ),
         ),
         child: Row(
           children: [
-            const ImageIcon(AssetImage('assets/icons/profile_page/logout.png'), color: Color(0xFFFF3131), size: 22),
+            const ImageIcon(
+              AssetImage('assets/icons/profile_page/logout.png'),
+              color: Color(0xFFFF3131),
+              size: 22,
+            ),
             const SizedBox(width: 12),
             Text(
               StringRes.at('logout'),
-              style: const TextStyle(color: Color(0xFFFF3131), fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Color(0xFFFF3131),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -1083,7 +1281,7 @@ class _AccountActions extends StatelessWidget {
 // ── _AvatarPicker — tappable circle that previews the new profile photo ──────
 
 class _AvatarPicker extends StatelessWidget {
-  final File?  newImage;
+  final File? newImage;
   final String networkPhoto;
 
   const _AvatarPicker({required this.newImage, required this.networkPhoto});
@@ -1093,11 +1291,13 @@ class _AvatarPicker extends StatelessWidget {
     final ImageProvider img = newImage != null
         ? FileImage(newImage!)
         : (networkPhoto.isNotEmpty
-            ? NetworkImage(networkPhoto)
-            : const AssetImage('assets/icons/auth/icon_camera_90x90.png')) as ImageProvider;
+                  ? NetworkImage(networkPhoto)
+                  : const AssetImage('assets/icons/auth/icon_camera_90x90.png'))
+              as ImageProvider;
 
     return Container(
-      width: 80, height: 80,
+      width: 80,
+      height: 80,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2),
@@ -1113,7 +1313,7 @@ class _PopupInput extends StatelessWidget {
   final String hint;
   final TextEditingController controller;
   final int? maxLength;
-  final int  maxLines;
+  final int maxLines;
   final bool obscure;
   final ValueChanged<String>? onChanged;
   final Widget? suffixIcon;
@@ -1121,9 +1321,11 @@ class _PopupInput extends StatelessWidget {
   const _PopupInput({
     required this.hint,
     required this.controller,
-    this.maxLength, this.maxLines = 1,
+    this.maxLength,
+    this.maxLines = 1,
     this.obscure = false,
-    this.onChanged, this.suffixIcon,
+    this.onChanged,
+    this.suffixIcon,
   });
 
   @override
@@ -1136,19 +1338,25 @@ class _PopupInput extends StatelessWidget {
         border: Border.all(color: Colors.white54, width: 2),
       ),
       child: TextField(
-        controller:  controller,
-        onChanged:   onChanged,
-        maxLength:   maxLength,
-        maxLines:    maxLines,
+        controller: controller,
+        onChanged: onChanged,
+        maxLength: maxLength,
+        maxLines: maxLines,
         obscureText: obscure,
-        style: const TextStyle(color: Colors.white, fontFamily: 'InstagramSans',
-            fontWeight: FontWeight.bold, fontSize: 18),
+        style: const TextStyle(
+          color: Colors.white,
+          fontFamily: 'InstagramSans',
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(color: Colors.white54),
           border: InputBorder.none,
           counterText: '',
-          suffixText: maxLength != null ? '${controller.text.length}/$maxLength' : null,
+          suffixText: maxLength != null
+              ? '${controller.text.length}/$maxLength'
+              : null,
           suffixIcon: suffixIcon,
           suffixIconConstraints: const BoxConstraints(),
         ),
@@ -1163,7 +1371,11 @@ class _SaveDiscardRow extends StatelessWidget {
   final double s;
   final VoidCallback onSave, onDiscard;
 
-  const _SaveDiscardRow({required this.s, required this.onSave, required this.onDiscard});
+  const _SaveDiscardRow({
+    required this.s,
+    required this.onSave,
+    required this.onDiscard,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1190,12 +1402,14 @@ class _SaveDiscardRow extends StatelessWidget {
 
 class _ActionCircle extends StatelessWidget {
   final String icon;
-  final Color  color, borderColor;
+  final Color color, borderColor;
   final VoidCallback onTap;
 
   const _ActionCircle({
-    required this.icon, required this.color,
-    required this.borderColor, required this.onTap,
+    required this.icon,
+    required this.color,
+    required this.borderColor,
+    required this.onTap,
   });
 
   @override
@@ -1205,7 +1419,8 @@ class _ActionCircle extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: color, shape: BoxShape.circle,
+          color: color,
+          shape: BoxShape.circle,
           border: Border.all(color: borderColor, width: 2),
         ),
         child: ImageIcon(AssetImage(icon), color: Colors.white, size: 30),

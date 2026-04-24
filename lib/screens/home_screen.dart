@@ -1,4 +1,4 @@
-// developed and designed by outly • © 2026
+// developed and designed by Outly • © 2026
 // home screen — zone-2 content: vertical carousel of event cards.
 //
 // layout zones used:

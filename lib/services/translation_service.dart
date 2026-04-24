@@ -29,13 +29,15 @@ class StringRes {
   /// Call this once at app startup (e.g. in main or loading screen).
   static void initLocale() {
     // get the device's primary language code (e.g. "it", "en", "fr")
-    final String deviceLang = ui.PlatformDispatcher.instance.locale.languageCode.toLowerCase();
+    final String deviceLang = ui.PlatformDispatcher.instance.locale.languageCode
+        .toLowerCase();
     if (_localizedValues.containsKey(deviceLang)) {
       locale = deviceLang;
     } else {
       locale = 'en'; // fallback
     }
     UserSession().locale = locale;
+    UserSession().saveLocale(locale);
     localeNotifier.refresh();
   }
 
@@ -46,11 +48,15 @@ class StringRes {
 
   // to set the user language for his session
   static void setLocale(String newLocale) {
-    final String normalizedLocale = newLocale.toLowerCase().split(RegExp(r'[-_]')).first;
+    final String normalizedLocale = newLocale
+        .toLowerCase()
+        .split(RegExp(r'[-_]'))
+        .first;
     if (!_localizedValues.containsKey(normalizedLocale)) return;
 
     locale = normalizedLocale;
     UserSession().locale = normalizedLocale;
+    UserSession().saveLocale(normalizedLocale);
     localeNotifier.refresh();
   }
 }

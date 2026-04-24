@@ -2,6 +2,8 @@
 // Screen to manage the app's loading process
 
 import 'package:flutter/material.dart';
+import '../../services/user_session.dart';
+import '../home_screen.dart';
 import '../../services/translation_service.dart';
 import 'login_screen.dart';
 
@@ -20,8 +22,19 @@ class _LoadingPageState extends State<LoadingPage> {
   @override
   void initState() {
     super.initState();
-    StringRes.initLocale(); // Auto-detect device language
-    startAppAnimations();
+    _bootstrapApp();
+  }
+
+  Future<void> _bootstrapApp() async {
+    await UserSession().restore();
+
+    if (UserSession().locale.isNotEmpty) {
+      StringRes.setLocale(UserSession().locale);
+    } else {
+      StringRes.initLocale();
+    }
+
+    await startAppAnimations();
   }
 
   Future<void> startAppAnimations() async {
@@ -47,11 +60,15 @@ class _LoadingPageState extends State<LoadingPage> {
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
 
-    // 6. Naviga verso la LoginPage
+    final Widget destination = UserSession().isLoggedIn
+        ? const HomePage()
+        : const LoginPage();
+
+    // 6. Naviga verso la schermata iniziale corretta
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
+        pageBuilder: (context, animation, secondaryAnimation) => destination,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

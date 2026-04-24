@@ -1,4 +1,4 @@
-// developed and designed by outly • © 2026
+// developed and designed by Outly • © 2026
 // create event screen — zone-2 content: a single full-height event card
 // where the user configures all event details before saving.
 //
