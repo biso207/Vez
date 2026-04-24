@@ -22,13 +22,16 @@ const Map<String, String> es = {
   "user_already_exists": "El usuario ya existe",
   "same_username": "El nuevo usuario es igual al anterior",
   "invalid_email": "Correo electrónico inválido",
-  "invalid_password": "Contraseña inválida.\nNecesita 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 especial.",
+  "invalid_password":
+      "Contraseña inválida.\nNecesita 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 especial.",
   "signup_failed": "Registro fallido",
   "signup_successful": "¡Registro exitoso!",
   "something_went_wrong": "Algo salió mal",
-  "enable_location_services": "Activa los servicios de ubicación en tu dispositivo",
+  "enable_location_services":
+      "Activa los servicios de ubicación en tu dispositivo",
   "location_permissions_denied": "Permisos de ubicación denegados",
-  "location_permissions_permanently_denied": "Permisos de ubicación denegados permanentemente. Cámbialo en ajustes.",
+  "location_permissions_permanently_denied":
+      "Permisos de ubicación denegados permanentemente. Cámbialo en ajustes.",
   "unknown_city": "Ciudad desconocida",
   "no_internet_connection": "Sin conexión a internet",
   "login_failed": "Inicio de sesión fallido",
@@ -38,6 +41,9 @@ const Map<String, String> es = {
   "filter_by_you": "Por ti",
   "filter_invited": "Invitado",
   "filter_nearby": "Cerca",
+  "no_events_by_you": "Aún no has creado eventos",
+  "no_events_invited": "Todavía no hay invitaciones para mostrar",
+  "no_events_nearby": "Todavía no hay eventos cercanos para mostrar",
 
   // edit profile //
   "new_username": "Nuevo usuario",
@@ -111,5 +117,5 @@ const Map<String, String> es = {
   "lang_zh": "Chino",
   "lang_fr": "Francés",
   "lang_de": "Alemán",
-  "lang_es": "Español"
+  "lang_es": "Español",
 };

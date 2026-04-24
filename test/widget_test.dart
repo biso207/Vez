@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vez/main.dart';
+import 'package:vez/screens/auth/loading_screen.dart';
 
 void main() {
-  testWidgets('App loads and shows loading indicator', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('App boots into the loading screen', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    // Verify that the LoadingPage shows a CircularProgressIndicator.
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
+    expect(find.byType(LoadingPage), findsOneWidget);
   });
 }

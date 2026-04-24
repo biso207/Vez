@@ -22,13 +22,16 @@ const Map<String, String> de = {
   "user_already_exists": "Benutzer existiert bereits",
   "same_username": "Der neue Name ist identisch mit dem alten",
   "invalid_email": "Ungültige E-Mail-Adresse",
-  "invalid_password": "Ungültiges Passwort.\nBenötigt 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl, 1 Sonderzeichen.",
+  "invalid_password":
+      "Ungültiges Passwort.\nBenötigt 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl, 1 Sonderzeichen.",
   "signup_failed": "Registrierung fehlgeschlagen",
   "signup_successful": "Registrierung erfolgreich!",
   "something_went_wrong": "Etwas ist schiefgelaufen",
-  "enable_location_services": "Bitte aktiviere die Standortdienste auf deinem Gerät",
+  "enable_location_services":
+      "Bitte aktiviere die Standortdienste auf deinem Gerät",
   "location_permissions_denied": "Standortberechtigungen verweigert",
-  "location_permissions_permanently_denied": "Standortberechtigungen dauerhaft verweigert. Ändere dies in den Einstellungen.",
+  "location_permissions_permanently_denied":
+      "Standortberechtigungen dauerhaft verweigert. Ändere dies in den Einstellungen.",
   "unknown_city": "Unbekannte Stadt",
   "no_internet_connection": "Keine Internetverbindung",
   "login_failed": "Anmeldung fehlgeschlagen",
@@ -38,6 +41,9 @@ const Map<String, String> de = {
   "filter_by_you": "Von dir",
   "filter_invited": "Eingeladen",
   "filter_nearby": "In der Nähe",
+  "no_events_by_you": "Du hast noch keine Events erstellt",
+  "no_events_invited": "Noch keine Einladungen zum Anzeigen",
+  "no_events_nearby": "Noch keine Events in der Nähe zum Anzeigen",
 
   // edit profile //
   "new_username": "Neuer Benutzername",
@@ -111,5 +117,5 @@ const Map<String, String> de = {
   "lang_zh": "Chinesisch",
   "lang_fr": "Französisch",
   "lang_de": "Deutsch",
-  "lang_es": "Spanisch"
+  "lang_es": "Spanisch",
 };

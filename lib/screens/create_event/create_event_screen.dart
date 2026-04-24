@@ -46,36 +46,35 @@ class CreateEvent extends StatefulWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CreateEventState extends State<CreateEvent> {
-
   // ── controllers & services ─────────────────────────────────────────────────
 
   final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _titleController  = TextEditingController();
-  final FocusNode             _titleFocus       = FocusNode();
-  final ImagePicker           _picker           = ImagePicker();
+  final TextEditingController _titleController = TextEditingController();
+  final FocusNode _titleFocus = FocusNode();
+  final ImagePicker _picker = ImagePicker();
 
   late final GetDBService _dbGet;
   late final SetDBService _dbSet;
 
   // ── event creation state ───────────────────────────────────────────────────
 
-  String _bgImage      = 'assets/images/bg/default_create_event_bg.jpg';
+  String _bgImage = 'assets/images/bg/default_create_event_bg.jpg';
   String _categoryName = 'cinema';
   String _categoryIcon = 'assets/icons/categories/cinema.png';
-  String _typeName     = 'Public';
-  String _typeIcon     = 'assets/icons/event/public.png';
+  String _typeName = 'Public';
+  String _typeIcon = 'assets/icons/event/public.png';
 
-  DateTime?  _date;
+  DateTime? _date;
   TimeOfDay? _time;
-  String?    _description;
-  String?    _maxGuests;
-  String?    _price;
+  String? _description;
+  String? _maxGuests;
+  String? _price;
 
-  String  _locationName    = '';
-  String  _locationAddress = '';
+  String _locationName = '';
+  String _locationAddress = '';
   double? _locationLat;
   double? _locationLng;
-  bool    _locationPrecise = false;
+  bool _locationPrecise = false;
 
   // ── user state ─────────────────────────────────────────────────────────────
 
@@ -84,29 +83,32 @@ class _CreateEventState extends State<CreateEvent> {
   // ── static data ────────────────────────────────────────────────────────────
 
   static const List<Map<String, String>> _categories = [
-    {'name': 'cinema',          'icon': 'assets/icons/categories/cinema.png'},
-    {'name': 'concert',         'icon': 'assets/icons/categories/concert.png'},
-    {'name': 'disco',           'icon': 'assets/icons/categories/disco.png'},
-    {'name': 'gaming',          'icon': 'assets/icons/categories/gaming.png'},
-    {'name': 'hang_out',        'icon': 'assets/icons/categories/hang_out.png'},
-    {'name': 'journey',         'icon': 'assets/icons/categories/journey.png'},
-    {'name': 'kids_and_family', 'icon': 'assets/icons/categories/kids_and_family.png'},
-    {'name': 'museum',          'icon': 'assets/icons/categories/museum.png'},
-    {'name': 'outdoor',         'icon': 'assets/icons/categories/outdoor.png'},
-    {'name': 'party',           'icon': 'assets/icons/categories/party.png'},
-    {'name': 'pub',             'icon': 'assets/icons/categories/pub.png'},
-    {'name': 'restaurant',      'icon': 'assets/icons/categories/restaurant.png'},
-    {'name': 'shopping',        'icon': 'assets/icons/categories/shopping.png'},
-    {'name': 'sport',           'icon': 'assets/icons/categories/sport.png'},
-    {'name': 'theatre',         'icon': 'assets/icons/categories/theatre.png'},
-    {'name': 'wellness',        'icon': 'assets/icons/categories/wellness.png'},
-    {'name': 'workshop',        'icon': 'assets/icons/categories/workshop.png'},
+    {'name': 'cinema', 'icon': 'assets/icons/categories/cinema.png'},
+    {'name': 'concert', 'icon': 'assets/icons/categories/concert.png'},
+    {'name': 'disco', 'icon': 'assets/icons/categories/disco.png'},
+    {'name': 'gaming', 'icon': 'assets/icons/categories/gaming.png'},
+    {'name': 'hang_out', 'icon': 'assets/icons/categories/hang_out.png'},
+    {'name': 'journey', 'icon': 'assets/icons/categories/journey.png'},
+    {
+      'name': 'kids_and_family',
+      'icon': 'assets/icons/categories/kids_and_family.png',
+    },
+    {'name': 'museum', 'icon': 'assets/icons/categories/museum.png'},
+    {'name': 'outdoor', 'icon': 'assets/icons/categories/outdoor.png'},
+    {'name': 'party', 'icon': 'assets/icons/categories/party.png'},
+    {'name': 'pub', 'icon': 'assets/icons/categories/pub.png'},
+    {'name': 'restaurant', 'icon': 'assets/icons/categories/restaurant.png'},
+    {'name': 'shopping', 'icon': 'assets/icons/categories/shopping.png'},
+    {'name': 'sport', 'icon': 'assets/icons/categories/sport.png'},
+    {'name': 'theatre', 'icon': 'assets/icons/categories/theatre.png'},
+    {'name': 'wellness', 'icon': 'assets/icons/categories/wellness.png'},
+    {'name': 'workshop', 'icon': 'assets/icons/categories/workshop.png'},
   ];
 
   static const List<Map<String, String>> _eventTypes = [
     {'name': 'Exclusive', 'icon': 'assets/icons/event/exclusive.png'},
-    {'name': 'Private',   'icon': 'assets/icons/event/private.png'},
-    {'name': 'Public',    'icon': 'assets/icons/event/public.png'},
+    {'name': 'Private', 'icon': 'assets/icons/event/private.png'},
+    {'name': 'Public', 'icon': 'assets/icons/event/public.png'},
   ];
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
@@ -144,18 +146,18 @@ class _CreateEventState extends State<CreateEvent> {
 
   bool get _isValid =>
       _titleController.text.isNotEmpty &&
-      _date  != null &&
-      _time  != null &&
+      _date != null &&
+      _time != null &&
       _locationName.isNotEmpty;
 
   // ── event save / reset ─────────────────────────────────────────────────────
 
   Future<void> _saveEvent() async {
     final String? placeId = await _dbSet.storePlace(
-      name:      _locationName,
-      address:   _locationAddress.isNotEmpty ? _locationAddress : null,
+      name: _locationName,
+      address: _locationAddress.isNotEmpty ? _locationAddress : null,
       isPrecise: _locationPrecise,
-      latitude:  _locationLat,
+      latitude: _locationLat,
       longitude: _locationLng,
     );
 
@@ -164,39 +166,46 @@ class _CreateEventState extends State<CreateEvent> {
       return;
     }
 
-    final int res = await _dbSet.storeEvent(
-      {
-        'title':            _titleController.text.trim(),
-        'category':         _categoryName,
-        'type':             _typeName,
-        'date':             '${_date!.year}-${_date!.month}-${_date!.day}',
-        'time':             '${_time!.hour}:${_time!.minute}',
-        'max_guests':       _maxGuests,
-        'price':            _price,
-        'description':      _description,
-        'bg_photo': _bgImage,
-      },
-      placeId: placeId,
-    );
+    final int res = await _dbSet.storeEvent({
+      'title': _titleController.text.trim(),
+      'category': _categoryName,
+      'type': _typeName,
+      'date': '${_date!.year}-${_date!.month}-${_date!.day}',
+      'time': '${_time!.hour}:${_time!.minute}',
+      'max_guests': _maxGuests,
+      'price': _price,
+      'description': _description,
+      'background_image': _bgImage.startsWith('assets/')
+          ? null
+          : File(_bgImage),
+    }, placeId: placeId);
 
     if (!mounted) return;
 
     if (res == 200 || res == 201) {
       _showSnackBar(StringRes.at('event_saved_success'));
       _resetFields();
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HomePage(initialFilterIndex: 0),
+        ),
+      );
     } else {
-      _showSnackBar('${StringRes.at("event_save_failed")} ($res)', isError: true);
+      _showSnackBar(
+        '${StringRes.at("event_save_failed")} ($res)',
+        isError: true,
+      );
     }
   }
 
   void _resetFields() {
     setState(() {
-      _bgImage      = 'assets/images/bg/default_create_event_bg.jpg';
+      _bgImage = 'assets/images/bg/default_create_event_bg.jpg';
       _categoryName = 'cinema';
       _categoryIcon = 'assets/icons/categories/cinema.png';
-      _typeName     = 'Public';
-      _typeIcon     = 'assets/icons/event/public.png';
+      _typeName = 'Public';
+      _typeIcon = 'assets/icons/event/public.png';
       _titleController.clear();
       _date = _time = null;
       _description = _maxGuests = _price = null;
@@ -218,8 +227,8 @@ class _CreateEventState extends State<CreateEvent> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _date ?? DateTime.now(),
-      firstDate:   DateTime.now(),
-      lastDate:    DateTime(2101),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
     );
     if (picked != null) setState(() => _date = picked);
   }
@@ -237,23 +246,29 @@ class _CreateEventState extends State<CreateEvent> {
 
   void _goToHome() {
     HapticService.tap();
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomePage()),
+    );
   }
 
   void _goToProfile() => Navigator.pushReplacement(
-    context, MaterialPageRoute(builder: (_) => ProfilePage()),
+    context,
+    MaterialPageRoute(builder: (_) => ProfilePage()),
   );
 
   // ── snack bar helper ───────────────────────────────────────────────────────
 
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-      backgroundColor: isError
-          ? const Color.fromARGB(200, 255, 49, 49)
-          : const Color.fromARGB(200, 8, 157, 13),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError
+            ? const Color.fromARGB(200, 255, 49, 49)
+            : const Color.fromARGB(200, 8, 157, 13),
+      ),
+    );
   }
 
   // ── category & type popups (VezPopup directly — established visual style) ──
@@ -261,28 +276,41 @@ class _CreateEventState extends State<CreateEvent> {
   /// scrollable list of event categories
   void _showCategoryPopup() {
     _titleFocus.unfocus();
-    final double pw = MediaQuery.of(context).size.width  * 0.50;
+    final double pw = MediaQuery.of(context).size.width * 0.50;
     final double ph = MediaQuery.of(context).size.height * 0.50;
 
     VezPopup.show(
       context: context,
-      width:  pw,
+      width: pw,
       height: ph,
       backgroundColor: const Color.fromARGB(128, 6, 0, 92), // todo: change
-      borderColor:     const Color.fromARGB(128, 0, 10, 218), // todo: change
+      borderColor: const Color.fromARGB(128, 0, 10, 218), // todo: change
       child: ListView.separated(
-        physics:    const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        padding:    EdgeInsets.zero,
-        itemCount:  _categories.length,
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        padding: EdgeInsets.zero,
+        itemCount: _categories.length,
         separatorBuilder: (_, _) => _PopupDivider(width: pw),
         itemBuilder: (_, i) => ListTile(
           dense: true,
           visualDensity: VisualDensity.compact,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          leading: ImageIcon(AssetImage(_categories[i]['icon']!), color: Colors.white, size: 38),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 5,
+          ),
+          leading: ImageIcon(
+            AssetImage(_categories[i]['icon']!),
+            color: Colors.white,
+            size: 38,
+          ),
           title: Text(
             StringRes.at(_categories[i]['name']!),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
           ),
           onTap: () {
             setState(() {
@@ -306,23 +334,26 @@ class _CreateEventState extends State<CreateEvent> {
       width: pw,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: List.generate(_eventTypes.length, (i) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _PopupListItem(
-              icon:  _eventTypes[i]['icon']!,
-              label: StringRes.at(_eventTypes[i]['name']!.toLowerCase()),
-              onTap: () {
-                setState(() {
-                  _typeName = _eventTypes[i]['name']!;
-                  _typeIcon = _eventTypes[i]['icon']!;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            if (i < _eventTypes.length - 1) _PopupDivider(width: pw),
-          ],
-        )),
+        children: List.generate(
+          _eventTypes.length,
+          (i) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _PopupListItem(
+                icon: _eventTypes[i]['icon']!,
+                label: StringRes.at(_eventTypes[i]['name']!.toLowerCase()),
+                onTap: () {
+                  setState(() {
+                    _typeName = _eventTypes[i]['name']!;
+                    _typeIcon = _eventTypes[i]['icon']!;
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              if (i < _eventTypes.length - 1) _PopupDivider(width: pw),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -334,11 +365,11 @@ class _CreateEventState extends State<CreateEvent> {
     _titleFocus.unfocus();
     VezEventPopups.showTextInput(
       context,
-      title:        StringRes.at('set_details'),
-      titleIcon:    'assets/icons/event/description.png',
+      title: StringRes.at('set_details'),
+      titleIcon: 'assets/icons/event/description.png',
       currentValue: _description,
-      isMultiline:  true,
-      onSave:       (v) => setState(() => _description = v.isNotEmpty ? v : null),
+      isMultiline: true,
+      onSave: (v) => setState(() => _description = v.isNotEmpty ? v : null),
     );
   }
 
@@ -347,11 +378,11 @@ class _CreateEventState extends State<CreateEvent> {
     _titleFocus.unfocus();
     VezEventPopups.showTextInput(
       context,
-      title:        StringRes.at('set_max_guests'),
-      titleIcon:    'assets/icons/event/guests.png',
+      title: StringRes.at('set_max_guests'),
+      titleIcon: 'assets/icons/event/guests.png',
       currentValue: _maxGuests,
-      isNumeric:    true,
-      onSave:       (v) => setState(() => _maxGuests = v.isNotEmpty ? v : null),
+      isNumeric: true,
+      onSave: (v) => setState(() => _maxGuests = v.isNotEmpty ? v : null),
     );
   }
 
@@ -360,11 +391,11 @@ class _CreateEventState extends State<CreateEvent> {
     _titleFocus.unfocus();
     VezEventPopups.showTextInput(
       context,
-      title:        StringRes.at('set_price'),
-      titleIcon:    'assets/icons/event/price.png',
+      title: StringRes.at('set_price'),
+      titleIcon: 'assets/icons/event/price.png',
       currentValue: _price,
-      isNumeric:    true,
-      onSave:       (v) => setState(() => _price = v.isNotEmpty ? v : null),
+      isNumeric: true,
+      onSave: (v) => setState(() => _price = v.isNotEmpty ? v : null),
     );
   }
 
@@ -375,11 +406,11 @@ class _CreateEventState extends State<CreateEvent> {
       context,
       onSimpleNameTap: () => VezEventPopups.showTextInput(
         context,
-        title:        StringRes.at('location_simple_name'),
-        titleIcon:    'assets/icons/event/location.png',
+        title: StringRes.at('location_simple_name'),
+        titleIcon: 'assets/icons/event/location.png',
         currentValue: _locationName,
-        onSave:       (val) => setState(() {
-          _locationName    = val;
+        onSave: (val) => setState(() {
+          _locationName = val;
           _locationPrecise = false;
           _locationAddress = '';
           _locationLat = _locationLng = null;
@@ -392,10 +423,10 @@ class _CreateEventState extends State<CreateEvent> {
         );
         if (result != null) {
           setState(() {
-            _locationName    = result['name']       ?? 'Selected Location';
-            _locationAddress = result['address']    ?? '';
-            _locationLat     = result['latitude']   as double?;
-            _locationLng     = result['longitude']  as double?;
+            _locationName = result['name'] ?? 'Selected Location';
+            _locationAddress = result['address'] ?? '';
+            _locationLat = result['latitude'] as double?;
+            _locationLng = result['longitude'] as double?;
             _locationPrecise = result['is_precise'] as bool? ?? false;
           });
         }
@@ -407,11 +438,11 @@ class _CreateEventState extends State<CreateEvent> {
   void _showSaveConfirmation() {
     VezEventPopups.showConfirmation(
       context,
-      title:        StringRes.at('save_event'),
-      titleIcon:    'assets/icons/profile_page/save.png',
+      title: StringRes.at('save_event'),
+      titleIcon: 'assets/icons/profile_page/save.png',
       confirmLabel: StringRes.at('confirm'),
-      cancelLabel:  StringRes.at('cancel'),
-      onConfirm:    _saveEvent,
+      cancelLabel: StringRes.at('cancel'),
+      onConfirm: _saveEvent,
     );
   }
 
@@ -419,11 +450,11 @@ class _CreateEventState extends State<CreateEvent> {
   void _showDeleteConfirmation() {
     VezEventPopups.showConfirmation(
       context,
-      title:        StringRes.at('delete_data'),
-      titleIcon:    'assets/icons/profile_page/delete.png',
+      title: StringRes.at('delete_data'),
+      titleIcon: 'assets/icons/profile_page/delete.png',
       confirmLabel: StringRes.at('confirm'),
-      cancelLabel:  StringRes.at('cancel'),
-      onConfirm:    _resetFields,
+      cancelLabel: StringRes.at('cancel'),
+      onConfirm: _resetFields,
     );
   }
 
@@ -433,70 +464,72 @@ class _CreateEventState extends State<CreateEvent> {
   Widget build(BuildContext context) {
     final double sh = MediaQuery.of(context).size.height;
     final double sw = MediaQuery.of(context).size.width;
-    final double s  = (sw / 390).clamp(0.8, 1.2);
+    final double s = (sw / 390).clamp(0.8, 1.2);
 
-    final double cardH  = sh * 0.65;
-    final double cardW  = sw * 0.85;
+    final double cardH = sh * 0.65;
+    final double cardW = sw * 0.85;
     final double rOuter = 40 * s;
     final double rInner = 30 * s;
 
-    final String? fmtDate = _date != null ? '${_date!.day}/${_date!.month}' : null;
+    final String? fmtDate = _date != null
+        ? '${_date!.day}/${_date!.month}'
+        : null;
     final String? fmtTime = _time?.format(context);
 
     return VezPageLayout(
       // ── top navbar ──────────────────────────────────────────────────────
       searchController: _searchController,
-      searchHint:       StringRes.at('search'),
-      profileIconPath:  _profilePhoto,
-      isProfileAvatar:  true,
-      onProfileTap:     _goToProfile,
-      filterIconPath:   'assets/icons/profile_page/following_requests.png',
+      searchHint: StringRes.at('search'),
+      profileIconPath: _profilePhoto,
+      isProfileAvatar: true,
+      onProfileTap: _goToProfile,
+      filterIconPath: 'assets/icons/profile_page/following_requests.png',
       onFilterSelected: (_) {},
 
       // ── bottom navbar ────────────────────────────────────────────────────
       bottomNavBar: _BottomNavPill(
-        s:                  s,
-        activeIndex:        1,
-        onHomeTap:          _goToHome,
-        onCreateEventTap:   () {},
+        s: s,
+        activeIndex: 1,
+        onHomeTap: _goToHome,
+        onCreateEventTap: () {},
         onNotificationsTap: () {},
       ),
 
       // ── zone-2 body: event creation card ────────────────────────────────
       body: Center(
         child: _EventCard(
-          width:   cardW,
-          height:  cardH,
-          rOuter:  rOuter,
-          rInner:  rInner,
-          s:       s,
+          width: cardW,
+          height: cardH,
+          rOuter: rOuter,
+          rInner: rInner,
+          s: s,
           bgImage: _bgImage,
 
-          categoryIcon:    _categoryIcon,
-          typeIcon:        _typeIcon,
+          categoryIcon: _categoryIcon,
+          typeIcon: _typeIcon,
           titleController: _titleController,
-          titleFocus:      _titleFocus,
+          titleFocus: _titleFocus,
 
           formattedDate: fmtDate,
           formattedTime: fmtTime,
-          locationName:  _locationName.isNotEmpty ? _locationName : null,
-          description:   _description,
-          maxGuests:     _maxGuests,
-          price:         _price != null ? '$_price€' : null,
+          locationName: _locationName.isNotEmpty ? _locationName : null,
+          description: _description,
+          maxGuests: _maxGuests,
+          price: _price != null ? '$_price€' : null,
 
           isValid: _isValid,
 
-          onPickBackground:  _pickBackground,
-          onCategoryTap:     _showCategoryPopup,
-          onTypeTap:         _showTypePopup,
-          onDateTap:         _pickDate,
-          onTimeTap:         _pickTime,
-          onLocationTap:     _showLocationSelectorPopup,
-          onDescriptionTap:  _showDescriptionPopup,
-          onMaxGuestsTap:    _showMaxGuestsPopup,
-          onPriceTap:        _showPricePopup,
-          onSaveTap:         _showSaveConfirmation,
-          onDeleteTap:       _showDeleteConfirmation,
+          onPickBackground: _pickBackground,
+          onCategoryTap: _showCategoryPopup,
+          onTypeTap: _showTypePopup,
+          onDateTap: _pickDate,
+          onTimeTap: _pickTime,
+          onLocationTap: _showLocationSelectorPopup,
+          onDescriptionTap: _showDescriptionPopup,
+          onMaxGuestsTap: _showMaxGuestsPopup,
+          onPriceTap: _showPricePopup,
+          onSaveTap: _showSaveConfirmation,
+          onDeleteTap: _showDeleteConfirmation,
         ),
       ),
     );
@@ -513,8 +546,12 @@ class _EventCard extends StatelessWidget {
   final TextEditingController titleController;
   final FocusNode titleFocus;
 
-  final String? formattedDate, formattedTime, locationName,
-                description, maxGuests, price;
+  final String? formattedDate,
+      formattedTime,
+      locationName,
+      description,
+      maxGuests,
+      price;
   final bool isValid;
 
   final VoidCallback onPickBackground;
@@ -524,27 +561,41 @@ class _EventCard extends StatelessWidget {
   final VoidCallback onSaveTap, onDeleteTap;
 
   const _EventCard({
-    required this.width,  required this.height,
-    required this.rOuter, required this.rInner, required this.s,
-    required this.bgImage, required this.categoryIcon, required this.typeIcon,
-    required this.titleController, required this.titleFocus,
-    required this.formattedDate,  required this.formattedTime,
-    required this.locationName,   required this.description,
-    required this.maxGuests,      required this.price,
+    required this.width,
+    required this.height,
+    required this.rOuter,
+    required this.rInner,
+    required this.s,
+    required this.bgImage,
+    required this.categoryIcon,
+    required this.typeIcon,
+    required this.titleController,
+    required this.titleFocus,
+    required this.formattedDate,
+    required this.formattedTime,
+    required this.locationName,
+    required this.description,
+    required this.maxGuests,
+    required this.price,
     required this.isValid,
     required this.onPickBackground,
-    required this.onCategoryTap,   required this.onTypeTap,
-    required this.onDateTap,       required this.onTimeTap,
+    required this.onCategoryTap,
+    required this.onTypeTap,
+    required this.onDateTap,
+    required this.onTimeTap,
     required this.onLocationTap,
-    required this.onDescriptionTap, required this.onMaxGuestsTap,
+    required this.onDescriptionTap,
+    required this.onMaxGuestsTap,
     required this.onPriceTap,
-    required this.onSaveTap,       required this.onDeleteTap,
+    required this.onSaveTap,
+    required this.onDeleteTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: width, height: height,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
         color: const Color.fromARGB(128, 0, 0, 0),
         borderRadius: BorderRadius.circular(rOuter),
@@ -558,21 +609,23 @@ class _EventCard extends StatelessWidget {
           Positioned.fill(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(rOuter),
-              child: Stack(children: [
-                Positioned.fill(
-                  child: bgImage.startsWith('assets')
-                      ? Image.asset(bgImage, fit: BoxFit.cover)
-                      : Image.file(File(bgImage), fit: BoxFit.cover),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(80, 0, 0, 0),
-                      borderRadius: BorderRadius.circular(rOuter),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: bgImage.startsWith('assets')
+                        ? Image.asset(bgImage, fit: BoxFit.cover)
+                        : Image.file(File(bgImage), fit: BoxFit.cover),
+                  ),
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(80, 0, 0, 0),
+                        borderRadius: BorderRadius.circular(rOuter),
+                      ),
                     ),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
           ),
 
@@ -585,11 +638,22 @@ class _EventCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(children: [
-                      _GlassCircleButton(icon: categoryIcon, onTap: onCategoryTap, isBlue: true, s: s),
-                      SizedBox(width: 12 * s),
-                      _GlassCircleButton(icon: typeIcon, onTap: onTypeTap, s: s),
-                    ]),
+                    Row(
+                      children: [
+                        _GlassCircleButton(
+                          icon: categoryIcon,
+                          onTap: onCategoryTap,
+                          isBlue: true,
+                          s: s,
+                        ),
+                        SizedBox(width: 12 * s),
+                        _GlassCircleButton(
+                          icon: typeIcon,
+                          onTap: onTypeTap,
+                          s: s,
+                        ),
+                      ],
+                    ),
                     _PreviewBadge(label: StringRes.at('preview')),
                   ],
                 ),
@@ -600,28 +664,31 @@ class _EventCard extends StatelessWidget {
                 SizedBox(height: 14 * s),
 
                 _InfoGrid(
-                  rInner:           rInner, s: s,
-                  titleController:  titleController,
-                  titleFocus:       titleFocus,
-                  formattedDate:    formattedDate,
-                  formattedTime:    formattedTime,
-                  locationName:     locationName,
-                  description:      description,
-                  maxGuests:        maxGuests,
-                  price:            price,
-                  onDateTap:        onDateTap,
-                  onTimeTap:        onTimeTap,
-                  onLocationTap:    onLocationTap,
+                  rInner: rInner,
+                  s: s,
+                  titleController: titleController,
+                  titleFocus: titleFocus,
+                  formattedDate: formattedDate,
+                  formattedTime: formattedTime,
+                  locationName: locationName,
+                  description: description,
+                  maxGuests: maxGuests,
+                  price: price,
+                  onDateTap: onDateTap,
+                  onTimeTap: onTimeTap,
+                  onLocationTap: onLocationTap,
                   onDescriptionTap: onDescriptionTap,
-                  onMaxGuestsTap:   onMaxGuestsTap,
-                  onPriceTap:       onPriceTap,
+                  onMaxGuestsTap: onMaxGuestsTap,
+                  onPriceTap: onPriceTap,
                 ),
 
                 SizedBox(height: 14 * s),
 
                 _ActionButtons(
-                  s: s, isValid: isValid,
-                  onSaveTap: onSaveTap, onDeleteTap: onDeleteTap,
+                  s: s,
+                  isValid: isValid,
+                  onSaveTap: onSaveTap,
+                  onDeleteTap: onDeleteTap,
                 ),
               ],
             ),
@@ -643,24 +710,34 @@ class _GlassCircleButton extends StatelessWidget {
   final double s;
 
   const _GlassCircleButton({
-    required this.icon, required this.onTap,
-    this.isBlue = false, required this.s,
+    required this.icon,
+    required this.onTap,
+    this.isBlue = false,
+    required this.s,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Color fill   = isBlue ? const Color.fromARGB(51,  0, 11, 223) : const Color.fromARGB(51,  0, 0, 0);
-    final Color border = isBlue ? const Color.fromARGB(128, 0, 11, 223) : const Color.fromARGB(128, 255, 255, 255);
+    final Color fill = isBlue
+        ? const Color.fromARGB(51, 0, 11, 223)
+        : const Color.fromARGB(51, 0, 0, 0);
+    final Color border = isBlue
+        ? const Color.fromARGB(128, 0, 11, 223)
+        : const Color.fromARGB(128, 255, 255, 255);
 
     return GestureDetector(
-      onTap: () { HapticService.tap(); onTap(); },
+      onTap: () {
+        HapticService.tap();
+        onTap();
+      },
       child: ClipOval(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             padding: EdgeInsets.all(6 * s),
             decoration: BoxDecoration(
-              shape: BoxShape.circle, color: fill,
+              shape: BoxShape.circle,
+              color: fill,
               border: Border.all(color: border, width: 2),
             ),
             child: ImageIcon(AssetImage(icon), color: Colors.white, size: 28),
@@ -690,10 +767,19 @@ class _PreviewBadge extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color.fromARGB(128, 255, 195, 0),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color.fromARGB(204, 255, 195, 0), width: 2),
+            border: Border.all(
+              color: const Color.fromARGB(204, 255, 195, 0),
+              width: 2,
+            ),
           ),
-          child: Text(label,
-              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ),
     );
@@ -722,10 +808,19 @@ class _EditBgButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color.fromARGB(51, 255, 255, 255),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+              border: Border.all(
+                color: const Color.fromARGB(128, 255, 255, 255),
+                width: 2,
+              ),
             ),
-            child: Text(StringRes.at('edit_bg'),
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            child: Text(
+              StringRes.at('edit_bg'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ),
@@ -741,23 +836,38 @@ class _InfoGrid extends StatelessWidget {
   final double rInner, s;
   final TextEditingController titleController;
   final FocusNode titleFocus;
-  final String? formattedDate, formattedTime, locationName, description, maxGuests, price;
+  final String? formattedDate,
+      formattedTime,
+      locationName,
+      description,
+      maxGuests,
+      price;
   final VoidCallback onDateTap, onTimeTap, onLocationTap;
   final VoidCallback onDescriptionTap, onMaxGuestsTap, onPriceTap;
 
   const _InfoGrid({
-    required this.rInner,          required this.s,
-    required this.titleController, required this.titleFocus,
-    required this.formattedDate,   required this.formattedTime,
-    required this.locationName,    required this.description,
-    required this.maxGuests,       required this.price,
-    required this.onDateTap,       required this.onTimeTap,
-    required this.onLocationTap,   required this.onDescriptionTap,
-    required this.onMaxGuestsTap,  required this.onPriceTap,
+    required this.rInner,
+    required this.s,
+    required this.titleController,
+    required this.titleFocus,
+    required this.formattedDate,
+    required this.formattedTime,
+    required this.locationName,
+    required this.description,
+    required this.maxGuests,
+    required this.price,
+    required this.onDateTap,
+    required this.onTimeTap,
+    required this.onLocationTap,
+    required this.onDescriptionTap,
+    required this.onMaxGuestsTap,
+    required this.onPriceTap,
   });
 
   static const Widget _vDiv = VerticalDivider(
-    color: Color.fromARGB(128, 255, 255, 255), width: 2, thickness: 2,
+    color: Color.fromARGB(128, 255, 255, 255),
+    width: 2,
+    thickness: 2,
   );
 
   @override
@@ -770,35 +880,80 @@ class _InfoGrid extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color.fromARGB(51, 0, 0, 0),
             borderRadius: BorderRadius.circular(rInner),
-            border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+            border: Border.all(
+              color: const Color.fromARGB(128, 255, 255, 255),
+              width: 2,
+            ),
           ),
           child: Column(
             children: [
               _TitleField(controller: titleController, focus: titleFocus),
-              const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 2),
+              const Divider(
+                color: Color.fromARGB(128, 255, 255, 255),
+                height: 2,
+                thickness: 2,
+              ),
 
               // row 1: date / time / location / description
               IntrinsicHeight(
-                child: Row(children: [
-                  _GridCell(label: StringRes.at('date'),     icon: 'assets/icons/event/calendar.png',    value: formattedDate, onTap: onDateTap),
-                  _vDiv,
-                  _GridCell(label: StringRes.at('time'),     icon: 'assets/icons/event/time.png',        value: formattedTime, onTap: onTimeTap),
-                  _vDiv,
-                  _GridCell(label: StringRes.at('location'), icon: 'assets/icons/event/location.png',    value: locationName,  onTap: onLocationTap),
-                  _vDiv,
-                  _GridCell(label: StringRes.at('details'),  icon: 'assets/icons/event/description.png', value: description,   onTap: onDescriptionTap),
-                ]),
+                child: Row(
+                  children: [
+                    _GridCell(
+                      label: StringRes.at('date'),
+                      icon: 'assets/icons/event/calendar.png',
+                      value: formattedDate,
+                      onTap: onDateTap,
+                    ),
+                    _vDiv,
+                    _GridCell(
+                      label: StringRes.at('time'),
+                      icon: 'assets/icons/event/time.png',
+                      value: formattedTime,
+                      onTap: onTimeTap,
+                    ),
+                    _vDiv,
+                    _GridCell(
+                      label: StringRes.at('location'),
+                      icon: 'assets/icons/event/location.png',
+                      value: locationName,
+                      onTap: onLocationTap,
+                    ),
+                    _vDiv,
+                    _GridCell(
+                      label: StringRes.at('details'),
+                      icon: 'assets/icons/event/description.png',
+                      value: description,
+                      onTap: onDescriptionTap,
+                    ),
+                  ],
+                ),
               ),
 
-              const Divider(color: Color.fromARGB(128, 255, 255, 255), height: 2, thickness: 2),
+              const Divider(
+                color: Color.fromARGB(128, 255, 255, 255),
+                height: 2,
+                thickness: 2,
+              ),
 
               // row 2: max guests / price
               IntrinsicHeight(
-                child: Row(children: [
-                  _GridCell(label: StringRes.at('max_guests'), icon: 'assets/icons/event/guests.png', value: maxGuests, onTap: onMaxGuestsTap),
-                  _vDiv,
-                  _GridCell(label: StringRes.at('price'),      icon: 'assets/icons/event/price.png',  value: price,     onTap: onPriceTap),
-                ]),
+                child: Row(
+                  children: [
+                    _GridCell(
+                      label: StringRes.at('max_guests'),
+                      icon: 'assets/icons/event/guests.png',
+                      value: maxGuests,
+                      onTap: onMaxGuestsTap,
+                    ),
+                    _vDiv,
+                    _GridCell(
+                      label: StringRes.at('price'),
+                      icon: 'assets/icons/event/price.png',
+                      value: price,
+                      onTap: onPriceTap,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -824,18 +979,22 @@ class _TitleField extends StatelessWidget {
       children: [
         TextField(
           controller: controller,
-          focusNode:  focus,
-          maxLength:  15,
-          onChanged:  (_) {},
-          textAlign:  focus.hasFocus ? TextAlign.left : TextAlign.center,
-          style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+          focusNode: focus,
+          maxLength: 15,
+          onChanged: (_) {},
+          textAlign: focus.hasFocus ? TextAlign.left : TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+          ),
           decoration: InputDecoration(
             hintText: StringRes.at('event_title'),
             hintStyle: const TextStyle(color: Colors.white),
             border: InputBorder.none,
             counterText: '',
             contentPadding: EdgeInsets.only(
-              left:  focus.hasFocus ? 18 : 0,
+              left: focus.hasFocus ? 18 : 0,
               right: focus.hasFocus ? 72 : 0,
             ),
           ),
@@ -845,7 +1004,11 @@ class _TitleField extends StatelessWidget {
             right: 18,
             child: Text(
               '${controller.text.length}/15',
-              style: const TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
       ],
@@ -863,8 +1026,10 @@ class _GridCell extends StatelessWidget {
   final VoidCallback onTap;
 
   const _GridCell({
-    required this.label, required this.icon,
-    required this.value, required this.onTap,
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.onTap,
   });
 
   @override
@@ -875,14 +1040,20 @@ class _GridCell extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
           child: Column(
-            mainAxisSize:      MainAxisSize.min,
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ImageIcon(AssetImage(icon), color: Colors.white, size: 20),
               Text(
                 (value != null && value!.isNotEmpty) ? value! : label,
-                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -902,8 +1073,10 @@ class _ActionButtons extends StatelessWidget {
   final VoidCallback onSaveTap, onDeleteTap;
 
   const _ActionButtons({
-    required this.s, required this.isValid,
-    required this.onSaveTap, required this.onDeleteTap,
+    required this.s,
+    required this.isValid,
+    required this.onSaveTap,
+    required this.onDeleteTap,
   });
 
   @override
@@ -914,7 +1087,7 @@ class _ActionButtons extends StatelessWidget {
         _CardActionCircle(
           icon: 'assets/icons/profile_page/save.png',
           active: isValid,
-          activeColor:  const Color.fromARGB(128, 8, 157, 13),
+          activeColor: const Color.fromARGB(128, 8, 157, 13),
           activeBorder: const Color.fromARGB(204, 8, 157, 13),
           onTap: isValid ? onSaveTap : null,
         ),
@@ -922,7 +1095,7 @@ class _ActionButtons extends StatelessWidget {
         _CardActionCircle(
           icon: 'assets/icons/profile_page/delete.png',
           active: isValid,
-          activeColor:  const Color.fromARGB(128, 255, 49, 49),
+          activeColor: const Color.fromARGB(128, 255, 49, 49),
           activeBorder: const Color.fromARGB(204, 255, 49, 49),
           onTap: isValid ? onDeleteTap : null,
         ),
@@ -933,20 +1106,27 @@ class _ActionButtons extends StatelessWidget {
 
 class _CardActionCircle extends StatelessWidget {
   final String icon;
-  final bool   active;
-  final Color  activeColor, activeBorder;
+  final bool active;
+  final Color activeColor, activeBorder;
   final VoidCallback? onTap;
 
   const _CardActionCircle({
-    required this.icon,    required this.active,
-    required this.activeColor, required this.activeBorder,
+    required this.icon,
+    required this.active,
+    required this.activeColor,
+    required this.activeBorder,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap != null ? () { HapticService.tap(); onTap!(); } : null,
+      onTap: onTap != null
+          ? () {
+              HapticService.tap();
+              onTap!();
+            }
+          : null,
       child: ClipOval(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -954,8 +1134,11 @@ class _CardActionCircle extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color:  active ? activeColor : const Color.fromARGB(128, 0, 0, 0),
-              border: Border.all(color: active ? activeBorder : Colors.grey, width: 2),
+              color: active ? activeColor : const Color.fromARGB(128, 0, 0, 0),
+              border: Border.all(
+                color: active ? activeBorder : Colors.grey,
+                width: 2,
+              ),
             ),
             child: ImageIcon(AssetImage(icon), color: Colors.white, size: 28),
           ),
@@ -976,8 +1159,10 @@ class _BottomNavPill extends StatelessWidget {
   final VoidCallback onHomeTap, onCreateEventTap, onNotificationsTap;
 
   const _BottomNavPill({
-    required this.s,          required this.activeIndex,
-    required this.onHomeTap,  required this.onCreateEventTap,
+    required this.s,
+    required this.activeIndex,
+    required this.onHomeTap,
+    required this.onCreateEventTap,
     required this.onNotificationsTap,
   });
 
@@ -985,26 +1170,35 @@ class _BottomNavPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return VezGlass.container(
       padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 0),
-      radius:  BorderRadius.circular(40),
+      radius: BorderRadius.circular(40),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: ImageIcon(const AssetImage('assets/icons/nav_bar/go_to_home_page.png'),
-                color: activeIndex == 0 ? Colors.white : Colors.white54),
-            iconSize: 30, onPressed: onHomeTap,
+            icon: ImageIcon(
+              const AssetImage('assets/icons/nav_bar/go_to_home_page.png'),
+              color: activeIndex == 0 ? Colors.white : Colors.white54,
+            ),
+            iconSize: 30,
+            onPressed: onHomeTap,
           ),
           SizedBox(width: 16 * s),
           IconButton(
-            icon: ImageIcon(const AssetImage('assets/icons/nav_bar/create_event.png'),
-                color: activeIndex == 1 ? Colors.white : Colors.white54),
-            iconSize: 30, onPressed: onCreateEventTap,
+            icon: ImageIcon(
+              const AssetImage('assets/icons/nav_bar/create_event.png'),
+              color: activeIndex == 1 ? Colors.white : Colors.white54,
+            ),
+            iconSize: 30,
+            onPressed: onCreateEventTap,
           ),
           SizedBox(width: 16 * s),
           IconButton(
-            icon: ImageIcon(const AssetImage('assets/icons/nav_bar/notifications.png'),
-                color: activeIndex == 2 ? Colors.white : Colors.white54),
-            iconSize: 30, onPressed: onNotificationsTap,
+            icon: ImageIcon(
+              const AssetImage('assets/icons/nav_bar/notifications.png'),
+              color: activeIndex == 2 ? Colors.white : Colors.white54,
+            ),
+            iconSize: 30,
+            onPressed: onNotificationsTap,
           ),
         ],
       ),
@@ -1020,7 +1214,11 @@ class _PopupListItem extends StatelessWidget {
   final String icon, label;
   final VoidCallback onTap;
 
-  const _PopupListItem({required this.icon, required this.label, required this.onTap});
+  const _PopupListItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1029,11 +1227,20 @@ class _PopupListItem extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-        child: Row(children: [
-          Image.asset(icon, width: 38, height: 38),
-          const SizedBox(width: 14),
-          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-        ]),
+        child: Row(
+          children: [
+            Image.asset(icon, width: 38, height: 38),
+            const SizedBox(width: 14),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1048,8 +1255,12 @@ class _PopupDivider extends StatelessWidget {
     final double w = (width * 0.70).clamp(100.0, width - 32.0);
     return Center(
       child: Container(
-        width: w, height: 2,
-        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
+        width: w,
+        height: 2,
+        decoration: BoxDecoration(
+          color: Colors.white24,
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }

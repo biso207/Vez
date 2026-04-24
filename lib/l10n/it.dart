@@ -22,13 +22,16 @@ const Map<String, String> it = {
   "user_already_exists": "L'utente esiste già",
   "same_username": "Il nuovo nome utente è uguale al precedente",
   "invalid_email": "Email non valida",
-  "invalid_password": "Password non valida.\nRichiede 8 caratteri, 1 maiuscola, 1 minuscola, 1 numero, 1 speciale.",
+  "invalid_password":
+      "Password non valida.\nRichiede 8 caratteri, 1 maiuscola, 1 minuscola, 1 numero, 1 speciale.",
   "signup_failed": "Registrazione fallita",
   "signup_successful": "Registrazione completata!",
   "something_went_wrong": "Qualcosa è andato storto",
-  "enable_location_services": "Attiva i servizi di localizzazione sul dispositivo",
+  "enable_location_services":
+      "Attiva i servizi di localizzazione sul dispositivo",
   "location_permissions_denied": "Permessi di posizione negati",
-  "location_permissions_permanently_denied": "Permessi di posizione negati permanentemente. Modificali nelle impostazioni.",
+  "location_permissions_permanently_denied":
+      "Permessi di posizione negati permanentemente. Modificali nelle impostazioni.",
   "unknown_city": "Città Sconosciuta",
   "no_internet_connection": "Nessuna connessione a Internet",
   "login_failed": "Login fallito",
@@ -38,6 +41,9 @@ const Map<String, String> it = {
   "filter_by_you": "Tuoi",
   "filter_invited": "Invitato",
   "filter_nearby": "Vicinanza",
+  "no_events_by_you": "Non hai ancora creato eventi",
+  "no_events_invited": "Non ci sono ancora inviti da mostrare",
+  "no_events_nearby": "Non ci sono ancora eventi vicini da mostrare",
 
   // edit profile //
   "new_username": "Nuovo Username",
@@ -111,5 +117,5 @@ const Map<String, String> it = {
   "lang_zh": "Cinese",
   "lang_fr": "Francese",
   "lang_de": "Tedesco",
-  "lang_es": "Spagnolo"
+  "lang_es": "Spagnolo",
 };

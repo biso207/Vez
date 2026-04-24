@@ -22,13 +22,15 @@ const Map<String, String> en = {
   "user_already_exists": "User already exists",
   "same_username": "New username is the same as the old one",
   "invalid_email": "Invalid email",
-  "invalid_password": "Invalid Password.\nNeed 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special.",
+  "invalid_password":
+      "Invalid Password.\nNeed 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special.",
   "signup_failed": "Signup failed",
   "signup_successful": "Signup Successful!",
   "something_went_wrong": "Something went wrong",
   "enable_location_services": "Please enable location services on your device",
   "location_permissions_denied": "Location permissions are denied",
-  "location_permissions_permanently_denied": "Location permissions are permanently denied. Change it in settings.",
+  "location_permissions_permanently_denied":
+      "Location permissions are permanently denied. Change it in settings.",
   "unknown_city": "Unknown City",
   "no_internet_connection": "No Internet Connection",
   "login_failed": "Login Failed",
@@ -38,6 +40,9 @@ const Map<String, String> en = {
   "filter_by_you": "By You",
   "filter_invited": "Invited",
   "filter_nearby": "Nearby",
+  "no_events_by_you": "You have not created any events yet",
+  "no_events_invited": "No invites to show yet",
+  "no_events_nearby": "No nearby events to show yet",
 
   // edit profile //
   "new_username": "New Username",

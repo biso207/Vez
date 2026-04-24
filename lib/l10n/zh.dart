@@ -38,6 +38,9 @@ const Map<String, String> zh = {
   "filter_by_you": "我创建的",
   "filter_invited": "受邀的",
   "filter_nearby": "附近的",
+  "no_events_by_you": "你还没有创建任何活动",
+  "no_events_invited": "暂时没有可显示的邀请",
+  "no_events_nearby": "暂时没有附近活动可显示",
 
   // edit profile //
   "new_username": "新用户名",
@@ -111,5 +114,5 @@ const Map<String, String> zh = {
   "lang_zh": "中文",
   "lang_fr": "法语",
   "lang_de": "德语",
-  "lang_es": "西班牙语"
+  "lang_es": "西班牙语",
 };
