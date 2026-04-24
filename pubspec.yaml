@@ -55,6 +55,7 @@ flutter:
     - assets/icons/categories/
     - assets/icons/event/
     - assets/loading_screen/
+    - assets/icons/profile_page/flags/
 
 
   fonts:

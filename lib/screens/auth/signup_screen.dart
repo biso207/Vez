@@ -750,12 +750,12 @@ class _AuthPillButton extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: Container(
             width: w,
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.20),
+              color: const Color.fromARGB(51, 255, 255, 255),
               borderRadius: BorderRadius.circular(40),
               border: Border.all(color: Colors.white54, width: 1.5),
             ),
@@ -766,7 +766,7 @@ class _AuthPillButton extends StatelessWidget {
                 text,
                 style: const TextStyle(
                   fontFamily: 'InstagramSans',
-                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold,
+                  color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold,
                 ),
               ),
             ),

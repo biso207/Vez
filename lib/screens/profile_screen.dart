@@ -87,32 +87,32 @@ class _ProfilePageState extends State<ProfilePage> {
     {
       'code': 'en',
       'name': 'lang_en',
-      'icon': 'assets/icons/profile_page/en_flag.png',
+      'icon': 'assets/icons/profile_page/flags/en_flag.png',
     },
     {
       'code': 'de',
       'name': 'lang_de',
-      'icon': 'assets/icons/profile_page/de_flag.png',
+      'icon': 'assets/icons/profile_page/flags/de_flag.png',
     },
     {
       'code': 'fr',
       'name': 'lang_fr',
-      'icon': 'assets/icons/profile_page/fr_flag.png',
+      'icon': 'assets/icons/profile_page/flags/fr_flag.png',
     },
     {
       'code': 'it',
       'name': 'lang_it',
-      'icon': 'assets/icons/profile_page/it_flag.png',
+      'icon': 'assets/icons/profile_page/flags/it_flag.png',
     },
     {
       'code': 'es',
       'name': 'lang_es',
-      'icon': 'assets/icons/profile_page/es_flag.png',
+      'icon': 'assets/icons/profile_page/flags/es_flag.png',
     },
     {
       'code': 'zh',
       'name': 'lang_zh',
-      'icon': 'assets/icons/profile_page/zh_flag.png',
+      'icon': 'assets/icons/profile_page/flags/zh_flag.png',
     },
   ];
 
@@ -428,10 +428,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Row(
                           children: [
                             // Icona della lingua corrente
-                            ImageIcon(
-                              AssetImage(currentLang['icon']!),
-                              color: Colors.white,
-                              size: 24,
+                            Image.asset(
+                              currentLang['icon']!,
+                              width: 24,
+                              height: 24,
                             ),
                             const SizedBox(width: 15),
                             // Testo: Lingua + Sottotitolo
@@ -671,7 +671,7 @@ class _ProfilePageState extends State<ProfilePage> {
   /// scrollable list of languages
   void _showLanguageSelector({VoidCallback? onLanguageChanged}) {
     final double pw = MediaQuery.of(context).size.width * 0.50;
-    final double totalHeight = (_languages.length * 57.0);
+    final double totalHeight = (_languages.length * 50.0);
     final double ph = totalHeight.clamp(
       100.0,
       MediaQuery.of(context).size.height * 0.8,
@@ -717,10 +717,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 mainAxisAlignment: MainAxisAlignment.start, // Forza l'allineamento a sinistra
                 children: [
                   // Icona leading (stesse dimensioni del category popup)
-                  ImageIcon(
-                    AssetImage(iconPath),
-                    color: Colors.white,
-                    size: 38,
+                  Image.asset(
+                    iconPath,
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.contain,
                   ),
 
                   const SizedBox(width: 12), // Spazio fisso tra icona e testo

@@ -74,7 +74,7 @@ class VezGlass {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: border,
-              color: color ?? Colors.black.withOpacity(.5),
+              color: color ?? const Color.fromARGB(102, 0, 0, 0),
             ),
             child: Center(
               child: Transform.rotate(

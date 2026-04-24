@@ -1,7 +1,7 @@
 const Map<String, String> en = {
   // authentication (login & signup) //
-  "login": "I'M BACK",
-  "signup": "I'M NEW",
+  "login": "I'm Back",
+  "signup": "I'm New",
   "top_title_signup": "Welcome to Vez",
   "under_title_signup": "Create and Enjoy real life events",
   "top_title_login": "Hey!",
