@@ -1,12 +1,10 @@
-// Developed and Designed by Outly • © 2026
-// Screen to manage the manage the signup and login algorithms and the remote db
-
-// libraries
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart'
     as http; // http packet (standard in Dart/Flutter).
+
 import 'api_keys.dart'; // private key to connect to the remote db
 
 class SetDBService {
@@ -19,40 +17,35 @@ class SetDBService {
 
   SetDBService({required this.userID});
 
+  Map<String, String> get _jsonHeaders => {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $_apiKey',
+    'apikey': _apiKey,
+  };
+
   /// Generic method to update any user attribute (column) in the database.
   /// Uses a PATCH request to modify the existing row where userID matches.
   Future<int> updateUserData(String column, dynamic value) async {
     try {
-      // Endpoint with filter to target the specific user
       final url = Uri.parse('$_baseUrl/rest/v1/users?user_id=eq.$userID');
 
-      // STEP HASHING PSW //
       if (column == "psw") {
-        // password to byte with salt
-        var bytes = utf8.encode(value + salt);
-        // hash 256
-        var digest = sha256.convert(bytes);
+        final bytes = utf8.encode(value + salt);
+        final digest = sha256.convert(bytes);
         value = digest.toString();
-        // --------------- //
       }
 
-      // The body contains the column name and its new value
       final Map<String, dynamic> updateData = {column: value};
 
       final response = await http.patch(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-          'apikey': _apiKey,
-          'Prefer': 'return=minimal',
-        },
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
         body: jsonEncode(updateData),
       );
 
       return response.statusCode;
     } catch (e) {
-      return 0; // Connection error
+      return 0;
     }
   }
 
@@ -78,13 +71,7 @@ class SetDBService {
 
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-          'apikey': _apiKey,
-          'Prefer':
-              'return=representation', // returns the created record with place_id
-        },
+        headers: {..._jsonHeaders, 'Prefer': 'return=representation'},
         body: jsonEncode(placeData),
       );
 
@@ -103,6 +90,37 @@ class SetDBService {
     }
   }
 
+  Future<int> updatePlace({
+    required String placeId,
+    required String name,
+    String? address,
+    required bool isPrecise,
+    double? latitude,
+    double? longitude,
+  }) async {
+    try {
+      final url = Uri.parse('$_baseUrl/rest/v1/place?place_id=eq.$placeId');
+      final Map<String, dynamic> placeData = {
+        'name': name,
+        'is_precise': isPrecise,
+        'address': (address != null && address.isNotEmpty) ? address : '',
+        'latitude': latitude ?? 0.0,
+        'longitude': longitude ?? 0.0,
+      };
+
+      final response = await http.patch(
+        url,
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+        body: jsonEncode(placeData),
+      );
+
+      return response.statusCode;
+    } catch (e) {
+      print('updatePlace error: $e');
+      return 0;
+    }
+  }
+
   /// Method to store an event in the db.
   /// Requires a valid [placeId] obtained from [storePlace].
   Future<int> storeEvent(
@@ -110,99 +128,285 @@ class SetDBService {
     required String placeId,
   }) async {
     try {
-      // 1) recovering categoryID
-      print('===== STORE EVENT DEBUG =====');
-      print('1) Category name to look up: "${eventData['category']}"');
-      final String categoryID = await getCategoryID(eventData['category']);
-      print('2) Got categoryID: "$categoryID"');
+      final Map<String, dynamic>? insertData = await _buildEventPayload(
+        eventData,
+        placeId: placeId,
+      );
+      if (insertData == null) return 400;
 
-      // Check if categoryID looks like a valid UUID
-      if (categoryID.length < 10) {
-        print('ERROR: categoryID is NOT a valid UUID. Category lookup failed!');
-        return 400;
-      }
-
-      // 2) recovering event title
-      String title = eventData['title'];
-      print('3) Title: "$title", placeId: "$placeId"');
-
-      // 3) formatting date and time
-      // "2026-4-8" -> "2026-04-08"
-      String dateEventStr = "";
-      try {
-        List<String> dParts = eventData['date'].split('-');
-        String y = dParts[0];
-        String m = dParts[1].padLeft(2, '0');
-        String d = dParts[2].padLeft(2, '0');
-
-        List<String> tParts = eventData['time'].split(':');
-        String h = tParts[0].padLeft(2, '0');
-        String min = tParts[1].padLeft(2, '0');
-
-        // compatible type with the timestamp in the db (ISO 8601)
-        dateEventStr = "$y-$m-${d}T$h:$min:00.000Z";
-      } catch (e) {
-        return 400;
-      }
-
-      // 4) getting url of the photo
-      String photoUrl = "";
-      final dynamic backgroundValue =
-          eventData['bg_photo'] ?? eventData['background_image'];
-      if (backgroundValue is File) {
-        photoUrl =
-            await getURLEventBackgroundPhoto(backgroundValue, title) ?? "";
-        if (photoUrl.isEmpty) {
-          print('ERROR: event background upload failed.');
-          return 400;
-        }
-      }
-
-      // 5) creating the payload to be sent
-      final Map<String, dynamic> insertData = {
-        "title": title,
-        "description": eventData['description'],
-        "date_event": dateEventStr,
-        "max_participants": eventData['max_guests'] != null
-            ? int.tryParse(eventData['max_guests'].toString())
-            : null,
-        "type": eventData['type'],
-        "creator_user_id": userID,
-        "bg_photo": photoUrl,
-        "category_id": categoryID,
-        "price": eventData['price'] != null
-            ? int.tryParse(eventData['price'].toString())
-            : null,
-        "place_id": placeId,
-      };
-
-      print('6) storeEvent payload: ${jsonEncode(insertData)}');
-
-      // 6) url to send the request
       final insertUrl = Uri.parse('$_baseUrl/rest/v1/events');
 
-      // 7) sending the request
       final response = await http.post(
         insertUrl,
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+        body: jsonEncode(insertData),
+      );
+
+      print('storeEvent response: ${response.statusCode} - ${response.body}');
+      return response.statusCode;
+    } catch (e) {
+      print('storeEvent error: $e');
+      return 0;
+    }
+  }
+
+  Future<int> updateEvent(
+    String eventId,
+    Map<String, dynamic> eventData, {
+    required String placeId,
+    String? currentBackgroundUrl,
+  }) async {
+    try {
+      final Map<String, dynamic>? updateData = await _buildEventPayload(
+        eventData,
+        placeId: placeId,
+        currentBackgroundUrl: currentBackgroundUrl,
+      );
+      if (updateData == null) return 400;
+
+      final url = Uri.parse('$_baseUrl/rest/v1/events?event_id=eq.$eventId');
+      final response = await http.patch(
+        url,
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+        body: jsonEncode(updateData),
+      );
+
+      print('updateEvent response: ${response.statusCode} - ${response.body}');
+      return response.statusCode;
+    } catch (e) {
+      print('updateEvent error: $e');
+      return 0;
+    }
+  }
+
+  Future<int> deleteEvent(String eventId, {String? placeId}) async {
+    try {
+      await _deleteRows(table: 'event_invites', filter: 'event_id=eq.$eventId');
+      await _deleteRows(table: 'participation', filter: 'event_id=eq.$eventId');
+
+      final eventResponse = await _deleteRows(
+        table: 'events',
+        filter: 'event_id=eq.$eventId',
+      );
+
+      if ((eventResponse == 200 || eventResponse == 204) &&
+          placeId != null &&
+          placeId.isNotEmpty) {
+        await _deleteRows(table: 'place', filter: 'place_id=eq.$placeId');
+      }
+
+      return eventResponse == 204 ? 200 : eventResponse;
+    } catch (e) {
+      print('deleteEvent error: $e');
+      return 0;
+    }
+  }
+
+  Future<int> addOrUpdateEventInvite({
+    required String eventId,
+    required String invitedUserId,
+    String role = 'guest',
+  }) async {
+    try {
+      final existingInviteId = await _getExistingInviteId(
+        eventId: eventId,
+        invitedUserId: invitedUserId,
+      );
+      final String now = DateTime.now().toUtc().toIso8601String();
+
+      if (existingInviteId != null) {
+        final url = Uri.parse(
+          '$_baseUrl/rest/v1/event_invites'
+          '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
+        );
+        final response = await http.patch(
+          url,
+          headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+          body: jsonEncode({
+            'role': role,
+            'response': 'maybe',
+            'invited_at': now,
+            'responded_at': null,
+          }),
+        );
+        return response.statusCode;
+      }
+
+      final url = Uri.parse('$_baseUrl/rest/v1/event_invites');
+      final response = await http.post(
+        url,
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+        body: jsonEncode({
+          'event_id': eventId,
+          'user_id': invitedUserId,
+          'role': role,
+          'response': 'maybe',
+          'invited_at': now,
+          'responded_at': null,
+        }),
+      );
+
+      return response.statusCode;
+    } catch (e) {
+      print('addOrUpdateEventInvite error: $e');
+      return 0;
+    }
+  }
+
+  Future<int> removeEventInvite({
+    required String eventId,
+    required String invitedUserId,
+  }) async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/event_invites'
+        '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
+      );
+      final response = await http.delete(
+        url,
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Bearer $_apiKey',
           'apikey': _apiKey,
           'Prefer': 'return=minimal',
         },
-        body: jsonEncode(insertData),
       );
-
-      print(
-        '7) storeEvent response: ${response.statusCode} - ${response.body}',
-      );
-      print('===== END STORE EVENT DEBUG =====');
-
-      // 8) returning the status code of the response
-      return response.statusCode;
+      return response.statusCode == 204 ? 200 : response.statusCode;
     } catch (e) {
-      print('storeEvent error: $e');
-      return 0; // error
+      print('removeEventInvite error: $e');
+      return 0;
+    }
+  }
+
+  Future<Map<String, dynamic>?> _buildEventPayload(
+    Map<String, dynamic> eventData, {
+    required String placeId,
+    String? currentBackgroundUrl,
+  }) async {
+    print('===== EVENT PAYLOAD DEBUG =====');
+    print('Category name to look up: "${eventData['category']}"');
+    final String categoryID = await getCategoryID(eventData['category']);
+    print('Got categoryID: "$categoryID"');
+
+    if (categoryID.length < 10) {
+      print('ERROR: categoryID is NOT a valid UUID. Category lookup failed.');
+      return null;
+    }
+
+    final String? dateEventStr = _formatEventDateTime(
+      eventData['date']?.toString(),
+      eventData['time']?.toString(),
+    );
+    if (dateEventStr == null) return null;
+
+    final String title = (eventData['title'] ?? '').toString().trim();
+    final String? photoUrl = await _resolveEventBackgroundUrl(
+      backgroundValue: eventData['bg_photo'] ?? eventData['background_image'],
+      title: title,
+      currentBackgroundUrl: currentBackgroundUrl,
+    );
+    if (photoUrl == null) return null;
+
+    final Map<String, dynamic> payload = {
+      "title": title,
+      "description": eventData['description'],
+      "date_event": dateEventStr,
+      "max_participants": eventData['max_guests'] != null
+          ? int.tryParse(eventData['max_guests'].toString())
+          : null,
+      "type": eventData['type'],
+      "creator_user_id": userID,
+      "bg_photo": photoUrl,
+      "category_id": categoryID,
+      "price": eventData['price'] != null
+          ? int.tryParse(eventData['price'].toString())
+          : null,
+      "place_id": placeId,
+    };
+
+    print('Event payload: ${jsonEncode(payload)}');
+    print('===== END EVENT PAYLOAD DEBUG =====');
+    return payload;
+  }
+
+  String? _formatEventDateTime(String? rawDate, String? rawTime) {
+    try {
+      if (rawDate == null || rawTime == null) return null;
+
+      final List<String> dParts = rawDate.split('-');
+      final String y = dParts[0];
+      final String m = dParts[1].padLeft(2, '0');
+      final String d = dParts[2].padLeft(2, '0');
+
+      final List<String> tParts = rawTime.split(':');
+      final String h = tParts[0].padLeft(2, '0');
+      final String min = tParts[1].padLeft(2, '0');
+
+      return "$y-$m-${d}T$h:$min:00.000Z";
+    } catch (e) {
+      print('formatEventDateTime error: $e');
+      return null;
+    }
+  }
+
+  Future<String?> _resolveEventBackgroundUrl({
+    required dynamic backgroundValue,
+    required String title,
+    String? currentBackgroundUrl,
+  }) async {
+    if (backgroundValue is File) {
+      final String? uploadedUrl = await getURLEventBackgroundPhoto(
+        backgroundValue,
+        title,
+      );
+      if (uploadedUrl == null || uploadedUrl.isEmpty) {
+        print('ERROR: event background upload failed.');
+        return null;
+      }
+      return uploadedUrl;
+    }
+
+    if (backgroundValue is String) {
+      return backgroundValue.trim();
+    }
+
+    return currentBackgroundUrl?.trim() ?? '';
+  }
+
+  Future<int> _deleteRows({
+    required String table,
+    required String filter,
+  }) async {
+    final url = Uri.parse('$_baseUrl/rest/v1/$table?$filter');
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer $_apiKey',
+        'apikey': _apiKey,
+        'Prefer': 'return=minimal',
+      },
+    );
+    return response.statusCode;
+  }
+
+  Future<int?> _getExistingInviteId({
+    required String eventId,
+    required String invitedUserId,
+  }) async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/event_invites'
+        '?event_id=eq.$eventId&user_id=eq.$invitedUserId&select=id_invite'
+        '&limit=1',
+      );
+      final response = await http.get(url, headers: _jsonHeaders);
+      if (response.statusCode != 200) return null;
+
+      final List<dynamic> data = jsonDecode(response.body);
+      if (data.isEmpty) return null;
+      return data.first['id_invite'] as int?;
+    } catch (e) {
+      print('getExistingInviteId error: $e');
+      return null;
     }
   }
 
@@ -229,7 +433,7 @@ class SetDBService {
           .replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '')
           .toLowerCase();
       final String normalizedTitle = safeTitle.isEmpty ? 'event' : safeTitle;
-      final fileName =
+      final String fileName =
           '$normalizedTitle-${DateTime.now().millisecondsSinceEpoch}.jpg';
       final url = Uri.parse(
         '$_baseUrl/storage/v1/object/backgrounds_events/$fileName',
@@ -247,11 +451,10 @@ class SetDBService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return '$_baseUrl/storage/v1/object/public/backgrounds_events/$fileName';
-      } else {
-        // This will tell you if the file was too large (413 Payload Too Large)
-        print('Upload failed: ${response.statusCode} - ${response.body}');
-        return null;
       }
+
+      print('Upload failed: ${response.statusCode} - ${response.body}');
+      return null;
     } catch (e) {
       print('Errore upload: $e');
       return null;
@@ -261,28 +464,21 @@ class SetDBService {
   // getting an event's category ID
   Future<String> getCategoryID(String categoryName) async {
     try {
-      // url to send the request
       final categoryUrl = Uri.parse(
         '$_baseUrl/rest/v1/event_category?select=category_id&name=eq.$categoryName',
       );
       print('  getCategoryID: querying name="$categoryName"');
       print('  getCategoryID: URL = $categoryUrl');
 
-      // sending the request
       final categoryResponse = await http.get(
         categoryUrl,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-          'apikey': _apiKey,
-        },
+        headers: _jsonHeaders,
       );
 
       print(
         '  getCategoryID: response ${categoryResponse.statusCode} body=${categoryResponse.body}',
       );
 
-      // recovering the category id
       if (categoryResponse.statusCode == 200) {
         final List<dynamic> categories = jsonDecode(categoryResponse.body);
         if (categories.isNotEmpty) {
@@ -293,7 +489,7 @@ class SetDBService {
           '  getCategoryID: WARNING empty result! No category named "$categoryName" in DB.',
         );
       }
-      return categoryResponse.statusCode.toString(); // error code
+      return categoryResponse.statusCode.toString();
     } catch (e) {
       print('  getCategoryID EXCEPTION: $e');
       return "0";

@@ -31,7 +31,6 @@ import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import 'auth/login_screen.dart';
 import 'create_event/create_event_screen.dart';
-import 'home_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // stateful widget wrapper
@@ -226,18 +225,21 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _goToHome() {
     HapticService.tap();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomePage()),
-    );
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   void _goToCreateEvent() {
     HapticService.tap();
-    Navigator.pushReplacement(
+    Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const CreateEvent()),
-    );
+    ).then((changed) {
+      if (changed == true && mounted) {
+        _goToHome();
+      }
+    });
   }
 
   void _clearPopupControllers() {
@@ -714,7 +716,8 @@ class _ProfilePageState extends State<ProfilePage> {
               // Padding interno per simulare il ListTile del category popup
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.start, // Forza l'allineamento a sinistra
+                mainAxisAlignment:
+                    MainAxisAlignment.start, // Forza l'allineamento a sinistra
                 children: [
                   // Icona leading (stesse dimensioni del category popup)
                   Image.asset(

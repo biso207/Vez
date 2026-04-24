@@ -17,6 +17,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../models/event_catalog.dart';
+import '../../models/vez_event_card.dart';
 import '../../models/vez_glass.dart';
 import '../../models/vez_page_layout.dart';
 import '../../models/vez_popup.dart';
@@ -26,7 +28,6 @@ import '../../services/haptic_service.dart';
 import '../../services/setters_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/user_session.dart';
-import '../home_screen.dart';
 import '../profile_screen.dart';
 import 'vez_map_picker.dart';
 
@@ -35,7 +36,9 @@ import 'vez_map_picker.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CreateEvent extends StatefulWidget {
-  const CreateEvent({super.key});
+  const CreateEvent({super.key, this.editingEvent});
+
+  final HomeEventCardData? editingEvent;
 
   @override
   State<CreateEvent> createState() => _CreateEventState();
@@ -58,7 +61,7 @@ class _CreateEventState extends State<CreateEvent> {
 
   // ── event creation state ───────────────────────────────────────────────────
 
-  String _bgImage = 'assets/images/bg/default_create_event_bg.jpg';
+  String _bgImage = EventCatalog.defaultBackgroundImage;
   String _categoryName = 'cinema';
   String _categoryIcon = 'assets/icons/categories/cinema.png';
   String _typeName = 'Public';
@@ -79,37 +82,15 @@ class _CreateEventState extends State<CreateEvent> {
   // ── user state ─────────────────────────────────────────────────────────────
 
   String _profilePhoto = '';
+  String _originalBackgroundUrl = '';
 
   // ── static data ────────────────────────────────────────────────────────────
 
-  static const List<Map<String, String>> _categories = [
-    {'name': 'cinema', 'icon': 'assets/icons/categories/cinema.png'},
-    {'name': 'concert', 'icon': 'assets/icons/categories/concert.png'},
-    {'name': 'disco', 'icon': 'assets/icons/categories/disco.png'},
-    {'name': 'gaming', 'icon': 'assets/icons/categories/gaming.png'},
-    {'name': 'hang_out', 'icon': 'assets/icons/categories/hang_out.png'},
-    {'name': 'journey', 'icon': 'assets/icons/categories/journey.png'},
-    {
-      'name': 'kids_and_family',
-      'icon': 'assets/icons/categories/kids_and_family.png',
-    },
-    {'name': 'museum', 'icon': 'assets/icons/categories/museum.png'},
-    {'name': 'outdoor', 'icon': 'assets/icons/categories/outdoor.png'},
-    {'name': 'party', 'icon': 'assets/icons/categories/party.png'},
-    {'name': 'pub', 'icon': 'assets/icons/categories/pub.png'},
-    {'name': 'restaurant', 'icon': 'assets/icons/categories/restaurant.png'},
-    {'name': 'shopping', 'icon': 'assets/icons/categories/shopping.png'},
-    {'name': 'sport', 'icon': 'assets/icons/categories/sport.png'},
-    {'name': 'theatre', 'icon': 'assets/icons/categories/theatre.png'},
-    {'name': 'wellness', 'icon': 'assets/icons/categories/wellness.png'},
-    {'name': 'workshop', 'icon': 'assets/icons/categories/workshop.png'},
-  ];
+  static const List<Map<String, String>> _categories = EventCatalog.categories;
 
-  static const List<Map<String, String>> _eventTypes = [
-    {'name': 'Exclusive', 'icon': 'assets/icons/event/exclusive.png'},
-    {'name': 'Private', 'icon': 'assets/icons/event/private.png'},
-    {'name': 'Public', 'icon': 'assets/icons/event/public.png'},
-  ];
+  static const List<Map<String, String>> _eventTypes = EventCatalog.eventTypes;
+
+  bool get _isEditMode => widget.editingEvent != null;
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
@@ -121,6 +102,9 @@ class _CreateEventState extends State<CreateEvent> {
       _dbGet = GetDBService(userID: uid);
       _dbSet = SetDBService(userID: uid);
       _loadProfilePhoto();
+    }
+    if (_isEditMode) {
+      _applyEventData(widget.editingEvent!);
     }
     // rebuild on focus change for the title counter / alignment
     _titleFocus.addListener(() => setState(() {}));
@@ -146,27 +130,72 @@ class _CreateEventState extends State<CreateEvent> {
 
   bool get _isValid =>
       _titleController.text.isNotEmpty &&
-      _date != null &&
-      _time != null &&
-      _locationName.isNotEmpty;
+          _date != null &&
+          _time != null &&
+          _locationName.isNotEmpty;
+
+  void _applyEventData(HomeEventCardData event) {
+    final DateTime? parsedDate = DateTime.tryParse(
+      event.rawDateEvent,
+    )?.toLocal();
+
+    _originalBackgroundUrl = event.imagePath.trim();
+    _bgImage = _originalBackgroundUrl.isNotEmpty
+        ? _originalBackgroundUrl
+        : EventCatalog.defaultBackgroundImage;
+    _categoryName = event.categoryName;
+    _categoryIcon = event.categoryIconPath;
+    _typeName = EventCatalog.normalizeTypeName(event.typeLabel);
+    _typeIcon = event.typeIconPath;
+    _titleController.text = event.title;
+    _date = parsedDate;
+    _time = parsedDate != null
+        ? TimeOfDay(hour: parsedDate.hour, minute: parsedDate.minute)
+        : null;
+    _description = event.description.isEmpty ? null : event.description;
+    _maxGuests = event.maxGuests?.toString();
+    _price = event.price?.toString();
+    _locationName = event.locationLabel;
+    _locationAddress = event.placeAddress;
+    _locationLat = event.latitude;
+    _locationLng = event.longitude;
+    _locationPrecise = event.locationPrecise;
+  }
 
   // ── event save / reset ─────────────────────────────────────────────────────
 
   Future<void> _saveEvent() async {
-    final String? placeId = await _dbSet.storePlace(
-      name: _locationName,
-      address: _locationAddress.isNotEmpty ? _locationAddress : null,
-      isPrecise: _locationPrecise,
-      latitude: _locationLat,
-      longitude: _locationLng,
-    );
+    String? placeId = widget.editingEvent?.placeId;
 
-    if (placeId == null) {
+    if (_isEditMode && placeId != null && placeId.isNotEmpty) {
+      final int placeRes = await _dbSet.updatePlace(
+        placeId: placeId,
+        name: _locationName,
+        address: _locationAddress.isNotEmpty ? _locationAddress : null,
+        isPrecise: _locationPrecise,
+        latitude: _locationLat,
+        longitude: _locationLng,
+      );
+      if (placeRes != 200 && placeRes != 204) {
+        _showSnackBar(StringRes.at('event_place_save_failed'), isError: true);
+        return;
+      }
+    } else {
+      placeId = await _dbSet.storePlace(
+        name: _locationName,
+        address: _locationAddress.isNotEmpty ? _locationAddress : null,
+        isPrecise: _locationPrecise,
+        latitude: _locationLat,
+        longitude: _locationLng,
+      );
+    }
+
+    if (placeId == null || placeId.isEmpty) {
       _showSnackBar(StringRes.at('event_place_save_failed'), isError: true);
       return;
     }
 
-    final int res = await _dbSet.storeEvent({
+    final Map<String, dynamic> payload = {
       'title': _titleController.text.trim(),
       'category': _categoryName,
       'type': _typeName,
@@ -175,33 +204,43 @@ class _CreateEventState extends State<CreateEvent> {
       'max_guests': _maxGuests,
       'price': _price,
       'description': _description,
-      'bg_photo': _bgImage.startsWith('assets/')
-          ? null
-          : File(_bgImage),
-    }, placeId: placeId);
+      'bg_photo': _resolveBackgroundPayload(),
+    };
+
+    final int res = _isEditMode
+        ? await _dbSet.updateEvent(
+      widget.editingEvent!.eventId,
+      payload,
+      placeId: placeId,
+      currentBackgroundUrl: _originalBackgroundUrl,
+    )
+        : await _dbSet.storeEvent(payload, placeId: placeId);
 
     if (!mounted) return;
 
-    if (res == 200 || res == 201) {
-      _showSnackBar(StringRes.at('event_saved_success'));
-      _resetFields();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const HomePage(initialFilterIndex: 0),
+    if (res == 200 || res == 201 || res == 204) {
+      _showSnackBar(
+        StringRes.at(
+          _isEditMode ? 'event_updated_success' : 'event_saved_success',
         ),
       );
+      Navigator.pop(context, true);
     } else {
       _showSnackBar(
-        '${StringRes.at("event_save_failed")} ($res)',
+        '${StringRes.at(_isEditMode ? "event_update_failed" : "event_save_failed")} ($res)',
         isError: true,
       );
     }
   }
 
   void _resetFields() {
+    if (_isEditMode) {
+      setState(() => _applyEventData(widget.editingEvent!));
+      return;
+    }
+
     setState(() {
-      _bgImage = 'assets/images/bg/default_create_event_bg.jpg';
+      _bgImage = EventCatalog.defaultBackgroundImage;
       _categoryName = 'cinema';
       _categoryIcon = 'assets/icons/categories/cinema.png';
       _typeName = 'Public';
@@ -212,10 +251,44 @@ class _CreateEventState extends State<CreateEvent> {
       _locationName = _locationAddress = '';
       _locationLat = _locationLng = null;
       _locationPrecise = false;
+      _originalBackgroundUrl = '';
     });
   }
 
   // ── pickers ────────────────────────────────────────────────────────────────
+
+  dynamic _resolveBackgroundPayload() {
+    final String trimmed = _bgImage.trim();
+    if (trimmed.isEmpty) return null;
+    if (trimmed.startsWith('http')) return trimmed;
+    if (trimmed.startsWith('assets/')) {
+      return _isEditMode && _originalBackgroundUrl.isNotEmpty
+          ? _originalBackgroundUrl
+          : null;
+    }
+    return File(trimmed);
+  }
+
+  Future<void> _deleteEvent() async {
+    if (!_isEditMode) return;
+
+    final int res = await _dbSet.deleteEvent(
+      widget.editingEvent!.eventId,
+      placeId: widget.editingEvent!.placeId,
+    );
+
+    if (!mounted) return;
+
+    if (res == 200 || res == 204) {
+      _showSnackBar(StringRes.at('event_deleted_success'));
+      Navigator.pop(context, true);
+    } else {
+      _showSnackBar(
+        '${StringRes.at("event_delete_failed")} ($res)',
+        isError: true,
+      );
+    }
+  }
 
   Future<void> _pickBackground() async {
     final XFile? file = await _picker.pickImage(source: ImageSource.gallery);
@@ -246,16 +319,20 @@ class _CreateEventState extends State<CreateEvent> {
 
   void _goToHome() {
     HapticService.tap();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomePage()),
-    );
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
-  void _goToProfile() => Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (_) => ProfilePage()),
-  );
+  void _goToProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProfilePage()),
+    ).then((_) {
+      if (!mounted) return;
+      _loadProfilePhoto();
+    });
+  }
 
   // ── snack bar helper ───────────────────────────────────────────────────────
 
@@ -336,7 +413,7 @@ class _CreateEventState extends State<CreateEvent> {
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
           _eventTypes.length,
-          (i) => Column(
+              (i) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _PopupListItem(
@@ -458,6 +535,17 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
+  void _showDeleteEventConfirmation() {
+    VezEventPopups.showConfirmation(
+      context,
+      title: StringRes.at('delete_event'),
+      titleIcon: 'assets/icons/profile_page/delete.png',
+      confirmLabel: StringRes.at('confirm'),
+      cancelLabel: StringRes.at('cancel'),
+      onConfirm: _deleteEvent,
+    );
+  }
+
   // ── build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -497,39 +585,48 @@ class _CreateEventState extends State<CreateEvent> {
 
       // ── zone-2 body: event creation card ────────────────────────────────
       body: Center(
-        child: _EventCard(
-          width: cardW,
-          height: cardH,
-          rOuter: rOuter,
-          rInner: rInner,
-          s: s,
-          bgImage: _bgImage,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _EventCard(
+              width: cardW,
+              height: cardH,
+              rOuter: rOuter,
+              rInner: rInner,
+              s: s,
+              bgImage: _bgImage,
 
-          categoryIcon: _categoryIcon,
-          typeIcon: _typeIcon,
-          titleController: _titleController,
-          titleFocus: _titleFocus,
+              categoryIcon: _categoryIcon,
+              typeIcon: _typeIcon,
+              titleController: _titleController,
+              titleFocus: _titleFocus,
 
-          formattedDate: fmtDate,
-          formattedTime: fmtTime,
-          locationName: _locationName.isNotEmpty ? _locationName : null,
-          description: _description,
-          maxGuests: _maxGuests,
-          price: _price != null ? '$_price€' : null,
+              formattedDate: fmtDate,
+              formattedTime: fmtTime,
+              locationName: _locationName.isNotEmpty ? _locationName : null,
+              description: _description,
+              maxGuests: _maxGuests,
+              price: _price != null ? '$_price€' : null,
 
-          isValid: _isValid,
+              isValid: _isValid,
 
-          onPickBackground: _pickBackground,
-          onCategoryTap: _showCategoryPopup,
-          onTypeTap: _showTypePopup,
-          onDateTap: _pickDate,
-          onTimeTap: _pickTime,
-          onLocationTap: _showLocationSelectorPopup,
-          onDescriptionTap: _showDescriptionPopup,
-          onMaxGuestsTap: _showMaxGuestsPopup,
-          onPriceTap: _showPricePopup,
-          onSaveTap: _showSaveConfirmation,
-          onDeleteTap: _showDeleteConfirmation,
+              onPickBackground: _pickBackground,
+              onCategoryTap: _showCategoryPopup,
+              onTypeTap: _showTypePopup,
+              onDateTap: _pickDate,
+              onTimeTap: _pickTime,
+              onLocationTap: _showLocationSelectorPopup,
+              onDescriptionTap: _showDescriptionPopup,
+              onMaxGuestsTap: _showMaxGuestsPopup,
+              onPriceTap: _showPricePopup,
+              onSaveTap: _showSaveConfirmation,
+              onDeleteTap: _showDeleteConfirmation,
+            ),
+            if (_isEditMode) ...[
+              SizedBox(height: 16 * s),
+              _DeleteEventButton(onTap: _showDeleteEventConfirmation, s: s),
+            ],
+          ],
         ),
       ),
     );
@@ -612,7 +709,9 @@ class _EventCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: bgImage.startsWith('assets')
+                    child: bgImage.startsWith('http')
+                        ? Image.network(bgImage, fit: BoxFit.cover)
+                        : bgImage.startsWith('assets')
                         ? Image.asset(bgImage, fit: BoxFit.cover)
                         : Image.file(File(bgImage), fit: BoxFit.cover),
                   ),
@@ -831,6 +930,48 @@ class _EditBgButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // _InfoGrid — frosted container: title field + two grid rows
 // ─────────────────────────────────────────────────────────────────────────────
+
+class _DeleteEventButton extends StatelessWidget {
+  const _DeleteEventButton({required this.onTap, required this.s});
+
+  final VoidCallback onTap;
+  final double s;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.tap();
+        onTap();
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 18 * s, vertical: 8 * s),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(70, 255, 49, 49),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: const Color.fromARGB(180, 255, 49, 49),
+                width: 2,
+              ),
+            ),
+            child: Text(
+              StringRes.at('delete_event'),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15 * s,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _InfoGrid extends StatelessWidget {
   final double rInner, s;
@@ -1123,9 +1264,9 @@ class _CardActionCircle extends StatelessWidget {
     return GestureDetector(
       onTap: onTap != null
           ? () {
-              HapticService.tap();
-              onTap!();
-            }
+        HapticService.tap();
+        onTap!();
+      }
           : null,
       child: ClipOval(
         child: BackdropFilter(

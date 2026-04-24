@@ -52,10 +52,11 @@ flutter:
     - assets/icons/home_page/
     - assets/icons/nav_bar/
     - assets/icons/profile_page/
+    - assets/icons/profile_page/flags/
     - assets/icons/categories/
     - assets/icons/event/
+    - assets/icons/event/participation_state/
     - assets/loading_screen/
-    - assets/icons/profile_page/flags/
 
 
   fonts:
