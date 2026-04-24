@@ -5,11 +5,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
-import 'package:http/http.dart' as http; // http packet (standard in Dart/Flutter).
+import 'package:http/http.dart'
+    as http; // http packet (standard in Dart/Flutter).
 import 'api_keys.dart'; // private key to connect to the remote db
 
-
 class SetDBService {
+  static const int _maxEventBackgroundSizeBytes = 1024 * 1024;
+
   final String _apiKey = ApiKeys.remoteDbKey;
   final String _baseUrl = ApiKeys.baseUrl;
   final String userID;
@@ -35,9 +37,7 @@ class SetDBService {
       }
 
       // The body contains the column name and its new value
-      final Map<String, dynamic> updateData = {
-        column: value,
-      };
+      final Map<String, dynamic> updateData = {column: value};
 
       final response = await http.patch(
         url,
@@ -82,7 +82,8 @@ class SetDBService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_apiKey',
           'apikey': _apiKey,
-          'Prefer': 'return=representation', // returns the created record with place_id
+          'Prefer':
+              'return=representation', // returns the created record with place_id
         },
         body: jsonEncode(placeData),
       );
@@ -104,7 +105,10 @@ class SetDBService {
 
   /// Method to store an event in the db.
   /// Requires a valid [placeId] obtained from [storePlace].
-  Future<int> storeEvent(Map<String, dynamic> eventData, {required String placeId}) async {
+  Future<int> storeEvent(
+    Map<String, dynamic> eventData, {
+    required String placeId,
+  }) async {
     try {
       // 1) recovering categoryID
       print('===== STORE EVENT DEBUG =====');
@@ -143,8 +147,15 @@ class SetDBService {
 
       // 4) getting url of the photo
       String photoUrl = "";
-      if (eventData['background_image'] != null && eventData['background_image'] is File) {
-        photoUrl = await getURLEventBackgroundPhoto(eventData['background_image'] as File, title) ?? "";
+      final dynamic backgroundValue =
+          eventData['bg_photo'] ?? eventData['background_image'];
+      if (backgroundValue is File) {
+        photoUrl =
+            await getURLEventBackgroundPhoto(backgroundValue, title) ?? "";
+        if (photoUrl.isEmpty) {
+          print('ERROR: event background upload failed.');
+          return 400;
+        }
       }
 
       // 5) creating the payload to be sent
@@ -152,12 +163,16 @@ class SetDBService {
         "title": title,
         "description": eventData['description'],
         "date_event": dateEventStr,
-        "max_participants": eventData['max_guests'] != null ? int.tryParse(eventData['max_guests'].toString()) : null,
+        "max_participants": eventData['max_guests'] != null
+            ? int.tryParse(eventData['max_guests'].toString())
+            : null,
         "type": eventData['type'],
         "creator_user_id": userID,
         "bg_photo": photoUrl,
         "category_id": categoryID,
-        "price": eventData['price'] != null ? int.tryParse(eventData['price'].toString()) : null,
+        "price": eventData['price'] != null
+            ? int.tryParse(eventData['price'].toString())
+            : null,
         "place_id": placeId,
       };
 
@@ -178,12 +193,13 @@ class SetDBService {
         body: jsonEncode(insertData),
       );
 
-      print('7) storeEvent response: ${response.statusCode} - ${response.body}');
+      print(
+        '7) storeEvent response: ${response.statusCode} - ${response.body}',
+      );
       print('===== END STORE EVENT DEBUG =====');
 
       // 8) returning the status code of the response
       return response.statusCode;
-
     } catch (e) {
       print('storeEvent error: $e');
       return 0; // error
@@ -191,10 +207,33 @@ class SetDBService {
   }
 
   // method get the url of a stored background photo of an event
-  Future<String?> getURLEventBackgroundPhoto(File imageFile, String title) async {
+  Future<String?> getURLEventBackgroundPhoto(
+    File imageFile,
+    String title,
+  ) async {
     try {
-      final fileName = '$title-${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final url = Uri.parse('$_baseUrl/storage/v1/object/backgrounds_events/$fileName');
+      if (!await imageFile.exists()) {
+        print('Upload failed: background image file not found.');
+        return null;
+      }
+
+      final int fileSize = await imageFile.length();
+      if (fileSize > _maxEventBackgroundSizeBytes) {
+        print('Upload failed: background image exceeds 1 MB.');
+        return null;
+      }
+
+      final String safeTitle = title
+          .trim()
+          .replaceAll(RegExp(r'\s+'), '_')
+          .replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '')
+          .toLowerCase();
+      final String normalizedTitle = safeTitle.isEmpty ? 'event' : safeTitle;
+      final fileName =
+          '$normalizedTitle-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final url = Uri.parse(
+        '$_baseUrl/storage/v1/object/backgrounds_events/$fileName',
+      );
 
       final response = await http.post(
         url,
@@ -208,8 +247,7 @@ class SetDBService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return '$_baseUrl/storage/v1/object/public/backgrounds_events/$fileName';
-      }
-      else {
+      } else {
         // This will tell you if the file was too large (413 Payload Too Large)
         print('Upload failed: ${response.statusCode} - ${response.body}');
         return null;
@@ -224,7 +262,9 @@ class SetDBService {
   Future<String> getCategoryID(String categoryName) async {
     try {
       // url to send the request
-      final categoryUrl = Uri.parse('$_baseUrl/rest/v1/event_category?select=category_id&name=eq.$categoryName');
+      final categoryUrl = Uri.parse(
+        '$_baseUrl/rest/v1/event_category?select=category_id&name=eq.$categoryName',
+      );
       print('  getCategoryID: querying name="$categoryName"');
       print('  getCategoryID: URL = $categoryUrl');
 
@@ -238,7 +278,9 @@ class SetDBService {
         },
       );
 
-      print('  getCategoryID: response ${categoryResponse.statusCode} body=${categoryResponse.body}');
+      print(
+        '  getCategoryID: response ${categoryResponse.statusCode} body=${categoryResponse.body}',
+      );
 
       // recovering the category id
       if (categoryResponse.statusCode == 200) {
@@ -247,11 +289,12 @@ class SetDBService {
           print('  getCategoryID: FOUND ID = ${categories[0]['category_id']}');
           return categories[0]['category_id'];
         }
-        print('  getCategoryID: WARNING empty result! No category named "$categoryName" in DB.');
+        print(
+          '  getCategoryID: WARNING empty result! No category named "$categoryName" in DB.',
+        );
       }
       return categoryResponse.statusCode.toString(); // error code
-    }
-    catch (e) {
+    } catch (e) {
       print('  getCategoryID EXCEPTION: $e');
       return "0";
     }
