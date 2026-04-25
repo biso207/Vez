@@ -31,6 +31,7 @@ import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import 'auth/login_screen.dart';
 import 'create_event/create_event_screen.dart';
+import 'notifications_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // stateful widget wrapper
@@ -242,6 +243,13 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  void _goToNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationsPage()),
+    );
+  }
+
   void _clearPopupControllers() {
     _usernameCtrl.clear();
     _passwordCtrl.clear();
@@ -289,7 +297,7 @@ class _ProfilePageState extends State<ProfilePage> {
         activeIndex: -1,
         onHomeTap: _goToHome,
         onCreateEventTap: _goToCreateEvent,
-        onNotificationsTap: () {},
+        onNotificationsTap: _goToNotifications,
       ),
 
       // ── zone-2 body: scrollable profile content ──────────────────────────

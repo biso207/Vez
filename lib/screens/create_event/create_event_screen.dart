@@ -28,8 +28,11 @@ import '../../services/haptic_service.dart';
 import '../../services/setters_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/user_session.dart';
+import '../notifications_screen.dart';
 import '../profile_screen.dart';
 import 'vez_map_picker.dart';
+
+enum _GuestAudienceFilter { friends, following, anyone }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // stateful widget wrapper
@@ -83,6 +86,10 @@ class _CreateEventState extends State<CreateEvent> {
 
   String _profilePhoto = '';
   String _originalBackgroundUrl = '';
+  List<Map<String, dynamic>> _allUsers = const [];
+  Set<String> _followingIds = const {};
+  Set<String> _followerIds = const {};
+  final Map<String, Map<String, dynamic>> _pendingGuests = {};
 
   // ── static data ────────────────────────────────────────────────────────────
 
@@ -91,6 +98,8 @@ class _CreateEventState extends State<CreateEvent> {
   static const List<Map<String, String>> _eventTypes = EventCatalog.eventTypes;
 
   bool get _isEditMode => widget.editingEvent != null;
+  bool get _canInviteGuests => EventCatalog.canInviteGuests(_typeName);
+  int get _pendingGuestCount => _pendingGuests.length;
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
 
@@ -126,13 +135,33 @@ class _CreateEventState extends State<CreateEvent> {
     setState(() => _profilePhoto = photo?.trim() ?? '');
   }
 
+  Future<void> _ensureUserDirectoryLoaded() async {
+    if (_allUsers.isNotEmpty) return;
+
+    final results = await Future.wait([
+      _dbGet.getUsersBasic(),
+      _dbGet.getFollowing(),
+      _dbGet.getFollowers(),
+    ]);
+
+    _allUsers = results[0];
+    _followingIds = results[1]
+        .map((row) => (row['following_id'] ?? '').toString())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    _followerIds = results[2]
+        .map((row) => (row['follower_id'] ?? '').toString())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
   // ── validation ─────────────────────────────────────────────────────────────
 
   bool get _isValid =>
       _titleController.text.isNotEmpty &&
-          _date != null &&
-          _time != null &&
-          _locationName.isNotEmpty;
+      _date != null &&
+      _time != null &&
+      _locationName.isNotEmpty;
 
   void _applyEventData(HomeEventCardData event) {
     final DateTime? parsedDate = DateTime.tryParse(
@@ -207,22 +236,36 @@ class _CreateEventState extends State<CreateEvent> {
       'bg_photo': _resolveBackgroundPayload(),
     };
 
-    final int res = _isEditMode
-        ? await _dbSet.updateEvent(
-      widget.editingEvent!.eventId,
-      payload,
-      placeId: placeId,
-      currentBackgroundUrl: _originalBackgroundUrl,
-    )
-        : await _dbSet.storeEvent(payload, placeId: placeId);
+    int res;
+    String? savedEventId;
+
+    if (_isEditMode) {
+      savedEventId = widget.editingEvent!.eventId;
+      res = await _dbSet.updateEvent(
+        savedEventId,
+        payload,
+        placeId: placeId,
+        currentBackgroundUrl: _originalBackgroundUrl,
+      );
+    } else {
+      savedEventId = await _dbSet.storeEventAndGetId(payload, placeId: placeId);
+      res = savedEventId != null && savedEventId.isNotEmpty ? 201 : 0;
+    }
 
     if (!mounted) return;
 
     if (res == 200 || res == 201 || res == 204) {
+      final int inviteFailures = savedEventId != null && savedEventId.isNotEmpty
+          ? await _inviteSelectedGuests(savedEventId)
+          : _pendingGuestCount;
+      if (!mounted) return;
+
       _showSnackBar(
-        StringRes.at(
-          _isEditMode ? 'event_updated_success' : 'event_saved_success',
-        ),
+        inviteFailures == 0
+            ? StringRes.at(
+                _isEditMode ? 'event_updated_success' : 'event_saved_success',
+              )
+            : '${StringRes.at(_isEditMode ? 'event_updated_success' : 'event_saved_success')} • ${StringRes.at('guest_add_failed')}',
       );
       Navigator.pop(context, true);
     } else {
@@ -235,7 +278,10 @@ class _CreateEventState extends State<CreateEvent> {
 
   void _resetFields() {
     if (_isEditMode) {
-      setState(() => _applyEventData(widget.editingEvent!));
+      setState(() {
+        _pendingGuests.clear();
+        _applyEventData(widget.editingEvent!);
+      });
       return;
     }
 
@@ -252,7 +298,28 @@ class _CreateEventState extends State<CreateEvent> {
       _locationLat = _locationLng = null;
       _locationPrecise = false;
       _originalBackgroundUrl = '';
+      _pendingGuests.clear();
     });
+  }
+
+  Future<int> _inviteSelectedGuests(String eventId) async {
+    if (_pendingGuests.isEmpty) return 0;
+
+    int failures = 0;
+    final List<String> guestIds = _pendingGuests.keys.toList();
+
+    for (final String userId in guestIds) {
+      final int result = await _dbSet.addOrUpdateEventInvite(
+        eventId: eventId,
+        invitedUserId: userId,
+      );
+      if (result != 200 && result != 201 && result != 204) {
+        failures++;
+      }
+    }
+
+    _pendingGuests.clear();
+    return failures;
   }
 
   // ── pickers ────────────────────────────────────────────────────────────────
@@ -334,6 +401,13 @@ class _CreateEventState extends State<CreateEvent> {
     });
   }
 
+  void _goToNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationsPage()),
+    );
+  }
+
   // ── snack bar helper ───────────────────────────────────────────────────────
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -413,16 +487,20 @@ class _CreateEventState extends State<CreateEvent> {
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
           _eventTypes.length,
-              (i) => Column(
+          (i) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _PopupListItem(
                 icon: _eventTypes[i]['icon']!,
                 label: StringRes.at(_eventTypes[i]['name']!.toLowerCase()),
                 onTap: () {
+                  final String selectedType = _eventTypes[i]['name']!;
                   setState(() {
-                    _typeName = _eventTypes[i]['name']!;
+                    _typeName = selectedType;
                     _typeIcon = _eventTypes[i]['icon']!;
+                    if (!EventCatalog.canInviteGuests(selectedType)) {
+                      _pendingGuests.clear();
+                    }
                   });
                   Navigator.pop(context);
                 },
@@ -546,6 +624,178 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
+  Future<void> _showAddGuestsPopup() async {
+    if (!_canInviteGuests) {
+      _showSnackBar(StringRes.at('guest_invites_private_only'), isError: true);
+      return;
+    }
+
+    await _ensureUserDirectoryLoaded();
+    if (!mounted) return;
+
+    final TextEditingController searchController = TextEditingController();
+    _GuestAudienceFilter audienceFilter = _GuestAudienceFilter.friends;
+    final Set<String> friendIds = _followingIds.intersection(_followerIds);
+    final double popupWidth = MediaQuery.of(context).size.width * 0.82;
+    final double popupHeight = MediaQuery.of(context).size.height * 0.64;
+
+    VezPopup.show(
+      context: context,
+      width: popupWidth,
+      height: popupHeight,
+      child: StatefulBuilder(
+        builder: (context, setPopupState) {
+          final Set<String> excludedIds = {
+            UserSession().userID,
+            ..._pendingGuests.keys,
+            if (_isEditMode)
+              ...widget.editingEvent!.guests.map((guest) => guest.userId),
+          };
+
+          final List<Map<String, dynamic>> candidates = _allUsers.where((user) {
+            final String userId = (user['user_id'] ?? '').toString();
+            final String username = (user['username'] ?? '').toString();
+            if (userId.isEmpty || excludedIds.contains(userId)) return false;
+
+            final String query = searchController.text.trim().toLowerCase();
+            if (query.isNotEmpty && !username.toLowerCase().contains(query)) {
+              return false;
+            }
+
+            switch (audienceFilter) {
+              case _GuestAudienceFilter.friends:
+                return friendIds.contains(userId);
+              case _GuestAudienceFilter.following:
+                return _followingIds.contains(userId);
+              case _GuestAudienceFilter.anyone:
+                return true;
+            }
+          }).toList();
+
+          final List<Map<String, dynamic>> selectedGuests = _pendingGuests
+              .values
+              .toList();
+
+          return Column(
+            children: [
+              _GuestPopupHeader(
+                title: StringRes.at('add_guest'),
+                onClose: () => Navigator.pop(context),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _GuestPopupSearchField(
+                  controller: searchController,
+                  hint: StringRes.at('search_guest'),
+                  onChanged: (_) => setPopupState(() {}),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _GuestPopupChip(
+                      label: StringRes.at('friends'),
+                      isActive: audienceFilter == _GuestAudienceFilter.friends,
+                      onTap: () => setPopupState(
+                        () => audienceFilter = _GuestAudienceFilter.friends,
+                      ),
+                    ),
+                    _GuestPopupChip(
+                      label: StringRes.at('following'),
+                      isActive:
+                          audienceFilter == _GuestAudienceFilter.following,
+                      onTap: () => setPopupState(
+                        () => audienceFilter = _GuestAudienceFilter.following,
+                      ),
+                    ),
+                    _GuestPopupChip(
+                      label: StringRes.at('anyone'),
+                      isActive: audienceFilter == _GuestAudienceFilter.anyone,
+                      onTap: () => setPopupState(
+                        () => audienceFilter = _GuestAudienceFilter.anyone,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (selectedGuests.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: selectedGuests.map((user) {
+                        final String userId = (user['user_id'] ?? '')
+                            .toString();
+                        return _SelectedGuestChip(
+                          username: (user['username'] ?? '').toString(),
+                          onRemove: () {
+                            setState(() => _pendingGuests.remove(userId));
+                            setPopupState(() {});
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Expanded(
+                child: candidates.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _GuestEmptyState(
+                          title: StringRes.at('no_users_found'),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: candidates.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (_, index) {
+                          final Map<String, dynamic> user = candidates[index];
+                          final String userId = (user['user_id'] ?? '')
+                              .toString();
+                          return _GuestUserActionRow(
+                            username: (user['username'] ?? '').toString(),
+                            profilePhoto: (user['profile_photo'] ?? '')
+                                .toString(),
+                            label: _relationLabel(userId),
+                            onTap: () {
+                              setState(() {
+                                _pendingGuests[userId] =
+                                    Map<String, dynamic>.from(user);
+                              });
+                              setPopupState(() {});
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
+    ).whenComplete(searchController.dispose);
+  }
+
+  String _relationLabel(String userId) {
+    if (_followingIds.contains(userId) && _followerIds.contains(userId)) {
+      return StringRes.at('friends');
+    }
+    if (_followingIds.contains(userId)) {
+      return StringRes.at('following');
+    }
+    return StringRes.at('anyone');
+  }
+
   // ── build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -580,7 +830,7 @@ class _CreateEventState extends State<CreateEvent> {
         activeIndex: 1,
         onHomeTap: _goToHome,
         onCreateEventTap: () {},
-        onNotificationsTap: () {},
+        onNotificationsTap: _goToNotifications,
       ),
 
       // ── zone-2 body: event creation card ────────────────────────────────
@@ -621,6 +871,16 @@ class _CreateEventState extends State<CreateEvent> {
               onPriceTap: _showPricePopup,
               onSaveTap: _showSaveConfirmation,
               onDeleteTap: _showDeleteConfirmation,
+            ),
+            SizedBox(height: 16 * s),
+            Opacity(
+              opacity: _canInviteGuests ? 1.0 : 0.55,
+              child: _InviteGuestsButton(
+                onTap: _showAddGuestsPopup,
+                label: _pendingGuestCount > 0
+                    ? '${StringRes.at('add_guests')} ($_pendingGuestCount)'
+                    : StringRes.at('add_guests'),
+              ),
             ),
             if (_isEditMode) ...[
               SizedBox(height: 16 * s),
@@ -1264,9 +1524,9 @@ class _CardActionCircle extends StatelessWidget {
     return GestureDetector(
       onTap: onTap != null
           ? () {
-        HapticService.tap();
-        onTap!();
-      }
+              HapticService.tap();
+              onTap!();
+            }
           : null,
       child: ClipOval(
         child: BackdropFilter(
@@ -1293,6 +1553,305 @@ class _CardActionCircle extends StatelessWidget {
 // _BottomNavPill — shared pill nav (see home_screen.dart for the canonical copy)
 // todo: move to vez_bottom_nav.dart when the project grows
 // ─────────────────────────────────────────────────────────────────────────────
+
+class _GuestPopupHeader extends StatelessWidget {
+  const _GuestPopupHeader({required this.title, required this.onClose});
+
+  final String title;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 6),
+      child: Row(
+        children: [
+          const SizedBox(width: 36),
+          Expanded(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 36),
+          IconButton(
+            onPressed: onClose,
+            icon: const Icon(Icons.close, color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GuestPopupSearchField extends StatelessWidget {
+  const _GuestPopupSearchField({
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return VezGlass.textField(
+      controller: controller,
+      hint: hint,
+      prefixIcon: const Icon(Icons.search, color: Colors.white),
+      color: Colors.white,
+      onChanged: onChanged,
+    );
+  }
+}
+
+class _GuestPopupChip extends StatelessWidget {
+  const _GuestPopupChip({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: isActive
+              ? const Color.fromARGB(100, 255, 255, 255)
+              : const Color.fromARGB(45, 255, 255, 255),
+          border: Border.all(
+            color: isActive ? Colors.white : Colors.white30,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectedGuestChip extends StatelessWidget {
+  const _SelectedGuestChip({required this.username, required this.onRemove});
+
+  final String username;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(left: 10, right: 4, top: 4, bottom: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: const Color.fromARGB(60, 255, 255, 255),
+        border: Border.all(color: Colors.white24, width: 1.3),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            username.isNotEmpty ? username : 'User',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          IconButton(
+            onPressed: onRemove,
+            iconSize: 18,
+            visualDensity: VisualDensity.compact,
+            splashRadius: 18,
+            icon: const Icon(Icons.close, color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GuestUserActionRow extends StatelessWidget {
+  const _GuestUserActionRow({
+    required this.username,
+    required this.profilePhoto,
+    required this.label,
+    required this.onTap,
+  });
+
+  final String username;
+  final String profilePhoto;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: const Color.fromARGB(45, 255, 255, 255),
+        border: Border.all(color: Colors.white24, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          _GuestUserAvatar(photo: profilePhoto),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  username.isNotEmpty ? username : 'User',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: onTap,
+            icon: const Icon(
+              Icons.person_add_alt_1_rounded,
+              color: Color(0xFF089D0D),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GuestUserAvatar extends StatelessWidget {
+  const _GuestUserAvatar({required this.photo});
+
+  final String photo;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isNetworkImage = photo.startsWith('http');
+
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white30, width: 1.5),
+      ),
+      child: ClipOval(
+        child: photo.isEmpty
+            ? const Icon(Icons.person, color: Colors.white70, size: 18)
+            : Image(
+                image: isNetworkImage
+                    ? NetworkImage(photo)
+                    : AssetImage(photo) as ImageProvider,
+                fit: BoxFit.cover,
+              ),
+      ),
+    );
+  }
+}
+
+class _GuestEmptyState extends StatelessWidget {
+  const _GuestEmptyState({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: const Color.fromARGB(30, 255, 255, 255),
+        border: Border.all(color: Colors.white24, width: 1.5),
+      ),
+      child: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _InviteGuestsButton extends StatelessWidget {
+  const _InviteGuestsButton({required this.onTap, required this.label});
+
+  final VoidCallback onTap;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.tap();
+        onTap();
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(70, 255, 255, 255),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: const Color.fromARGB(128, 255, 255, 255),
+                width: 2,
+              ),
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _BottomNavPill extends StatelessWidget {
   final double s;

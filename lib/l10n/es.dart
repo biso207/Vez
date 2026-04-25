@@ -57,6 +57,8 @@ const Map<String, String> es = {
   "anyone": "Cualquiera",
   "no_users_found": "No se encontraron usuarios",
   "guest_add_failed": "No se pudo agregar al invitado",
+  "guest_invites_private_only":
+      "Los invitados solo estan disponibles para eventos privados o exclusivos",
   "no_events_by_you": "Aún no has creado eventos",
   "no_events_invited": "Todavía no hay invitaciones para mostrar",
   "no_events_nearby": "Todavía no hay eventos cercanos para mostrar",

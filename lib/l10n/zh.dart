@@ -54,6 +54,8 @@ const Map<String, String> zh = {
   "anyone": "Anyone",
   "no_users_found": "No users found",
   "guest_add_failed": "Could not add guest",
+  "guest_invites_private_only":
+      "Guests are available only for private or exclusive events",
   "no_events_by_you": "你还没有创建任何活动",
   "no_events_invited": "暂时没有可显示的邀请",
   "no_events_nearby": "暂时没有附近活动可显示",

@@ -150,6 +150,43 @@ class SetDBService {
     }
   }
 
+  Future<String?> storeEventAndGetId(
+    Map<String, dynamic> eventData, {
+    required String placeId,
+  }) async {
+    try {
+      final Map<String, dynamic>? insertData = await _buildEventPayload(
+        eventData,
+        placeId: placeId,
+      );
+      if (insertData == null) return null;
+
+      final insertUrl = Uri.parse('$_baseUrl/rest/v1/events');
+
+      final response = await http.post(
+        insertUrl,
+        headers: {..._jsonHeaders, 'Prefer': 'return=representation'},
+        body: jsonEncode(insertData),
+      );
+
+      print(
+        'storeEventAndGetId response: ${response.statusCode} - ${response.body}',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final List<dynamic> data = jsonDecode(response.body);
+        if (data.isNotEmpty) {
+          return data.first['event_id']?.toString();
+        }
+      }
+
+      return null;
+    } catch (e) {
+      print('storeEventAndGetId error: $e');
+      return null;
+    }
+  }
+
   Future<int> updateEvent(
     String eventId,
     Map<String, dynamic> eventData, {

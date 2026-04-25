@@ -12,6 +12,7 @@ import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import 'create_event/create_event_screen.dart';
+import 'notifications_screen.dart';
 import 'profile_screen.dart';
 
 enum _GuestAudienceFilter { friends, following, anyone }
@@ -19,9 +20,10 @@ enum _GuestAudienceFilter { friends, following, anyone }
 enum _GuestStateFilter { all, going, notGoing, maybe }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, this.initialFilterIndex = 0});
+  const HomePage({super.key, this.initialFilterIndex = 0, this.initialEventId});
 
   final int initialFilterIndex;
+  final String? initialEventId;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -95,8 +97,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadEvents() async {
-    final List<Map<String, dynamic>> createdEvents = await _db.getCreatedEvents();
-    final List<Map<String, dynamic>> invitedEvents = await _db.getInvitedEvents();
+    final List<Map<String, dynamic>> createdEvents = await _db
+        .getCreatedEvents();
+    final List<Map<String, dynamic>> invitedEvents = await _db
+        .getInvitedEvents();
 
     if (!mounted) return;
 
@@ -119,12 +123,9 @@ class _HomePageState extends State<HomePage> {
       _db.getFollowers(),
     ]);
 
-    final List<Map<String, dynamic>> users =
-    results[0] as List<Map<String, dynamic>>;
-    final List<Map<String, dynamic>> following =
-    results[1] as List<Map<String, dynamic>>;
-    final List<Map<String, dynamic>> followers =
-    results[2] as List<Map<String, dynamic>>;
+    final List<Map<String, dynamic>> users = results[0];
+    final List<Map<String, dynamic>> following = results[1];
+    final List<Map<String, dynamic>> followers = results[2];
 
     _allUsers = users;
     _followingIds = following
@@ -148,7 +149,7 @@ class _HomePageState extends State<HomePage> {
       ...(_eventsByType[EventType.byYou] ?? const []),
     ];
     final int index = updatedEvents.indexWhere(
-          (item) => item.eventId == event.eventId,
+      (item) => item.eventId == event.eventId,
     );
 
     if (index >= 0) {
@@ -161,49 +162,43 @@ class _HomePageState extends State<HomePage> {
 
     if (!mounted) return;
     setState(() {
-      _eventsByType = {
-        ..._eventsByType,
-        EventType.byYou: updatedEvents,
-      };
+      _eventsByType = {..._eventsByType, EventType.byYou: updatedEvents};
     });
   }
 
   List<HomeEventCardData> _mapEvents(
-      List<Map<String, dynamic>> rawEvents,
-      EventType type,
-      ) {
+    List<Map<String, dynamic>> rawEvents,
+    EventType type,
+  ) {
     return rawEvents.map((event) => _mapEvent(event, type)).toList();
   }
 
-  HomeEventCardData _mapEvent(
-      Map<String, dynamic> rawEvent,
-      EventType type,
-      ) {
-    final Map<String, dynamic> place =
-    rawEvent['place'] is Map<String, dynamic>
+  HomeEventCardData _mapEvent(Map<String, dynamic> rawEvent, EventType type) {
+    final Map<String, dynamic> place = rawEvent['place'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(rawEvent['place'] as Map<String, dynamic>)
         : rawEvent['place'] is Map
         ? Map<String, dynamic>.from(rawEvent['place'] as Map)
         : <String, dynamic>{};
     final Map<String, dynamic> category =
-    rawEvent['event_category'] is Map<String, dynamic>
+        rawEvent['event_category'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(
-      rawEvent['event_category'] as Map<String, dynamic>,
-    )
+            rawEvent['event_category'] as Map<String, dynamic>,
+          )
         : rawEvent['event_category'] is Map
         ? Map<String, dynamic>.from(rawEvent['event_category'] as Map)
         : <String, dynamic>{};
     final Map<String, dynamic> creator =
-    rawEvent['creator'] is Map<String, dynamic>
+        rawEvent['creator'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(rawEvent['creator'] as Map<String, dynamic>)
         : rawEvent['creator'] is Map
         ? Map<String, dynamic>.from(rawEvent['creator'] as Map)
         : <String, dynamic>{};
 
-    final String visibility =
-    EventCatalog.normalizeTypeName(rawEvent['type']?.toString());
+    final String visibility = EventCatalog.normalizeTypeName(
+      rawEvent['type']?.toString(),
+    );
     final String categoryName =
-    (category['name'] ?? '').toString().trim().isNotEmpty
+        (category['name'] ?? '').toString().trim().isNotEmpty
         ? (category['name'] ?? '').toString().trim()
         : 'cinema';
     final String rawImage = (rawEvent['bg_photo'] ?? '').toString().trim();
@@ -242,9 +237,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<HomeEventGuestData> _mapGuests(
-      Map<String, dynamic> rawEvent,
-      String visibility,
-      ) {
+    Map<String, dynamic> rawEvent,
+    String visibility,
+  ) {
     if (EventCatalog.canInviteGuests(visibility)) {
       final List<dynamic> inviteRows =
           (rawEvent['event_invites'] as List<dynamic>?) ?? const [];
@@ -258,15 +253,12 @@ class _HomePageState extends State<HomePage> {
         (rawEvent['participation'] as List<dynamic>?) ?? const [];
     return participationRows
         .whereType<Map>()
-        .map(
-          (row) => _mapParticipationGuest(Map<String, dynamic>.from(row)),
-    )
+        .map((row) => _mapParticipationGuest(Map<String, dynamic>.from(row)))
         .toList();
   }
 
   HomeEventGuestData _mapInviteGuest(Map<String, dynamic> row) {
-    final Map<String, dynamic> user =
-    row['users'] is Map<String, dynamic>
+    final Map<String, dynamic> user = row['users'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(row['users'] as Map<String, dynamic>)
         : row['users'] is Map
         ? Map<String, dynamic>.from(row['users'] as Map)
@@ -278,16 +270,15 @@ class _HomePageState extends State<HomePage> {
       profilePhoto: (user['profile_photo'] ?? '').toString().trim(),
       state: _normalizeInviteState(
         row['response']?.toString(),
-        referenceTimestamp:
-        (row['responded_at'] ?? row['invited_at'])?.toString(),
+        referenceTimestamp: (row['responded_at'] ?? row['invited_at'])
+            ?.toString(),
       ),
       role: (row['role'] ?? 'guest').toString(),
     );
   }
 
   HomeEventGuestData _mapParticipationGuest(Map<String, dynamic> row) {
-    final Map<String, dynamic> user =
-    row['users'] is Map<String, dynamic>
+    final Map<String, dynamic> user = row['users'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(row['users'] as Map<String, dynamic>)
         : row['users'] is Map
         ? Map<String, dynamic>.from(row['users'] as Map)
@@ -321,21 +312,14 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    return HomeEventGuestCounts(
-      going: going,
-      notGoing: notGoing,
-      maybe: maybe,
-    );
+    return HomeEventGuestCounts(going: going, notGoing: notGoing, maybe: maybe);
   }
 
-  String _normalizeInviteState(
-      String? rawState, {
-        String? referenceTimestamp,
-      }) {
-    final String normalized = (rawState ?? '')
-        .trim()
-        .toLowerCase()
-        .replaceAll(' ', '_');
+  String _normalizeInviteState(String? rawState, {String? referenceTimestamp}) {
+    final String normalized = (rawState ?? '').trim().toLowerCase().replaceAll(
+      ' ',
+      '_',
+    );
 
     if (normalized.isEmpty ||
         normalized == 'maybe' ||
@@ -344,7 +328,9 @@ class _HomePageState extends State<HomePage> {
       return _isInviteExpired(referenceTimestamp) ? 'not_going' : 'maybe';
     }
 
-    if (normalized == 'accepted' || normalized == 'yes' || normalized == 'going') {
+    if (normalized == 'accepted' ||
+        normalized == 'yes' ||
+        normalized == 'going') {
       return 'going';
     }
 
@@ -361,12 +347,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _normalizeParticipationState(String? rawState) {
-    final String normalized = (rawState ?? '')
-        .trim()
-        .toLowerCase()
-        .replaceAll(' ', '_');
+    final String normalized = (rawState ?? '').trim().toLowerCase().replaceAll(
+      ' ',
+      '_',
+    );
 
-    if (normalized == 'going' || normalized == 'accepted' || normalized == 'yes') {
+    if (normalized == 'going' ||
+        normalized == 'accepted' ||
+        normalized == 'yes') {
       return 'going';
     }
     if (normalized == 'notgoing' ||
@@ -416,9 +404,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  EventType get _selectedType => _filterIcons[_filterIndex]['type'] as EventType;
+  EventType get _selectedType =>
+      _filterIcons[_filterIndex]['type'] as EventType;
 
-  List<HomeEventCardData> get _visibleEvents => _eventsByType[_selectedType] ?? const [];
+  List<HomeEventCardData> get _visibleEvents =>
+      _eventsByType[_selectedType] ?? const [];
 
   void _goToProfile() {
     Navigator.push(
@@ -440,6 +430,13 @@ class _HomePageState extends State<HomePage> {
         await _loadEvents();
       }
     });
+  }
+
+  void _goToNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationsPage()),
+    );
   }
 
   void _editEvent(HomeEventCardData event) {
@@ -472,14 +469,15 @@ class _HomePageState extends State<HomePage> {
               .where((guest) => _matchesGuestStateFilter(guest, statusFilter))
               .where(
                 (guest) => guest.username.toLowerCase().contains(
-              searchController.text.trim().toLowerCase(),
-            ),
-          )
+                  searchController.text.trim().toLowerCase(),
+                ),
+              )
               .toList();
 
           Future<void> refreshCurrentEvent() async {
-            final HomeEventCardData? refreshed =
-            await _refreshByYouEvent(currentEvent.eventId);
+            final HomeEventCardData? refreshed = await _refreshByYouEvent(
+              currentEvent.eventId,
+            );
             if (refreshed == null) return;
             currentEvent = refreshed;
             _upsertByYouEvent(refreshed);
@@ -507,12 +505,12 @@ class _HomePageState extends State<HomePage> {
                 onClose: () => Navigator.pop(context),
                 action: currentEvent.canInviteGuests
                     ? IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _showAddGuestPopup(currentEvent);
-                  },
-                  icon: const Icon(Icons.add, color: Colors.white),
-                )
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showAddGuestPopup(currentEvent);
+                        },
+                        icon: const Icon(Icons.add, color: Colors.white),
+                      )
                     : null,
               ),
               Padding(
@@ -534,28 +532,28 @@ class _HomePageState extends State<HomePage> {
                       label: StringRes.at('all'),
                       isActive: statusFilter == _GuestStateFilter.all,
                       onTap: () => setPopupState(
-                            () => statusFilter = _GuestStateFilter.all,
+                        () => statusFilter = _GuestStateFilter.all,
                       ),
                     ),
                     _PopupFilterChip(
                       label: StringRes.at('going'),
                       isActive: statusFilter == _GuestStateFilter.going,
                       onTap: () => setPopupState(
-                            () => statusFilter = _GuestStateFilter.going,
+                        () => statusFilter = _GuestStateFilter.going,
                       ),
                     ),
                     _PopupFilterChip(
                       label: StringRes.at('not_going'),
                       isActive: statusFilter == _GuestStateFilter.notGoing,
                       onTap: () => setPopupState(
-                            () => statusFilter = _GuestStateFilter.notGoing,
+                        () => statusFilter = _GuestStateFilter.notGoing,
                       ),
                     ),
                     _PopupFilterChip(
                       label: StringRes.at('maybe'),
                       isActive: statusFilter == _GuestStateFilter.maybe,
                       onTap: () => setPopupState(
-                            () => statusFilter = _GuestStateFilter.maybe,
+                        () => statusFilter = _GuestStateFilter.maybe,
                       ),
                     ),
                   ],
@@ -579,7 +577,7 @@ class _HomePageState extends State<HomePage> {
                       _PopupEmptyState(title: StringRes.at('no_guests_yet'))
                     else
                       ...visibleGuests.map(
-                            (guest) => Padding(
+                        (guest) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: _PopupGuestRow(
                             username: guest.username,
@@ -587,14 +585,14 @@ class _HomePageState extends State<HomePage> {
                             state: guest.state,
                             trailing: currentEvent.canInviteGuests
                                 ? IconButton(
-                              onPressed: isBusy
-                                  ? null
-                                  : () => removeGuest(guest.userId),
-                              icon: const Icon(
-                                Icons.remove_circle_rounded,
-                                color: Color(0xFFFF3131),
-                              ),
-                            )
+                                    onPressed: isBusy
+                                        ? null
+                                        : () => removeGuest(guest.userId),
+                                    icon: const Icon(
+                                      Icons.remove_circle_rounded,
+                                      color: Color(0xFFFF3131),
+                                    ),
+                                  )
                                 : null,
                           ),
                         ),
@@ -635,7 +633,9 @@ class _HomePageState extends State<HomePage> {
             ...currentEvent.guests.map((guest) => guest.userId),
           };
 
-          final Set<String> friendIds = _followingIds.intersection(_followerIds);
+          final Set<String> friendIds = _followingIds.intersection(
+            _followerIds,
+          );
 
           final List<Map<String, dynamic>> candidates = _allUsers.where((user) {
             final String userId = (user['user_id'] ?? '').toString();
@@ -664,8 +664,9 @@ class _HomePageState extends State<HomePage> {
               invitedUserId: userId,
             );
             if (res == 200 || res == 201 || res == 204) {
-              final HomeEventCardData? refreshed =
-              await _refreshByYouEvent(currentEvent.eventId);
+              final HomeEventCardData? refreshed = await _refreshByYouEvent(
+                currentEvent.eventId,
+              );
               if (refreshed != null) {
                 currentEvent = refreshed;
                 _upsertByYouEvent(refreshed);
@@ -702,21 +703,22 @@ class _HomePageState extends State<HomePage> {
                       label: StringRes.at('friends'),
                       isActive: audienceFilter == _GuestAudienceFilter.friends,
                       onTap: () => setPopupState(
-                            () => audienceFilter = _GuestAudienceFilter.friends,
+                        () => audienceFilter = _GuestAudienceFilter.friends,
                       ),
                     ),
                     _PopupFilterChip(
                       label: StringRes.at('following'),
-                      isActive: audienceFilter == _GuestAudienceFilter.following,
+                      isActive:
+                          audienceFilter == _GuestAudienceFilter.following,
                       onTap: () => setPopupState(
-                            () => audienceFilter = _GuestAudienceFilter.following,
+                        () => audienceFilter = _GuestAudienceFilter.following,
                       ),
                     ),
                     _PopupFilterChip(
                       label: StringRes.at('anyone'),
                       isActive: audienceFilter == _GuestAudienceFilter.anyone,
                       onTap: () => setPopupState(
-                            () => audienceFilter = _GuestAudienceFilter.anyone,
+                        () => audienceFilter = _GuestAudienceFilter.anyone,
                       ),
                     ),
                   ],
@@ -726,30 +728,30 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: candidates.isEmpty
                     ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _PopupEmptyState(
-                    title: StringRes.at('no_users_found'),
-                  ),
-                )
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _PopupEmptyState(
+                          title: StringRes.at('no_users_found'),
+                        ),
+                      )
                     : ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: candidates.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (_, index) {
-                    final Map<String, dynamic> user = candidates[index];
-                    final String userId =
-                    (user['user_id'] ?? '').toString();
-                    return _PopupUserActionRow(
-                      username: (user['username'] ?? '').toString(),
-                      profilePhoto:
-                      (user['profile_photo'] ?? '').toString(),
-                      label: _relationLabel(userId),
-                      icon: Icons.person_add_alt_1_rounded,
-                      iconColor: const Color(0xFF089D0D),
-                      onTap: isBusy ? null : () => addGuest(userId),
-                    );
-                  },
-                ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: candidates.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (_, index) {
+                          final Map<String, dynamic> user = candidates[index];
+                          final String userId = (user['user_id'] ?? '')
+                              .toString();
+                          return _PopupUserActionRow(
+                            username: (user['username'] ?? '').toString(),
+                            profilePhoto: (user['profile_photo'] ?? '')
+                                .toString(),
+                            label: _relationLabel(userId),
+                            icon: Icons.person_add_alt_1_rounded,
+                            iconColor: const Color(0xFF089D0D),
+                            onTap: isBusy ? null : () => addGuest(userId),
+                          );
+                        },
+                      ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -763,9 +765,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   bool _matchesGuestStateFilter(
-      HomeEventGuestData guest,
-      _GuestStateFilter filter,
-      ) {
+    HomeEventGuestData guest,
+    _GuestStateFilter filter,
+  ) {
     switch (filter) {
       case _GuestStateFilter.all:
         return true;
@@ -829,7 +831,7 @@ class _HomePageState extends State<HomePage> {
         activeIndex: 0,
         onHomeTap: () {},
         onCreateEventTap: _goToCreateEvent,
-        onNotificationsTap: () {},
+        onNotificationsTap: _goToNotifications,
       ),
       body: _EventCarousel(
         events: _visibleEvents,
@@ -837,6 +839,7 @@ class _HomePageState extends State<HomePage> {
         isLoading: _isLoadingEvents,
         emptyStateTitle: _emptyStateTitle(),
         emptyStateIconPath: _emptyStateIcon,
+        highlightedEventId: widget.initialEventId,
         onAddGuestsTap: _showAddGuestPopup,
         onGuestListTap: _showGuestListPopup,
         onEditTap: _editEvent,
@@ -845,13 +848,14 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _EventCarousel extends StatelessWidget {
+class _EventCarousel extends StatefulWidget {
   const _EventCarousel({
     required this.events,
     required this.s,
     required this.isLoading,
     required this.emptyStateTitle,
     required this.emptyStateIconPath,
+    required this.highlightedEventId,
     required this.onAddGuestsTap,
     required this.onGuestListTap,
     required this.onEditTap,
@@ -862,41 +866,91 @@ class _EventCarousel extends StatelessWidget {
   final bool isLoading;
   final String emptyStateTitle;
   final String emptyStateIconPath;
+  final String? highlightedEventId;
   final ValueChanged<HomeEventCardData> onAddGuestsTap;
   final ValueChanged<HomeEventCardData> onGuestListTap;
   final ValueChanged<HomeEventCardData> onEditTap;
 
   @override
+  State<_EventCarousel> createState() => _EventCarouselState();
+}
+
+class _EventCarouselState extends State<_EventCarousel> {
+  late final PageController _controller;
+  String? _lastJumpedEventId;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController(viewportFraction: 0.75);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeJumpToEvent());
+  }
+
+  @override
+  void didUpdateWidget(covariant _EventCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.events != widget.events ||
+        oldWidget.highlightedEventId != widget.highlightedEventId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeJumpToEvent());
+    }
+  }
+
+  void _maybeJumpToEvent() {
+    if (!mounted || !_controller.hasClients) return;
+
+    final String? eventId = widget.highlightedEventId?.trim();
+    if (eventId == null || eventId.isEmpty || eventId == _lastJumpedEventId) {
+      return;
+    }
+
+    final int targetIndex = widget.events.indexWhere(
+      (event) => event.eventId == eventId,
+    );
+    if (targetIndex < 0) return;
+
+    _controller.jumpToPage(targetIndex);
+    _lastJumpedEventId = eventId;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    if (widget.isLoading) {
       return const Center(
         child: CircularProgressIndicator(color: Colors.white),
       );
     }
 
-    if (events.isEmpty) {
+    if (widget.events.isEmpty) {
       return _EmptyEventsState(
-        s: s,
-        title: emptyStateTitle,
-        iconPath: emptyStateIconPath,
+        s: widget.s,
+        title: widget.emptyStateTitle,
+        iconPath: widget.emptyStateIconPath,
       );
     }
 
     return PageView.builder(
       scrollDirection: Axis.vertical,
-      controller: PageController(viewportFraction: 0.75),
-      itemCount: events.length,
+      controller: _controller,
+      itemCount: widget.events.length,
       itemBuilder: (context, index) {
-        final HomeEventCardData event = events[index];
+        final HomeEventCardData event = widget.events[index];
         return Padding(
-          padding: EdgeInsets.symmetric(vertical: 6 * s),
+          padding: EdgeInsets.symmetric(vertical: 6 * widget.s),
           child: VezEventCard(
             event: event,
             onAddGuestsTap: event.canInviteGuests
-                ? () => onAddGuestsTap(event)
+                ? () => widget.onAddGuestsTap(event)
                 : null,
-            onGuestListTap: event.isByYou ? () => onGuestListTap(event) : null,
-            onEditTap: event.isByYou ? () => onEditTap(event) : null,
+            onGuestListTap: event.isByYou
+                ? () => widget.onGuestListTap(event)
+                : null,
+            onEditTap: event.isByYou ? () => widget.onEditTap(event) : null,
           ),
         );
       },
@@ -1140,10 +1194,7 @@ class _PopupGuestRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (trailing != null) ...[
-            trailing!,
-            const SizedBox(width: 4),
-          ],
+          if (trailing != null) ...[trailing!, const SizedBox(width: 4)],
           _PopupStateIcon(state: state),
         ],
       ),
@@ -1237,11 +1288,11 @@ class _PopupUserAvatar extends StatelessWidget {
         child: photo.isEmpty
             ? const Icon(Icons.person, color: Colors.white70, size: 18)
             : Image(
-          image: isNetworkImage
-              ? NetworkImage(photo)
-              : AssetImage(photo) as ImageProvider,
-          fit: BoxFit.cover,
-        ),
+                image: isNetworkImage
+                    ? NetworkImage(photo)
+                    : AssetImage(photo) as ImageProvider,
+                fit: BoxFit.cover,
+              ),
       ),
     );
   }
@@ -1290,8 +1341,7 @@ class _PopupCountsFooter extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: _PopupCountItem(
-              iconPath:
-              'assets/icons/event/participation_state/not_going.png',
+              iconPath: 'assets/icons/event/participation_state/not_going.png',
               label: StringRes.at('not_going'),
               value: counts.notGoing,
             ),

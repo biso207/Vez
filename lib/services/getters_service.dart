@@ -223,4 +223,31 @@ class GetDBService {
       return [];
     }
   }
+
+  Future<List<Map<String, dynamic>>> getInviteNotifications() async {
+    try {
+      final Uri url = Uri.parse(
+        '$_baseUrl/rest/v1/event_invites'
+        '?user_id=eq.$userID'
+        '&select=id_invite,response,invited_at,responded_at,role,event_id,'
+        'event:event_id('
+        'event_id,title,date_event,type,bg_photo,creator_user_id,'
+        'place:place_id(name,address,is_precise,latitude,longitude),'
+        'creator:creator_user_id(username,profile_photo)'
+        ')'
+        '&order=invited_at.desc',
+      );
+
+      final response = await http.get(url, headers: _headers);
+      if (response.statusCode != 200) return [];
+
+      final List<dynamic> data = jsonDecode(response.body);
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
 }
