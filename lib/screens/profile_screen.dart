@@ -20,15 +20,15 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../models/vez_glass.dart';
-import '../models/vez_page_layout.dart';
-import '../models/vez_popup.dart';
 import '../services/auth_service.dart';
 import '../services/getters_service.dart';
 import '../services/haptic_service.dart';
 import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
+import '../views/widgets/vez_glass.dart';
+import '../views/widgets/vez_page_layout.dart';
+import '../views/widgets/vez_popup.dart';
 import 'auth/login_screen.dart';
 import 'create_event/create_event_screen.dart';
 import 'notifications_screen.dart';
@@ -1325,7 +1325,6 @@ class _PopupInput extends StatelessWidget {
   final String hint;
   final TextEditingController controller;
   final int? maxLength;
-  final int maxLines;
   final bool obscure;
   final ValueChanged<String>? onChanged;
   final Widget? suffixIcon;
@@ -1334,7 +1333,6 @@ class _PopupInput extends StatelessWidget {
     required this.hint,
     required this.controller,
     this.maxLength,
-    this.maxLines = 1,
     this.obscure = false,
     this.onChanged,
     this.suffixIcon,
@@ -1346,14 +1344,14 @@ class _PopupInput extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14, left: 16, right: 16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(maxLines > 1 ? 20 : 30),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white54, width: 2),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
         maxLength: maxLength,
-        maxLines: maxLines,
+        maxLines: 1,
         obscureText: obscure,
         style: const TextStyle(
           color: Colors.white,

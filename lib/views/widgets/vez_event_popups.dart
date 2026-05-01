@@ -17,16 +17,15 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-import '../models/vez_popup.dart';
-import '../services/haptic_service.dart';
-import '../services/translation_service.dart';
+import '../../services/haptic_service.dart';
+import '../../services/translation_service.dart';
+import 'vez_popup.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VezEventPopups — static entry points
 // ─────────────────────────────────────────────────────────────────────────────
 
 class VezEventPopups {
-
   VezEventPopups._(); // prevent instantiation
 
   // ── text input popup ───────────────────────────────────────────────────────
@@ -37,27 +36,29 @@ class VezEventPopups {
   static void showTextInput(
     BuildContext context, {
     required String title,
-    String? titleIcon,        // optional asset icon shown beside the title
+    String? titleIcon, // optional asset icon shown beside the title
     String? currentValue,
     required ValueChanged<String> onSave,
-    bool isNumeric   = false,
+    bool isNumeric = false,
     bool isMultiline = false,
     int? maxLength,
   }) {
     final double pw = MediaQuery.of(context).size.width * 0.80;
-    final TextEditingController ctrl = TextEditingController(text: currentValue);
+    final TextEditingController ctrl = TextEditingController(
+      text: currentValue,
+    );
 
     VezPopup.show(
       context: context,
-      width:   pw,
-      child:   _TextInputContent(
-        title:       title,
-        titleIcon:   titleIcon,
-        controller:  ctrl,
-        isNumeric:   isNumeric,
+      width: pw,
+      child: _TextInputContent(
+        title: title,
+        titleIcon: titleIcon,
+        controller: ctrl,
+        isNumeric: isNumeric,
         isMultiline: isMultiline,
-        maxLength:   maxLength,
-        onSave:      (value) {
+        maxLength: maxLength,
+        onSave: (value) {
           FocusScope.of(context).unfocus();
           onSave(value);
           Navigator.pop(context);
@@ -90,7 +91,7 @@ class VezEventPopups {
         children: [
           // header
           _VezPopupHeader(
-            icon:  'assets/icons/event/location.png',
+            icon: 'assets/icons/event/location.png',
             label: StringRes.at('set_location'),
           ),
 
@@ -98,7 +99,7 @@ class VezEventPopups {
 
           // option 1: simple text name
           _VezPopupRow(
-            iconPath:  'assets/icons/event/known_place.png',
+            iconPath: 'assets/icons/event/known_place.png',
             label: StringRes.at('location_simple_name'),
             onTap: () {
               Navigator.pop(context);
@@ -110,7 +111,7 @@ class VezEventPopups {
 
           // option 2: precise map picker
           _VezPopupRow(
-            iconPath:  'assets/icons/event/precise_spot.png',
+            iconPath: 'assets/icons/event/precise_spot.png',
             label: StringRes.at('location_map'),
             onTap: () {
               Navigator.pop(context);
@@ -133,7 +134,7 @@ class VezEventPopups {
     String? titleIcon,
     required VoidCallback onConfirm,
     String confirmLabel = 'OK',
-    String cancelLabel  = 'Cancel',
+    String cancelLabel = 'Cancel',
   }) {
     final double pw = MediaQuery.of(context).size.width * 0.60;
 
@@ -144,17 +145,14 @@ class VezEventPopups {
         mainAxisSize: MainAxisSize.min,
         children: [
           // header
-          _VezPopupHeader(
-            icon:  titleIcon,
-            label: title,
-          ),
+          _VezPopupHeader(icon: titleIcon, label: title),
 
           _VezPopupDivider(parentWidth: pw),
 
           // confirm row (green accent)
           _VezPopupRow(
-            iconPath:       'assets/icons/event/confirm.png',
-            label:      confirmLabel,
+            iconPath: 'assets/icons/event/confirm.png',
+            label: confirmLabel,
             accentColor: const Color(0xFF089D0D),
             onTap: () {
               HapticService.success();
@@ -167,8 +165,8 @@ class VezEventPopups {
 
           // cancel row (red accent)
           _VezPopupRow(
-            iconPath:       'assets/icons/event/cancel.png',
-            label:      cancelLabel,
+            iconPath: 'assets/icons/event/cancel.png',
+            label: cancelLabel,
             accentColor: const Color(0xFFFF3131),
             onTap: () => Navigator.pop(context),
           ),
@@ -225,11 +223,11 @@ class _TextInputContentState extends State<_TextInputContent> {
             children: [
               // glass-style input field (same as profile edit inputs)
               _VezPopupInput(
-                controller:  widget.controller,
-                isNumeric:   widget.isNumeric,
+                controller: widget.controller,
+                isNumeric: widget.isNumeric,
                 isMultiline: widget.isMultiline,
-                maxLength:   widget.maxLength,
-                onChanged:   (_) => setState(() {}),
+                maxLength: widget.maxLength,
+                onChanged: (_) => setState(() {}),
               ),
 
               const SizedBox(height: 18),
@@ -239,17 +237,17 @@ class _TextInputContentState extends State<_TextInputContent> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _VezPopupActionCircle(
-                    iconPath:        'assets/icons/event/check.png',
-                    color:       const Color.fromARGB(128, 8, 157, 13),
+                    iconPath: 'assets/icons/event/check.png',
+                    color: const Color.fromARGB(128, 8, 157, 13),
                     borderColor: const Color.fromARGB(200, 8, 157, 13),
-                    onTap:       () => widget.onSave(widget.controller.text),
+                    onTap: () => widget.onSave(widget.controller.text),
                   ),
                   const SizedBox(width: 28),
                   _VezPopupActionCircle(
-                    iconPath:        'assets/icons/event/close.png',
-                    color:       const Color.fromARGB(128, 255, 49, 49),
+                    iconPath: 'assets/icons/event/close.png',
+                    color: const Color.fromARGB(128, 255, 49, 49),
                     borderColor: const Color.fromARGB(200, 255, 49, 49),
-                    onTap:       widget.onDiscard,
+                    onTap: widget.onDiscard,
                   ),
                 ],
               ),
@@ -270,8 +268,8 @@ class _TextInputContentState extends State<_TextInputContent> {
 // ── _VezPopupHeader — title row with optional asset icon ─────────────────────
 
 class _VezPopupHeader extends StatelessWidget {
-  final String? icon;   // asset path or null
-  final String  label;
+  final String? icon; // asset path or null
+  final String label;
 
   const _VezPopupHeader({required this.label, this.icon});
 
@@ -305,9 +303,9 @@ class _VezPopupHeader extends StatelessWidget {
 // ── _VezPopupRow — icon + label tappable row (matches category/type popup rows)
 
 class _VezPopupRow extends StatelessWidget {
-  final String   iconPath;
-  final String     label;
-  final Color?     accentColor;  // optional tint for icon and label
+  final String iconPath;
+  final String label;
+  final Color? accentColor; // optional tint for icon and label
   final VoidCallback onTap;
 
   const _VezPopupRow({
@@ -356,7 +354,8 @@ class _VezPopupDivider extends StatelessWidget {
     final double w = (parentWidth * 0.70).clamp(100.0, parentWidth - 32.0);
     return Center(
       child: Container(
-        width: w, height: 2,
+        width: w,
+        height: 2,
         decoration: BoxDecoration(
           color: Colors.white24,
           borderRadius: BorderRadius.circular(10),
@@ -391,10 +390,10 @@ class _VezPopupInput extends StatelessWidget {
         border: Border.all(color: Colors.white38, width: 2),
       ),
       child: TextField(
-        controller:   controller,
-        onChanged:    onChanged,
-        maxLength:    maxLength,
-        maxLines:     isMultiline ? 4 : 1,
+        controller: controller,
+        onChanged: onChanged,
+        maxLength: maxLength,
+        maxLines: isMultiline ? 4 : 1,
         keyboardType: isNumeric
             ? TextInputType.number
             : (isMultiline ? TextInputType.multiline : TextInputType.text),
@@ -404,14 +403,14 @@ class _VezPopupInput extends StatelessWidget {
           fontSize: 18,
         ),
         decoration: InputDecoration(
-          border:      InputBorder.none,
+          border: InputBorder.none,
           counterText: '',
           // live character counter shown when maxLength is set
           suffixText: maxLength != null
               ? '${controller.text.length}/$maxLength'
               : null,
           suffixStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-          hintStyle:   const TextStyle(color: Colors.white38),
+          hintStyle: const TextStyle(color: Colors.white38),
         ),
       ),
     );
@@ -422,8 +421,8 @@ class _VezPopupInput extends StatelessWidget {
 
 class _VezPopupActionCircle extends StatelessWidget {
   final String iconPath;
-  final Color    color;
-  final Color    borderColor;
+  final Color color;
+  final Color borderColor;
   final VoidCallback onTap;
 
   const _VezPopupActionCircle({
@@ -436,17 +435,25 @@ class _VezPopupActionCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () { HapticService.tap(); onTap(); },
+      onTap: () {
+        HapticService.tap();
+        onTap();
+      },
       child: ClipOval(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color, shape: BoxShape.circle,
+              color: color,
+              shape: BoxShape.circle,
               border: Border.all(color: borderColor, width: 2),
             ),
-            child: ImageIcon(AssetImage(iconPath), color: Colors.white, size: 26),
+            child: ImageIcon(
+              AssetImage(iconPath),
+              color: Colors.white,
+              size: 26,
+            ),
           ),
         ),
       ),

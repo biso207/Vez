@@ -10,15 +10,11 @@ import 'package:flutter/material.dart';
 /// =======================================================
 
 class VezGlass {
-
   /// Default blur applied to every glass element
   static const double blur = 5;
 
   /// Shared border style: 3 px white at 50% opacity
-  static Border border = Border.all(
-    color: Colors.white54,
-    width: 2,
-  );
+  static Border border = Border.all(color: Colors.white54, width: 2);
 
   /// ---------------------------------------------------
   /// Glass container (background blur)
@@ -27,9 +23,10 @@ class VezGlass {
     required Widget child,
     BorderRadius radius = const BorderRadius.all(Radius.circular(30)),
     EdgeInsets padding = const EdgeInsets.symmetric(
-        horizontal: 30, vertical: 7),
+      horizontal: 30,
+      vertical: 7,
+    ),
     Color? color,
-
   }) {
     return ClipRRect(
       borderRadius: radius,
@@ -81,25 +78,34 @@ class VezGlass {
                 angle: rotation,
                 child: isProfile
                     ? (isRemote
-                        ? Image.network(
-                            assetIcon,
-                            width: size,
-                            height: size,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Image.asset("assets/icons/home_page/profile_photo.png", color: Colors.white),
-                          )
-                        : Image.asset(
-                            isEmpty ? "assets/icons/home_page/profile_photo.png" : assetIcon,
-                            width: size,
-                            height: size,
-                            fit: BoxFit.cover,
-                            color: isEmpty ? Colors.white : null,
-                          ))
+                          ? Image.network(
+                              assetIcon,
+                              width: size,
+                              height: size,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Image.asset(
+                                    "assets/icons/home_page/profile_photo.png",
+                                    color: Colors.white,
+                                  ),
+                            )
+                          : Image.asset(
+                              isEmpty
+                                  ? "assets/icons/home_page/profile_photo.png"
+                                  : assetIcon,
+                              width: size,
+                              height: size,
+                              fit: BoxFit.cover,
+                              color: isEmpty ? Colors.white : null,
+                            ))
                     : Image.asset(
-                        isEmpty ? "assets/icons/home_page/profile_photo.png" : assetIcon,
+                        isEmpty
+                            ? "assets/icons/home_page/profile_photo.png"
+                            : assetIcon,
                         width: iconSize,
-                        color: (isEmpty || !assetIcon.contains('bg')) ? Colors.white : null,
+                        color: (isEmpty || !assetIcon.contains('bg'))
+                            ? Colors.white
+                            : null,
                       ),
               ),
             ),
@@ -115,7 +121,8 @@ class VezGlass {
   static Widget pillButton({
     required String text,
     required VoidCallback onTap,
-    Color? color, int? fontSize,
+    Color? color,
+    int? fontSize,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -181,19 +188,20 @@ class VezGlass {
             maxLength: maxLength, // 2. <-- PASSALO AL WIDGET NATIVO
             onChanged: onChanged, // 3. <-- PASSALO AL WIDGET NATIVO
             style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: fontWeight,
-                color: Colors.white
+              fontSize: fontSize,
+              fontWeight: fontWeight,
+              color: Colors.white,
             ),
             decoration: InputDecoration(
               isCollapsed: true,
               border: InputBorder.none,
-              counterText: "", // 4. <-- NASCONDE IL COUNTER DI DEFAULT SOTTO LA RIGA
+              counterText:
+                  "", // 4. <-- NASCONDE IL COUNTER DI DEFAULT SOTTO LA RIGA
               hintText: hint,
               hintStyle: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: fontWeight,
-                  color: Colors.white60
+                fontSize: fontSize,
+                fontWeight: fontWeight,
+                color: Colors.white60,
               ),
               prefixIcon: prefixIcon,
               prefixIconConstraints: const BoxConstraints(),
@@ -227,7 +235,8 @@ class VezErrorBanner extends StatelessWidget {
       child: Row(
         // Shrink-wrap horizontally but allow the text to fill remaining space
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start, // Align icon to first line
+        crossAxisAlignment:
+            CrossAxisAlignment.start, // Align icon to first line
         children: [
           // Error icon pinned to the top of the first text line
           const Padding(
@@ -267,10 +276,7 @@ class VezLoadingOverlay extends StatelessWidget {
       child: Container(
         color: Colors.black.withOpacity(0.45),
         child: const Center(
-          child: CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 2,
-          ),
+          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
         ),
       ),
     );

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/vez_glass.dart';
-import '../models/vez_page_layout.dart';
 import '../services/getters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
+import '../views/widgets/vez_glass.dart';
+import '../views/widgets/vez_page_layout.dart';
 import 'create_event/create_event_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';

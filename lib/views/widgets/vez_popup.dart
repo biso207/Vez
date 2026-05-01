@@ -29,9 +29,14 @@ class VezPopup {
                 child: Container(
                   width: width,
                   height: height,
-                  padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0), // Padding interno
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 0,
+                    horizontal: 0,
+                  ), // Padding interno
                   decoration: BoxDecoration(
-                    color: backgroundColor ?? const Color(0xFF0E0E0E).withOpacity(0.8),
+                    color:
+                        backgroundColor ??
+                        const Color(0xFF0E0E0E).withOpacity(0.8),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
                       color: borderColor ?? Colors.white54,
@@ -51,24 +56,20 @@ class VezPopup {
         final scaleAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
           CurvedAnimation(
             parent: animation,
-            curve: Curves.easeOutBack, // Questo fa il "salto" in avanti e torna indietro
+            curve: Curves
+                .easeOutBack, // Questo fa il "salto" in avanti e torna indietro
           ),
         );
 
         // 3. Dissolvenza leggermente più veloce
-        final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-          CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOut,
-          ),
-        );
+        final fadeAnimation = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
 
         return FadeTransition(
           opacity: fadeAnimation,
-          child: ScaleTransition(
-            scale: scaleAnimation,
-            child: child,
-          ),
+          child: ScaleTransition(scale: scaleAnimation, child: child),
         );
       },
     );

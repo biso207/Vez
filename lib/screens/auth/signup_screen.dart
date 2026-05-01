@@ -18,10 +18,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-import '../../models/vez_glass.dart';
-import '../../models/vez_popup.dart';
 import '../../services/auth_service.dart';
 import '../../services/translation_service.dart';
+import '../../views/widgets/vez_glass.dart';
 import '../home_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────

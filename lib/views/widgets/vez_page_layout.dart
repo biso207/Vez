@@ -17,11 +17,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-import '../models/vez_event_card.dart';
-import '../models/vez_glass.dart';
-import '../models/vez_popup.dart';
-import '../services/haptic_service.dart';
-import '../services/translation_service.dart';
+import '../../models/home_event.dart';
+import '../../services/haptic_service.dart';
+import '../../services/translation_service.dart';
+import 'vez_glass.dart';
+import 'vez_popup.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // constants shared across the whole layout
@@ -95,9 +95,18 @@ class VezPageLayout extends StatelessWidget {
 
   // filter-popup entries — kept here so the popup can always render them
   static const List<Map<String, dynamic>> _filterIcons = [
-    {'icon': 'assets/icons/home_page/by_you_events.png',  'type': EventType.byYou},
-    {'icon': 'assets/icons/home_page/invited_events.png', 'type': EventType.invited},
-    {'icon': 'assets/icons/home_page/nearby_events.png',  'type': EventType.nearby},
+    {
+      'icon': 'assets/icons/home_page/by_you_events.png',
+      'type': EventType.byYou,
+    },
+    {
+      'icon': 'assets/icons/home_page/invited_events.png',
+      'type': EventType.invited,
+    },
+    {
+      'icon': 'assets/icons/home_page/nearby_events.png',
+      'type': EventType.nearby,
+    },
   ];
 
   // ─── build ───────────────────────────────────────────────────────────────
@@ -119,21 +128,19 @@ class VezPageLayout extends StatelessWidget {
           // handled by Scaffold.backgroundColor above; nothing extra needed.
 
           // ── zone 2: central body ───────────────────────────────────────
-          Positioned.fill(
-            left:  margin,
-            right: margin,
-            child: body,
-          ),
+          Positioned.fill(left: margin, right: margin, child: body),
 
           // ── zone 3a: top blur veil ─────────────────────────────────────
           // masks the content as it scrolls under the top navbar
           Positioned(
-            top: 0, left: 0, right: 0,
+            top: 0,
+            left: 0,
+            right: 0,
             height: kBlurVeilTop,
             child: IgnorePointer(
               child: _ProgressiveBlur(
                 fromAlignment: Alignment.topCenter,
-                toAlignment:   Alignment.bottomCenter,
+                toAlignment: Alignment.bottomCenter,
               ),
             ),
           ),
@@ -141,31 +148,33 @@ class VezPageLayout extends StatelessWidget {
           // ── zone 3b: bottom blur veil ──────────────────────────────────
           // masks the content as it disappears below the bottom navbar
           Positioned(
-            bottom: 0, left: 0, right: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
             height: kBlurVeilBottom,
             child: IgnorePointer(
               child: _ProgressiveBlur(
                 fromAlignment: Alignment.bottomCenter,
-                toAlignment:   Alignment.topCenter,
+                toAlignment: Alignment.topCenter,
               ),
             ),
           ),
 
           // ── zone 4a: top navbar ────────────────────────────────────────
           Positioned(
-            top:   MediaQuery.of(context).padding.top + 24 * s,
-            left:  margin,
+            top: MediaQuery.of(context).padding.top + 24 * s,
+            left: margin,
             right: margin,
             child: _TopNavBar(
-              s:                s,
-              profileIconPath:  profileIconPath,
-              isProfileAvatar:  isProfileAvatar,
-              onProfileTap:     onProfileTap,
+              s: s,
+              profileIconPath: profileIconPath,
+              isProfileAvatar: isProfileAvatar,
+              onProfileTap: onProfileTap,
               searchController: searchController,
-              searchHint:       searchHint,
-              filterIconPath:   filterIconPath,
+              searchHint: searchHint,
+              filterIconPath: filterIconPath,
               onFilterSelected: onFilterSelected,
-              filterIcons:      _filterIcons,
+              filterIcons: _filterIcons,
             ),
           ),
 
@@ -173,7 +182,8 @@ class VezPageLayout extends StatelessWidget {
           if (bottomNavBar != null)
             Positioned(
               bottom: MediaQuery.of(context).padding.bottom + 24 * s,
-              left: 0, right: 0,
+              left: 0,
+              right: 0,
               child: Center(child: bottomNavBar!),
             ),
         ],
@@ -200,10 +210,10 @@ class _ProgressiveBlur extends StatelessWidget {
     return ShaderMask(
       shaderCallback: (rect) => LinearGradient(
         begin: fromAlignment,
-        end:   toAlignment,
+        end: toAlignment,
         // opaque at the edge, fully transparent toward the middle
         colors: const [Colors.black, Colors.transparent],
-        stops:  const [0.15, 1.0],
+        stops: const [0.15, 1.0],
       ).createShader(rect),
       blendMode: BlendMode.dstIn,
       child: BackdropFilter(
@@ -212,7 +222,7 @@ class _ProgressiveBlur extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: fromAlignment,
-              end:   toAlignment,
+              end: toAlignment,
               colors: [kBgColor.withOpacity(0.85), Colors.transparent],
             ),
           ),
@@ -267,18 +277,20 @@ class _TopNavBar extends StatelessWidget {
             ),
             child: isProfileAvatar
                 ? (profileIconPath.isEmpty
-                    ? const Icon(Icons.person, color: Colors.white)
-                    : Image(
-                        image: isNetworkImage
-                            ? NetworkImage(profileIconPath)
-                            : AssetImage(profileIconPath) as ImageProvider,
-                        fit: BoxFit.cover,
-                        width: 45, height: 45,
-                      ))
+                      ? const Icon(Icons.person, color: Colors.white)
+                      : Image(
+                          image: isNetworkImage
+                              ? NetworkImage(profileIconPath)
+                              : AssetImage(profileIconPath) as ImageProvider,
+                          fit: BoxFit.cover,
+                          width: 45,
+                          height: 45,
+                        ))
                 : Center(
                     child: Image.asset(
                       profileIconPath,
-                      width: 28, height: 28,
+                      width: 28,
+                      height: 28,
                       color: Colors.white,
                     ),
                   ),
@@ -340,10 +352,17 @@ class _TopNavBar extends StatelessWidget {
                   Navigator.pop(context);
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 10,
+                  ),
                   child: Row(
                     children: [
-                      Image.asset(filterIcons[i]['icon'] as String, width: 38, height: 38),
+                      Image.asset(
+                        filterIcons[i]['icon'] as String,
+                        width: 38,
+                        height: 38,
+                      ),
                       const SizedBox(width: 14),
                       Text(
                         labels[i],
@@ -358,8 +377,7 @@ class _TopNavBar extends StatelessWidget {
                 ),
               ),
               // divider between items (skip after last)
-              if (i < filterIcons.length - 1)
-                _PopupDivider(parentWidth: width),
+              if (i < filterIcons.length - 1) _PopupDivider(parentWidth: width),
             ],
           );
         }),
@@ -382,11 +400,9 @@ class _CircleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: size, height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: border,
-      ),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle, border: border),
       child: ClipOval(child: child),
     );
   }
@@ -407,7 +423,8 @@ class _PopupDivider extends StatelessWidget {
     final double w = (parentWidth * 0.7).clamp(120.0, parentWidth - 32.0);
     return Center(
       child: Container(
-        width: w, height: 2,
+        width: w,
+        height: 2,
         decoration: BoxDecoration(
           color: Colors.white38,
           borderRadius: BorderRadius.circular(10),

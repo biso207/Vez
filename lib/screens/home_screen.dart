@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-import '../models/event_catalog.dart';
-import '../models/vez_event_card.dart';
-import '../models/vez_glass.dart';
-import '../models/vez_page_layout.dart';
-import '../models/vez_popup.dart';
-import '../services/getters_service.dart';
+import '../controllers/home_controller.dart';
+import '../models/home_event.dart';
 import '../services/haptic_service.dart';
-import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
+import '../views/widgets/vez_event_card.dart';
+import '../views/widgets/vez_glass.dart';
+import '../views/widgets/vez_page_layout.dart';
+import '../views/widgets/vez_popup.dart';
 import 'create_event/create_event_screen.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
@@ -30,7 +28,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  static const Duration _inviteMaybeTimeout = Duration(hours: 24);
   static const String _emptyStateIcon =
       'assets/icons/home_page/no_event_found.png';
 
@@ -50,365 +47,37 @@ class _HomePageState extends State<HomePage> {
   ];
 
   final TextEditingController _searchController = TextEditingController();
-  final GetDBService _db = GetDBService(userID: UserSession().userID);
-  final SetDBService _dbSet = SetDBService(userID: UserSession().userID);
+  late final HomeController _controller;
 
   late int _filterIndex;
-  String _profilePhoto = '';
-  bool _isLoadingEvents = true;
-  List<Map<String, dynamic>> _allUsers = const [];
-  Set<String> _followingIds = const {};
-  Set<String> _followerIds = const {};
-  Map<EventType, List<HomeEventCardData>> _eventsByType = {
-    EventType.byYou: const [],
-    EventType.invited: const [],
-    EventType.nearby: const [],
-  };
 
   @override
   void initState() {
     super.initState();
     _filterIndex = widget.initialFilterIndex.clamp(0, _filterIcons.length - 1);
-    _loadPageData();
+    _controller = HomeController(userId: UserSession().userID)
+      ..addListener(_onControllerChanged);
+    _controller.loadPageData();
   }
 
   @override
   void dispose() {
+    _controller
+      ..removeListener(_onControllerChanged)
+      ..dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadPageData() async {
-    await _loadUserLanguage();
-    await Future.wait([_loadProfilePhoto(), _loadEvents()]);
-  }
-
-  Future<void> _loadProfilePhoto() async {
-    final String? photo = await _db.getUserData('profile_photo');
-    if (!mounted) return;
-    setState(() => _profilePhoto = photo?.trim() ?? '');
-  }
-
-  Future<void> _loadUserLanguage() async {
-    final String? lan = await _db.getUserData('language');
-    if (lan != null && lan.isNotEmpty) {
-      StringRes.setLocale(lan);
-    }
-  }
-
-  Future<void> _loadEvents() async {
-    final List<Map<String, dynamic>> createdEvents = await _db
-        .getCreatedEvents();
-    final List<Map<String, dynamic>> invitedEvents = await _db
-        .getInvitedEvents();
-
-    if (!mounted) return;
-
-    setState(() {
-      _eventsByType = {
-        EventType.byYou: _mapEvents(createdEvents, EventType.byYou),
-        EventType.invited: _mapEvents(invitedEvents, EventType.invited),
-        EventType.nearby: const [],
-      };
-      _isLoadingEvents = false;
-    });
-  }
-
-  Future<void> _ensureUserDirectoryLoaded() async {
-    if (_allUsers.isNotEmpty) return;
-
-    final results = await Future.wait([
-      _db.getUsersBasic(),
-      _db.getFollowing(),
-      _db.getFollowers(),
-    ]);
-
-    final List<Map<String, dynamic>> users = results[0];
-    final List<Map<String, dynamic>> following = results[1];
-    final List<Map<String, dynamic>> followers = results[2];
-
-    _allUsers = users;
-    _followingIds = following
-        .map((row) => (row['following_id'] ?? '').toString())
-        .where((id) => id.isNotEmpty)
-        .toSet();
-    _followerIds = followers
-        .map((row) => (row['follower_id'] ?? '').toString())
-        .where((id) => id.isNotEmpty)
-        .toSet();
-  }
-
-  Future<HomeEventCardData?> _refreshByYouEvent(String eventId) async {
-    final Map<String, dynamic>? rawEvent = await _db.getEventById(eventId);
-    if (rawEvent == null) return null;
-    return _mapEvent(rawEvent, EventType.byYou);
-  }
-
-  void _upsertByYouEvent(HomeEventCardData event) {
-    final List<HomeEventCardData> updatedEvents = [
-      ...(_eventsByType[EventType.byYou] ?? const []),
-    ];
-    final int index = updatedEvents.indexWhere(
-      (item) => item.eventId == event.eventId,
-    );
-
-    if (index >= 0) {
-      updatedEvents[index] = event;
-    } else {
-      updatedEvents.add(event);
-    }
-
-    updatedEvents.sort((a, b) => a.rawDateEvent.compareTo(b.rawDateEvent));
-
-    if (!mounted) return;
-    setState(() {
-      _eventsByType = {..._eventsByType, EventType.byYou: updatedEvents};
-    });
-  }
-
-  List<HomeEventCardData> _mapEvents(
-    List<Map<String, dynamic>> rawEvents,
-    EventType type,
-  ) {
-    return rawEvents.map((event) => _mapEvent(event, type)).toList();
-  }
-
-  HomeEventCardData _mapEvent(Map<String, dynamic> rawEvent, EventType type) {
-    final Map<String, dynamic> place = rawEvent['place'] is Map<String, dynamic>
-        ? Map<String, dynamic>.from(rawEvent['place'] as Map<String, dynamic>)
-        : rawEvent['place'] is Map
-        ? Map<String, dynamic>.from(rawEvent['place'] as Map)
-        : <String, dynamic>{};
-    final Map<String, dynamic> category =
-        rawEvent['event_category'] is Map<String, dynamic>
-        ? Map<String, dynamic>.from(
-            rawEvent['event_category'] as Map<String, dynamic>,
-          )
-        : rawEvent['event_category'] is Map
-        ? Map<String, dynamic>.from(rawEvent['event_category'] as Map)
-        : <String, dynamic>{};
-    final Map<String, dynamic> creator =
-        rawEvent['creator'] is Map<String, dynamic>
-        ? Map<String, dynamic>.from(rawEvent['creator'] as Map<String, dynamic>)
-        : rawEvent['creator'] is Map
-        ? Map<String, dynamic>.from(rawEvent['creator'] as Map)
-        : <String, dynamic>{};
-
-    final String visibility = EventCatalog.normalizeTypeName(
-      rawEvent['type']?.toString(),
-    );
-    final String categoryName =
-        (category['name'] ?? '').toString().trim().isNotEmpty
-        ? (category['name'] ?? '').toString().trim()
-        : 'cinema';
-    final String rawImage = (rawEvent['bg_photo'] ?? '').toString().trim();
-    final List<HomeEventGuestData> guests = _mapGuests(rawEvent, visibility);
-    final HomeEventGuestCounts guestCounts = _countGuests(guests);
-    final String placeName = (place['name'] ?? '').toString().trim();
-    final String rawDate = (rawEvent['date_event'] ?? '').toString();
-
-    return HomeEventCardData(
-      eventId: (rawEvent['event_id'] ?? '').toString(),
-      imagePath: rawImage,
-      type: type,
-      title: (rawEvent['title'] ?? '').toString().trim(),
-      subtitle: _buildSubtitle(rawDate, placeName),
-      typeLabel: visibility,
-      categoryName: categoryName,
-      categoryIconPath: EventCatalog.categoryIconForName(categoryName),
-      typeIconPath: EventCatalog.typeIconForName(visibility),
-      dateLabel: _formatCardDate(rawDate),
-      locationLabel: placeName,
-      rawDateEvent: rawDate,
-      creatorUserId: (rawEvent['creator_user_id'] ?? '').toString(),
-      creatorUsername: (creator['username'] ?? '').toString().trim(),
-      creatorProfilePhoto: (creator['profile_photo'] ?? '').toString().trim(),
-      description: (rawEvent['description'] ?? '').toString().trim(),
-      placeId: (rawEvent['place_id'] ?? '').toString(),
-      placeAddress: (place['address'] ?? '').toString().trim(),
-      locationPrecise: place['is_precise'] == true,
-      latitude: (place['latitude'] as num?)?.toDouble(),
-      longitude: (place['longitude'] as num?)?.toDouble(),
-      maxGuests: (rawEvent['max_participants'] as num?)?.toInt(),
-      price: (rawEvent['price'] as num?)?.toInt(),
-      guestCounts: guestCounts,
-      guests: guests,
-    );
-  }
-
-  List<HomeEventGuestData> _mapGuests(
-    Map<String, dynamic> rawEvent,
-    String visibility,
-  ) {
-    if (EventCatalog.canInviteGuests(visibility)) {
-      final List<dynamic> inviteRows =
-          (rawEvent['event_invites'] as List<dynamic>?) ?? const [];
-      return inviteRows
-          .whereType<Map>()
-          .map((row) => _mapInviteGuest(Map<String, dynamic>.from(row)))
-          .toList();
-    }
-
-    final List<dynamic> participationRows =
-        (rawEvent['participation'] as List<dynamic>?) ?? const [];
-    return participationRows
-        .whereType<Map>()
-        .map((row) => _mapParticipationGuest(Map<String, dynamic>.from(row)))
-        .toList();
-  }
-
-  HomeEventGuestData _mapInviteGuest(Map<String, dynamic> row) {
-    final Map<String, dynamic> user = row['users'] is Map<String, dynamic>
-        ? Map<String, dynamic>.from(row['users'] as Map<String, dynamic>)
-        : row['users'] is Map
-        ? Map<String, dynamic>.from(row['users'] as Map)
-        : <String, dynamic>{};
-
-    return HomeEventGuestData(
-      userId: (row['user_id'] ?? '').toString(),
-      username: (user['username'] ?? '').toString().trim(),
-      profilePhoto: (user['profile_photo'] ?? '').toString().trim(),
-      state: _normalizeInviteState(
-        row['response']?.toString(),
-        referenceTimestamp: (row['responded_at'] ?? row['invited_at'])
-            ?.toString(),
-      ),
-      role: (row['role'] ?? 'guest').toString(),
-    );
-  }
-
-  HomeEventGuestData _mapParticipationGuest(Map<String, dynamic> row) {
-    final Map<String, dynamic> user = row['users'] is Map<String, dynamic>
-        ? Map<String, dynamic>.from(row['users'] as Map<String, dynamic>)
-        : row['users'] is Map
-        ? Map<String, dynamic>.from(row['users'] as Map)
-        : <String, dynamic>{};
-
-    return HomeEventGuestData(
-      userId: (row['user_id'] ?? '').toString(),
-      username: (user['username'] ?? '').toString().trim(),
-      profilePhoto: (user['profile_photo'] ?? '').toString().trim(),
-      state: _normalizeParticipationState(
-        row['participation_state']?.toString(),
-      ),
-    );
-  }
-
-  HomeEventGuestCounts _countGuests(List<HomeEventGuestData> guests) {
-    int going = 0;
-    int notGoing = 0;
-    int maybe = 0;
-
-    for (final guest in guests) {
-      switch (guest.state) {
-        case 'going':
-          going++;
-          break;
-        case 'not_going':
-          notGoing++;
-          break;
-        default:
-          maybe++;
-      }
-    }
-
-    return HomeEventGuestCounts(going: going, notGoing: notGoing, maybe: maybe);
-  }
-
-  String _normalizeInviteState(String? rawState, {String? referenceTimestamp}) {
-    final String normalized = (rawState ?? '').trim().toLowerCase().replaceAll(
-      ' ',
-      '_',
-    );
-
-    if (normalized.isEmpty ||
-        normalized == 'maybe' ||
-        normalized == 'pending' ||
-        normalized == 'invited') {
-      return _isInviteExpired(referenceTimestamp) ? 'not_going' : 'maybe';
-    }
-
-    if (normalized == 'accepted' ||
-        normalized == 'yes' ||
-        normalized == 'going') {
-      return 'going';
-    }
-
-    if (normalized == 'declined' ||
-        normalized == 'no' ||
-        normalized == 'notgoing' ||
-        normalized == 'not_going') {
-      return 'not_going';
-    }
-
-    if (normalized.contains('not')) return 'not_going';
-    if (normalized.contains('go')) return 'going';
-    return _isInviteExpired(referenceTimestamp) ? 'not_going' : 'maybe';
-  }
-
-  String _normalizeParticipationState(String? rawState) {
-    final String normalized = (rawState ?? '').trim().toLowerCase().replaceAll(
-      ' ',
-      '_',
-    );
-
-    if (normalized == 'going' ||
-        normalized == 'accepted' ||
-        normalized == 'yes') {
-      return 'going';
-    }
-    if (normalized == 'notgoing' ||
-        normalized == 'not_going' ||
-        normalized == 'declined' ||
-        normalized == 'no') {
-      return 'not_going';
-    }
-    return 'maybe';
-  }
-
-  bool _isInviteExpired(String? rawTimestamp) {
-    if (rawTimestamp == null || rawTimestamp.isEmpty) return false;
-
-    final DateTime? timestamp = DateTime.tryParse(rawTimestamp);
-    if (timestamp == null) return false;
-
-    return DateTime.now().toUtc().difference(timestamp.toUtc()) >
-        _inviteMaybeTimeout;
-  }
-
-  String _buildSubtitle(String rawDate, String placeName) {
-    final String date = _formatEventDate(rawDate);
-    if (date.isEmpty) return placeName;
-    if (placeName.isEmpty) return date;
-    return '$date • $placeName';
-  }
-
-  String _formatCardDate(String rawDate) {
-    if (rawDate.isEmpty) return '';
-    try {
-      final DateTime parsed = DateTime.parse(rawDate).toLocal();
-      return DateFormat('dd/MM/yyyy • HH:mm', StringRes.locale).format(parsed);
-    } catch (_) {
-      return '';
-    }
-  }
-
-  String _formatEventDate(String? rawDate) {
-    if (rawDate == null || rawDate.isEmpty) return '';
-
-    try {
-      final DateTime parsed = DateTime.parse(rawDate).toLocal();
-      return DateFormat('dd MMM, HH:mm', StringRes.locale).format(parsed);
-    } catch (_) {
-      return '';
-    }
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
   }
 
   EventType get _selectedType =>
       _filterIcons[_filterIndex]['type'] as EventType;
 
   List<HomeEventCardData> get _visibleEvents =>
-      _eventsByType[_selectedType] ?? const [];
+      _controller.eventsByType[_selectedType] ?? const [];
 
   void _goToProfile() {
     Navigator.push(
@@ -416,7 +85,10 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(builder: (_) => const ProfilePage()),
     ).then((_) async {
       if (!mounted) return;
-      await Future.wait([_loadProfilePhoto(), _loadEvents()]);
+      await Future.wait([
+        _controller.loadProfilePhoto(),
+        _controller.loadEvents(),
+      ]);
     });
   }
 
@@ -427,7 +99,7 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(builder: (_) => const CreateEvent()),
     ).then((changed) async {
       if (changed == true && mounted) {
-        await _loadEvents();
+        await _controller.loadEvents();
       }
     });
   }
@@ -446,7 +118,7 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(builder: (_) => CreateEvent(editingEvent: event)),
     ).then((changed) async {
       if (changed == true && mounted) {
-        await _loadEvents();
+        await _controller.loadEvents();
       }
     });
   }
@@ -475,18 +147,17 @@ class _HomePageState extends State<HomePage> {
               .toList();
 
           Future<void> refreshCurrentEvent() async {
-            final HomeEventCardData? refreshed = await _refreshByYouEvent(
-              currentEvent.eventId,
-            );
+            final HomeEventCardData? refreshed = await _controller
+                .refreshByYouEvent(currentEvent.eventId);
             if (refreshed == null) return;
             currentEvent = refreshed;
-            _upsertByYouEvent(refreshed);
+            _controller.upsertByYouEvent(refreshed);
             setPopupState(() {});
           }
 
           Future<void> removeGuest(String userId) async {
             setPopupState(() => isBusy = true);
-            final int res = await _dbSet.removeEventInvite(
+            final int res = await _controller.removeEventInvite(
               eventId: currentEvent.eventId,
               invitedUserId: userId,
             );
@@ -612,7 +283,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _showAddGuestPopup(HomeEventCardData event) async {
-    await _ensureUserDirectoryLoaded();
+    await _controller.ensureUserDirectoryLoaded();
     if (!mounted) return;
 
     final TextEditingController searchController = TextEditingController();
@@ -633,11 +304,12 @@ class _HomePageState extends State<HomePage> {
             ...currentEvent.guests.map((guest) => guest.userId),
           };
 
-          final Set<String> friendIds = _followingIds.intersection(
-            _followerIds,
+          final Set<String> friendIds = _controller.followingIds.intersection(
+            _controller.followerIds,
           );
 
-          final List<Map<String, dynamic>> candidates = _allUsers.where((user) {
+          final List<Map<String, dynamic>>
+          candidates = _controller.allUsers.where((user) {
             final String userId = (user['user_id'] ?? '').toString();
             final String username = (user['username'] ?? '').toString();
             if (userId.isEmpty || excludedIds.contains(userId)) return false;
@@ -651,7 +323,7 @@ class _HomePageState extends State<HomePage> {
               case _GuestAudienceFilter.friends:
                 return friendIds.contains(userId);
               case _GuestAudienceFilter.following:
-                return _followingIds.contains(userId);
+                return _controller.followingIds.contains(userId);
               case _GuestAudienceFilter.anyone:
                 return true;
             }
@@ -659,17 +331,16 @@ class _HomePageState extends State<HomePage> {
 
           Future<void> addGuest(String userId) async {
             setPopupState(() => isBusy = true);
-            final int res = await _dbSet.addOrUpdateEventInvite(
+            final int res = await _controller.addOrUpdateEventInvite(
               eventId: currentEvent.eventId,
               invitedUserId: userId,
             );
             if (res == 200 || res == 201 || res == 204) {
-              final HomeEventCardData? refreshed = await _refreshByYouEvent(
-                currentEvent.eventId,
-              );
+              final HomeEventCardData? refreshed = await _controller
+                  .refreshByYouEvent(currentEvent.eventId);
               if (refreshed != null) {
                 currentEvent = refreshed;
-                _upsertByYouEvent(refreshed);
+                _controller.upsertByYouEvent(refreshed);
                 setPopupState(() {});
               }
             } else {
@@ -745,7 +416,7 @@ class _HomePageState extends State<HomePage> {
                             username: (user['username'] ?? '').toString(),
                             profilePhoto: (user['profile_photo'] ?? '')
                                 .toString(),
-                            label: _relationLabel(userId),
+                            label: _controller.relationLabel(userId),
                             icon: Icons.person_add_alt_1_rounded,
                             iconColor: const Color(0xFF089D0D),
                             onTap: isBusy ? null : () => addGuest(userId),
@@ -780,16 +451,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  String _relationLabel(String userId) {
-    if (_followingIds.contains(userId) && _followerIds.contains(userId)) {
-      return StringRes.at('friends');
-    }
-    if (_followingIds.contains(userId)) {
-      return StringRes.at('following');
-    }
-    return StringRes.at('anyone');
-  }
-
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -821,7 +482,7 @@ class _HomePageState extends State<HomePage> {
     return VezPageLayout(
       searchController: _searchController,
       searchHint: StringRes.at('search'),
-      profileIconPath: _profilePhoto,
+      profileIconPath: _controller.profilePhoto,
       isProfileAvatar: true,
       onProfileTap: _goToProfile,
       filterIconPath: _filterIcons[_filterIndex]['icon'] as String,
@@ -836,7 +497,7 @@ class _HomePageState extends State<HomePage> {
       body: _EventCarousel(
         events: _visibleEvents,
         s: s,
-        isLoading: _isLoadingEvents,
+        isLoading: _controller.isLoadingEvents,
         emptyStateTitle: _emptyStateTitle(),
         emptyStateIconPath: _emptyStateIcon,
         highlightedEventId: widget.initialEventId,

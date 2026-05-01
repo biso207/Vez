@@ -9,8 +9,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
-import '../../models/vez_glass.dart';
 import '../../services/translation_service.dart';
+import '../../views/widgets/vez_glass.dart';
 
 class VezMapPicker extends StatefulWidget {
   const VezMapPicker({super.key});

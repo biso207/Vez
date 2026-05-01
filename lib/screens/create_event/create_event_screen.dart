@@ -18,16 +18,16 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/event_catalog.dart';
-import '../../models/vez_event_card.dart';
-import '../../models/vez_glass.dart';
-import '../../models/vez_page_layout.dart';
-import '../../models/vez_popup.dart';
-import '../../models/vez_event_popups.dart';
+import '../../models/home_event.dart';
 import '../../services/getters_service.dart';
 import '../../services/haptic_service.dart';
 import '../../services/setters_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/user_session.dart';
+import '../../views/widgets/vez_event_popups.dart';
+import '../../views/widgets/vez_glass.dart';
+import '../../views/widgets/vez_page_layout.dart';
+import '../../views/widgets/vez_popup.dart';
 import '../notifications_screen.dart';
 import '../profile_screen.dart';
 import 'vez_map_picker.dart';
@@ -871,16 +871,6 @@ class _CreateEventState extends State<CreateEvent> {
               onPriceTap: _showPricePopup,
               onSaveTap: _showSaveConfirmation,
               onDeleteTap: _showDeleteConfirmation,
-            ),
-            SizedBox(height: 16 * s),
-            Opacity(
-              opacity: _canInviteGuests ? 1.0 : 0.55,
-              child: _InviteGuestsButton(
-                onTap: _showAddGuestsPopup,
-                label: _pendingGuestCount > 0
-                    ? '${StringRes.at('add_guests')} ($_pendingGuestCount)'
-                    : StringRes.at('add_guests'),
-              ),
             ),
             if (_isEditMode) ...[
               SizedBox(height: 16 * s),
