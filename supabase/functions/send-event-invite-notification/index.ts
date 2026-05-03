@@ -13,16 +13,16 @@ const corsHeaders = {
 };
 
 const inviteLines = [
-  'Hey {name}, {host} ti ha appena invitato a {event}. Ci sta un salto?',
-  '{name}, nuovo invito su Vez: {event}. Dai un occhio, promette bene.',
-  'Yo {name}, sei nella lista per {event}. {host} ti aspetta su Vez.',
-  '{host} ti ha chiamato per {event}, {name}. Tocca vedere che vibe e.',
-  'Nuovo piano in arrivo, {name}: {event}. Ti ha invitato {host}.',
-  '{name}, hai un invito fresco fresco: {event}. Apri Vez e guarda.',
-  'Plot twist della giornata: {host} ti ha invitato a {event}, {name}.',
-  '{name}, {event} ti aspetta. Invito mandato da {host}, tutto su Vez.',
-  'Hai un nuovo invito, {name}: {event}. Sembra una bella mossa.',
-  '{host} vuole vederti a {event}, {name}. Che fai, ci sei?',
+  StringRes.at("type1"),
+  StringRes.at("type2"),
+  StringRes.at("type3"),
+  StringRes.at("type4"),
+  StringRes.at("type5"),
+  StringRes.at("type6"),
+  StringRes.at("type7"),
+  StringRes.at("type8"),
+  StringRes.at("type9"),
+  StringRes.at("type10"),
 ];
 
 Deno.serve(async (req) => {

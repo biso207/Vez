@@ -143,4 +143,16 @@ const Map<String, String> fr = {
   "lang_fr": "Français",
   "lang_de": "Allemand",
   "lang_es": "Espagnol",
+
+  // notifications //
+  "type1": "{name}, invitation de {host} : {event}.",
+  "type2": "{host} t’invite à {event}.",
+  "type3": "Nouvelle invitation : {event}.",
+  "type4": "{name}, tu es invité à {event}.",
+  "type5": "Invitation reçue de {host}.",
+  "type6": "{event} t’attend.",
+  "type7": "{host} a pensé à toi.",
+  "type8": "Nouvel événement pour toi : {event}.",
+  "type9": "{name}, regarde ça : {event}.",
+  "type10": "Invitation en cours 👀 {event}"
 };

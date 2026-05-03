@@ -141,4 +141,16 @@ const Map<String, String> zh = {
   "lang_fr": "法语",
   "lang_de": "德语",
   "lang_es": "西班牙语",
+
+  // notifications //
+  "type1": "{name}，来自 {host} 的邀请：{event}。",
+  "type2": "{host} 邀请你参加 {event}。",
+  "type3": "新邀请：{event}。",
+  "type4": "{name}，你被邀请参加 {event}。",
+  "type5": "收到来自 {host} 的邀请。",
+  "type6": "{event} 在等你。",
+  "type7": "{host} 想到了你。",
+  "type8": "为你准备的新活动：{event}。",
+  "type9": "{name}，看看这个：{event}。",
+  "type10": "邀请来了 👀 {event}"
 };
