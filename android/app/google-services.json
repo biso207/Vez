@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "503670974727",
+    "project_id": "vezz-5d354",
+    "storage_bucket": "vezz-5d354.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:503670974727:android:42fa112f8ed991aa6a3da2",
+        "android_client_info": {
+          "package_name": "com.outly.vez"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzgtG8zPr1Rv2NCdle-fo4ZRtj16vn-sk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
