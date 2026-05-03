@@ -289,7 +289,7 @@ class _ByYouEventCard extends StatelessWidget {
                       Align(
                         alignment: Alignment.center,
                         child: _CardPillButton(
-                          label: StringRes.at('add_guests'),
+                          label: StringRes.at('add_guest'),
                           onTap: onAddGuestsTap,
                         ),
                       ),
