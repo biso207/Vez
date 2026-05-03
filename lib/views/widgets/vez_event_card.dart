@@ -129,7 +129,7 @@ class _SimpleEventCard extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 15 * s,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -246,6 +246,7 @@ class _ByYouEventCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // left buttons
                         Row(
                           children: [
                             _CardIconCircle(
@@ -262,6 +263,8 @@ class _ByYouEventCard extends StatelessWidget {
                             ),
                           ],
                         ),
+
+                        // right buttons
                         Row(
                           children: [
                             _CardIconCircle(
@@ -299,12 +302,15 @@ class _ByYouEventCard extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 22 * s,
+                        fontSize: 40 * s,
                         fontWeight: FontWeight.bold,
                         height: 1.0,
                       ),
                     ),
+
                     SizedBox(height: 8 * s),
+
+                    // date
                     if (event.dateLabel.isNotEmpty)
                       Text(
                         event.dateLabel,
@@ -312,11 +318,12 @@ class _ByYouEventCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13 * s,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 15 * s,
+                          fontWeight: FontWeight.normal,
                         ),
                       ),
+                    // location
                     if (event.locationLabel.isNotEmpty) ...[
                       SizedBox(height: 2 * s),
                       Text(
@@ -325,13 +332,16 @@ class _ByYouEventCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13 * s,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 15 * s,
+                          fontWeight: FontWeight.normal,
                         ),
                       ),
                     ],
+
                     SizedBox(height: 14 * s),
+
+                    // guests state banner
                     Align(
                       alignment: Alignment.center,
                       child: _GuestStateBanner(counts: event.guestCounts, s: s),
@@ -378,11 +388,11 @@ class _CardIconCircle extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isBlueAccent
-                ? const Color.fromARGB(95, 0, 11, 223)
+                ? const Color.fromARGB(51, 6, 0, 92)
                 : const Color.fromARGB(70, 0, 0, 0),
             border: Border.all(
               color: isBlueAccent
-                  ? const Color.fromARGB(170, 0, 11, 223)
+                  ? const Color.fromARGB(128, 0, 10, 218)
                   : const Color.fromARGB(150, 255, 255, 255),
               width: 2,
             ),
@@ -444,7 +454,7 @@ class _CardPillButton extends StatelessWidget {
             label,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -480,15 +490,15 @@ class _GuestStateBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(26 * s),
+      borderRadius: BorderRadius.circular(35 * s),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           constraints: BoxConstraints(minWidth: 230 * s, maxWidth: 280 * s),
           padding: EdgeInsets.symmetric(horizontal: 14 * s, vertical: 11 * s),
           decoration: BoxDecoration(
-            color: const Color.fromARGB(84, 24, 19, 14),
-            borderRadius: BorderRadius.circular(26 * s),
+            color: const Color.fromARGB(51, 0, 0, 0),
+            borderRadius: BorderRadius.circular(35 * s),
             border: Border.all(
               color: const Color.fromARGB(128, 255, 255, 255),
               width: 2,
@@ -504,7 +514,7 @@ class _GuestStateBanner extends StatelessWidget {
                   s: s,
                 ),
               ),
-              Container(width: 1.25, height: 34 * s, color: Colors.white24),
+              //Container(width: 1.25, height: 34 * s, color: Colors.white24),
               Expanded(
                 child: _GuestStateItem(
                   iconPath:
@@ -514,7 +524,7 @@ class _GuestStateBanner extends StatelessWidget {
                   s: s,
                 ),
               ),
-              Container(width: 1.25, height: 34 * s, color: Colors.white24),
+              //Container(width: 1.25, height: 34 * s, color: Colors.white24),
               Expanded(
                 child: _GuestStateItem(
                   iconPath: 'assets/icons/event/participation_state/maybe.png',
@@ -554,29 +564,36 @@ class _GuestStateItem extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // state icone
         Image.asset(
           iconPath,
-          width: 18 * s,
-          height: 18 * s,
+          width: 20 * s,
+          height: 20 * s,
           fit: BoxFit.contain,
         ),
-        SizedBox(height: 4 * s),
+
+        SizedBox(height: 4 * s), // distance
+
+        // state name
         Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: Colors.white70,
-            fontSize: 11 * s,
+            color: Colors.white,
+            fontSize: 12 * s,
             fontWeight: FontWeight.w600,
           ),
         ),
-        SizedBox(height: 2 * s),
+
+        SizedBox(height: 4 * s), // distance
+
+        // number of guests
         Text(
           '$value',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 15 * s,
+            fontSize: 20 * s,
             fontWeight: FontWeight.bold,
           ),
         ),
