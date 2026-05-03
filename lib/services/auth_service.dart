@@ -7,6 +7,7 @@ import 'dart:io'; // library to manage files
 import 'package:http/http.dart'
     as http; // http packet (standard in Dart/Flutter).
 import 'package:crypto/crypto.dart'; // library for the hashing of the psw
+import 'package:vez/services/notification_service.dart';
 import 'package:vez/services/translation_service.dart';
 import 'package:vez/services/user_session.dart';
 import 'api_keys.dart'; // private key to connect to the remote db
@@ -86,6 +87,7 @@ class RemoteDbService {
             userID: data[0]['user_id']!.toString(),
             locale: StringRes.locale,
           );
+          await NotificationService().syncTokenForCurrentUser();
         }
         return response.statusCode;
       }
@@ -132,6 +134,7 @@ class RemoteDbService {
             locale: lan,
           );
           StringRes.setLocale(lan);
+          await NotificationService().syncTokenForCurrentUser();
 
           return 200;
         } else {

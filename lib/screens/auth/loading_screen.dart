@@ -2,6 +2,7 @@
 // Screen to manage the app's loading process
 
 import 'package:flutter/material.dart';
+import '../../services/notification_service.dart';
 import '../../services/user_session.dart';
 import '../home_screen.dart';
 import '../../services/translation_service.dart';
@@ -33,6 +34,8 @@ class _LoadingPageState extends State<LoadingPage> {
     } else {
       StringRes.initLocale();
     }
+
+    await NotificationService().syncTokenForCurrentUser();
 
     await startAppAnimations();
   }
