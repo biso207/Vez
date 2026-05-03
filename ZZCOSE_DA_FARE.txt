@@ -1,7 +1,0 @@
-1 --> possibilità di creare account per locali
-2 --> vedere se nearby funziona bene(togliere eventi eslusivi da qui)
-
-secondari
-
-1 --> achievemnt e titoli per gli utenti
-2 --> modo per vedere se gli utenti sono stati in un evento effettivamente
