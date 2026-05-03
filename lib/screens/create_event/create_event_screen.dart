@@ -105,11 +105,13 @@ class _CreateEventState extends State<CreateEvent> {
     setState(() => _profilePhoto = photo?.trim() ?? '');
   }
 
+  // boolean to validate an event and be saved
   bool get _isValid =>
       _titleController.text.isNotEmpty &&
       _date != null &&
       _time != null &&
-      _locationName.isNotEmpty;
+      _locationName.isNotEmpty &&
+      _bgImage.isNotEmpty && !_bgImage.startsWith('assets/');
 
   // populate all fields when the screen edits an existing event.
   void _applyEventData(HomeEventCardData event) {

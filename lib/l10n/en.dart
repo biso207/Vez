@@ -13,7 +13,7 @@ const Map<String, String> en = {
   "set_city": "Set City",
   "locating_the_city": "Locating City...",
 
-  // errors
+  // errors //
   "fill_all_fields": "Fill All Fields",
   "invalid_credentials": "Invalid Credentials",
   "choose_username": "Choose Username",
@@ -22,15 +22,13 @@ const Map<String, String> en = {
   "user_already_exists": "User Already Exists",
   "same_username": "Same Username",
   "invalid_email": "Invalid Email",
-  "invalid_password":
-  "Invalid Password.\n8 Chars, 1 Uppercase, 1 Lowercase, 1 Number, 1 Special.",
+  "invalid_password": "Invalid Password.\n8 Chars, 1 Uppercase, 1 Lowercase, 1 Number, 1 Special.",
   "signup_failed": "Signup Failed",
   "signup_successful": "Signup Done!",
   "something_went_wrong": "Error",
   "enable_location_services": "Enable Location",
   "location_permissions_denied": "Location Denied",
-  "location_permissions_permanently_denied":
-  "Permission Denied. Check Settings",
+  "location_permissions_permanently_denied": "Permission Denied. Check Settings",
   "unknown_city": "Unknown City",
   "no_internet_connection": "No Connection",
   "login_failed": "Login Failed",
@@ -48,7 +46,7 @@ const Map<String, String> en = {
   "search_guest": "Search",
   "host": "Host",
   "no_guests_yet": "No Guests",
-  "no_guests_found": "No One to Invite",
+  "no_guests_found": "No One To Invite",
   "guest_remove_failed": "Remove Failed",
   "add_guest": "Invite",
   "friends": "Friends",
@@ -68,7 +66,7 @@ const Map<String, String> en = {
   "category_badge": "Category Badge",
   "city": "City",
 
-  // settings
+  // settings //
   "settings": "Settings",
   "display": "Display",
   "account": "Account",
@@ -87,7 +85,7 @@ const Map<String, String> en = {
   "preview": "Preview",
   "edit_bg": "Edit Background",
 
-  // setter event details
+  // setter event details //
   "save_event": "Save Event?",
   "delete_data": "Delete Data?",
   "set_location": "Choose Location",
@@ -112,10 +110,38 @@ const Map<String, String> en = {
   "event_deleted_success": "Event Deleted",
   "event_delete_failed": "Delete Failed",
 
-  // event typologies
+  // event typologies //
   "exclusive": "Exclusive",
   "private": "Private",
   "public": "Public",
+
+  // event categories //
+  "cinema": "Cinema",
+  "concert": "Concert",
+  "disco": "Disco",
+  "gaming": "Gaming",
+  "hang_out": "Hang Out",
+  "journey": "Journey",
+  "kids_and_family": "Kids & Family",
+  "museum": "Museum",
+  "outdoor": "Outdoor",
+  "party": "Party",
+  "pub": "Pub",
+  "restaurant": "Restaurant",
+  "shopping": "Shopping",
+  "sport": "Sport",
+  "theatre": "Theatre",
+  "wellness": "Wellness",
+  "workshop": "Workshop",
+
+  // language selection //
+  "select_language": "Select Language",
+  "lang_en": "English",
+  "lang_it": "Italian",
+  "lang_zh": "Chinese",
+  "lang_fr": "French",
+  "lang_de": "German",
+  "lang_es": "Spanish",
 
   // notifications //
   "type1": "{name}, Invite From {host}: {event}.",

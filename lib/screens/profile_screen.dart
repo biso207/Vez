@@ -1119,7 +1119,7 @@ class _PastEventsGrid extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// settings popup sub-widgets
+// settings // popup sub-widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── _SettingsSection — glass pill wrapping a labelled group of settings ───────

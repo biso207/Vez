@@ -13,7 +13,7 @@ const Map<String, String> it = {
   "set_city": "Imposta Città",
   "locating_the_city": "Localizzazione In Corso...",
 
-  // errors
+  // errors //
   "fill_all_fields": "Compila Tutti I Campi",
   "invalid_credentials": "Credenziali Non Valide",
   "choose_username": "Scegli Username",
@@ -68,7 +68,7 @@ const Map<String, String> it = {
   "category_badge": "Badge Categoria",
   "city": "Città",
 
-  // settings
+  // settings //
   "settings": "Impostazioni",
   "display": "Aspetto",
   "account": "Account",
@@ -87,7 +87,7 @@ const Map<String, String> it = {
   "preview": "Anteprima",
   "edit_bg": "Cambia Sfondo",
 
-  // setter event details
+  // setter event details //
   "save_event": "Salvare Evento?",
   "delete_data": "Eliminare Dati?",
   "set_location": "Scegli Luogo",
@@ -112,12 +112,12 @@ const Map<String, String> it = {
   "event_deleted_success": "Evento Eliminato",
   "event_delete_failed": "Eliminazione Fallita",
 
-  // event typologies
+  // event typologies //
   "exclusive": "Esclusivo",
   "private": "Privato",
   "public": "Pubblico",
 
-  // event categories
+  // event categories //
   "cinema": "Cinema",
   "concert": "Concerto",
   "disco": "Disco",

@@ -484,7 +484,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     _PopupFilterChip(
-                      iconPath: 'assets/icons/event/anyone.png',
+                      iconPath: 'assets/icons/event/public.png',
                       isActive: audienceFilter == _GuestAudienceFilter.anyone,
                       onTap: () => setPopupState(
                             () => audienceFilter = _GuestAudienceFilter.anyone,
@@ -517,7 +517,7 @@ class _HomePageState extends State<HomePage> {
                     } else if (_controller.followingIds.contains(userId)) {
                       relationIconPath = 'assets/icons/event/following.png';
                     } else {
-                      relationIconPath = 'assets/icons/event/anyone.png';
+                      relationIconPath = 'assets/icons/event/public.png';
                     }
 
                     return _PopupUserSelectionRow(

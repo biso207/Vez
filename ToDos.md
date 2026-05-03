@@ -12,6 +12,7 @@
 - [x] 10) Centrare il pulsante "Delete event" nella modifica evento senza che muova gli altri elementi della pagina
 - [x] 11) Migliorare la grafica della preview per gli eventi "By You" seguendo lo stile del mockup
 - [x] 12) Migliorare le scritte delle lingue
+- [x] 13) Obbligare l'utente a cambiare l'immagine di sfondo nella creazione evento
 
 # ───────────────────────────────────────────────────
 

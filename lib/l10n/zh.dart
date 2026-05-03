@@ -10,10 +10,10 @@ const Map<String, String> zh = {
   "password": "密码",
   "email": "电子邮件",
   "date_of_birth": "出生日期",
-  "set_city": "点击设置城市",
+  "set_city": "设置城市",
   "locating_the_city": "正在定位您的城市...",
 
-  // errors
+  // errors //
   "fill_all_fields": "请填写所有字段",
   "invalid_credentials": "无效的凭据",
   "choose_username": "请选择用户名",
@@ -26,9 +26,9 @@ const Map<String, String> zh = {
   "signup_failed": "注册失败",
   "signup_successful": "注册成功！",
   "something_went_wrong": "出了点问题",
-  "enable_location_services": "请在设备上启用位置服务",
+  "enable_location_services": "请开启位置服务",
   "location_permissions_denied": "位置权限被拒绝",
-  "location_permissions_permanently_denied": "位置权限已被永久拒绝，请在设置中更改。",
+  "location_permissions_permanently_denied": "位置权限已被永久拒绝，请在设置中更改",
   "unknown_city": "未知城市",
   "no_internet_connection": "无网络连接",
   "login_failed": "登录失败",
@@ -66,7 +66,7 @@ const Map<String, String> zh = {
   "category_badge": "分类徽章",
   "city": "城市",
 
-  // settings
+  // settings //
   "settings": "设置",
   "display": "显示",
   "account": "账户",
@@ -85,7 +85,7 @@ const Map<String, String> zh = {
   "preview": "预览",
   "edit_bg": "编辑背景",
 
-  // setter event details
+  // setter event details //
   "save_event": "保存活动？",
   "delete_data": "删除数据？",
   "set_location": "选地点",
@@ -97,11 +97,10 @@ const Map<String, String> zh = {
   "move_map_to_select_place": "移动地图",
   "unknown_place": "未知地点",
   "address_not_found": "未找到地址",
-  "network_error_try_again": "网络错误，请重试。",
+  "network_error_try_again": "网络错误，请重试",
   "confirm_location": "确认位置",
   "confirm": "是",
   "cancel": "否",
-
   "delete_event": "删除活动",
   "event_saved_success": "活动已成功保存",
   "event_save_failed": "无法保存活动",
@@ -111,12 +110,12 @@ const Map<String, String> zh = {
   "event_deleted_success": "活动已删除",
   "event_delete_failed": "无法删除活动",
 
-  // event typologies
+  // event typologies //
   "exclusive": "专属",
   "private": "私人",
   "public": "公开",
 
-  // event categories
+  // event categories //
   "cinema": "电影院",
   "concert": "音乐会",
   "disco": "夜店",
