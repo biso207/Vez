@@ -266,6 +266,12 @@ class SetDBService {
             'responded_at': null,
           }),
         );
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          await _sendEventInviteNotification(
+            eventId: eventId,
+            invitedUserId: invitedUserId,
+          );
+        }
         return response.statusCode;
       }
 
@@ -283,10 +289,45 @@ class SetDBService {
         }),
       );
 
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await _sendEventInviteNotification(
+          eventId: eventId,
+          invitedUserId: invitedUserId,
+        );
+      }
+
       return response.statusCode;
     } catch (e) {
       print('addOrUpdateEventInvite error: $e');
       return 0;
+    }
+  }
+
+  Future<void> _sendEventInviteNotification({
+    required String eventId,
+    required String invitedUserId,
+  }) async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/functions/v1/send-event-invite-notification',
+      );
+      final response = await http.post(
+        url,
+        headers: _jsonHeaders,
+        body: jsonEncode({
+          'event_id': eventId,
+          'invited_user_id': invitedUserId,
+          'inviter_user_id': userID,
+        }),
+      );
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        print(
+          'sendEventInviteNotification failed: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      print('sendEventInviteNotification error: $e');
     }
   }
 

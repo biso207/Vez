@@ -21,7 +21,8 @@ Future<void> main() async {
 
   runApp(
     DevicePreview(
-      enabled: false, // set true to enable the device preview (iPhones) - set false before release build
+      enabled:
+          false, // set true to enable the device preview (iPhones) - set false before release build
       builder: (context) => const MyApp(),
     ),
   );

@@ -21,16 +21,16 @@ class NotificationService {
   factory NotificationService() => _instance;
 
   static const AndroidNotificationChannel _androidChannel =
-  AndroidNotificationChannel(
-    'vez_events',
-    'Vez events',
-    description: 'Inviti e aggiornamenti degli eventi Vez',
-    importance: Importance.high,
-  );
+      AndroidNotificationChannel(
+        'vez_events',
+        'Vez events',
+        description: 'Inviti e aggiornamenti degli eventi Vez',
+        importance: Importance.high,
+      );
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   bool _isInitialized = false;
 
@@ -49,8 +49,8 @@ class NotificationService {
     await _localNotifications.initialize(settings: initializationSettings);
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-    >()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(_androidChannel);
 
     await _messaging.setForegroundNotificationPresentationOptions(

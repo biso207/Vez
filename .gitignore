@@ -46,3 +46,7 @@ app.*.map.json
 
 # Secret keys
 lib/services/api_keys.dart
+*firebase-adminsdk*.json
+firebase-service-account.json
+.env
+.env.*
