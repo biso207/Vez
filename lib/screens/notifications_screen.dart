@@ -58,7 +58,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   void _goToHome() {
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const HomePage(initialFilterIndex: 1)),
+      MaterialPageRoute(builder: (_) => const HomePage(initialFilterIndex: 0)),
       (route) => false,
     );
   }
@@ -68,7 +68,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       context,
       MaterialPageRoute(
         builder: (_) =>
-            HomePage(initialFilterIndex: 1, initialEventId: eventId),
+            HomePage(initialFilterIndex: 0, initialEventId: eventId),
       ),
       (route) => false,
     );

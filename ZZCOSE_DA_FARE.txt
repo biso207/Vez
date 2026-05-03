@@ -4,4 +4,4 @@
 secondari
 
 1 --> achievemnt e titoli per gli utenti
-2 -->  modo per vedere se gli utenti sono stati in un evento effettivamente
+2 --> modo per vedere se gli utenti sono stati in un evento effettivamente

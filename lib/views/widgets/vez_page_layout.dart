@@ -1,4 +1,4 @@
-// developed and designed by outly • © 2026
+// developed and designed by Outly • © 2026
 // universal 4-zone page layout template used by every screen in the app.
 //
 // zone architecture (bottom → top in the stack):
@@ -39,10 +39,10 @@ const double kBlurVeilBottom = 180.0;
 /// sigma used for both blur veils
 const double kBlurSigma = 10.0;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// VezPageLayout widget
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── vez page layout ──────────────────────────────────────────────────────────
+//
+//   used for: standardizing the screen structure across the app.
+//   design: multi-layer stack providing background, body, blur veils, and navbars.
 class VezPageLayout extends StatelessWidget {
   // ---------- zone-2 body ----------
   /// the main content widget placed in the centre of the screen
@@ -96,12 +96,12 @@ class VezPageLayout extends StatelessWidget {
   // filter-popup entries — kept here so the popup can always render them
   static const List<Map<String, dynamic>> _filterIcons = [
     {
-      'icon': 'assets/icons/home_page/by_you_events.png',
-      'type': EventType.byYou,
-    },
-    {
       'icon': 'assets/icons/home_page/invited_events.png',
       'type': EventType.invited,
+    },
+    {
+      'icon': 'assets/icons/home_page/by_you_events.png',
+      'type': EventType.byYou,
     },
     {
       'icon': 'assets/icons/home_page/nearby_events.png',
@@ -109,8 +109,9 @@ class VezPageLayout extends StatelessWidget {
     },
   ];
 
-  // ─── build ───────────────────────────────────────────────────────────────
-
+  // ── build ──────────────────────────────────────────────────────────────────
+  //
+  //   used for: orchestrating the 4-zone architectural stack.
   @override
   Widget build(BuildContext context) {
     final double sw = MediaQuery.of(context).size.width;
@@ -192,10 +193,10 @@ class VezPageLayout extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _ProgressiveBlur — reusable frosted-glass veil (zone 3)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── progressive blur ─────────────────────────────────────────────────────────
+//
+//   used for: creating a frosted-glass gradient veil (zone 3).
+//   design: shader-masked backdrop filter that fades from opaque to transparent.
 class _ProgressiveBlur extends StatelessWidget {
   final Alignment fromAlignment;
   final Alignment toAlignment;
@@ -205,6 +206,9 @@ class _ProgressiveBlur extends StatelessWidget {
     required this.toAlignment,
   });
 
+  // ── build ──────────────────────────────────────────────────────────────────
+  //
+  //   used for: rendering the gradient blur effect.
   @override
   Widget build(BuildContext context) {
     return ShaderMask(
@@ -232,10 +236,10 @@ class _ProgressiveBlur extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _TopNavBar — search field flanked by two circular glass buttons (zone 4a)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── top nav bar ──────────────────────────────────────────────────────────────
+//
+//   used for: search and profile actions at the top of the screen (zone 4a).
+//   design: horizontal row with profile button, search field, and filter popup.
 class _TopNavBar extends StatelessWidget {
   final double s;
   final String profileIconPath;
@@ -259,6 +263,9 @@ class _TopNavBar extends StatelessWidget {
     required this.filterIcons,
   });
 
+  // ── build ──────────────────────────────────────────────────────────────────
+  //
+  //   used for: rendering the top navigation bar components.
   @override
   Widget build(BuildContext context) {
     final bool isNetworkImage = profileIconPath.startsWith('http');
@@ -325,12 +332,14 @@ class _TopNavBar extends StatelessWidget {
     );
   }
 
-  // filter popup — lists the three event-group options
+  // ── show filter popup ──────────────────────────────────────────────────────
+  //
+  //   used for: selecting the event feed type (Invited, By You, Nearby).
   void _showFilterPopup(BuildContext context, double width) {
     // localized filter labels
     final labels = [
-      StringRes.at('filter_by_you'),
       StringRes.at('filter_invited'),
+      StringRes.at('filter_by_you'),
       StringRes.at('filter_nearby'),
     ];
 
@@ -386,10 +395,10 @@ class _TopNavBar extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _CircleButton — generic clipped circular container
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── circle button ────────────────────────────────────────────────────────────
+//
+//   used for: general-purpose circular containers with clipping.
+//   design: simple BoxDecoration with shape circle and ClipOval child.
 class _CircleButton extends StatelessWidget {
   final double size;
   final BoxBorder? border;
@@ -397,6 +406,9 @@ class _CircleButton extends StatelessWidget {
 
   const _CircleButton({required this.size, this.border, required this.child});
 
+  // ── build ──────────────────────────────────────────────────────────────────
+  //
+  //   used for: rendering the circular button container.
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -408,15 +420,18 @@ class _CircleButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _PopupDivider — thin horizontal rule used inside popups
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── popup divider ────────────────────────────────────────────────────────────
+//
+//   used for: separating items within glass popups.
+//   design: horizontal line with translucent white color and rounded ends.
 class _PopupDivider extends StatelessWidget {
   final double parentWidth;
 
   const _PopupDivider({required this.parentWidth});
 
+  // ── build ──────────────────────────────────────────────────────────────────
+  //
+  //   used for: rendering the divider line.
   @override
   Widget build(BuildContext context) {
     // divider width is ~70 % of the popup, clamped to a sensible range

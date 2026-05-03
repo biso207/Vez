@@ -6,6 +6,10 @@ import '../../models/home_event.dart';
 import '../../services/haptic_service.dart';
 import '../../services/translation_service.dart';
 
+// ── vez event card ──────────────────────────────────────────────────────────
+//
+//   used for: polymorphic entry point for event cards.
+//   design: decides whether to show a simple or a "by you" event card.
 class VezEventCard extends StatelessWidget {
   const VezEventCard({
     super.key,
@@ -20,6 +24,7 @@ class VezEventCard extends StatelessWidget {
   final VoidCallback? onGuestListTap;
   final VoidCallback? onEditTap;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     if (event.isByYou) {
@@ -35,11 +40,16 @@ class VezEventCard extends StatelessWidget {
   }
 }
 
+// ── simple event card ───────────────────────────────────────────────────────
+//
+//   used for: displaying basic info for invited or nearby events.
+//   design: full-bleed background image with bottom text overlay.
 class _SimpleEventCard extends StatelessWidget {
   const _SimpleEventCard({required this.event});
 
   final HomeEventCardData event;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -145,6 +155,9 @@ class _SimpleEventCard extends StatelessWidget {
     );
   }
 
+  // ── format distance ────────────────────────────────────────────────────────
+  //
+  //   used for: converting numeric km values into readable strings (m/km).
   String _formatDistance(double distanceKm) {
     if (distanceKm < 1) {
       return '${(distanceKm * 1000).round()} m';
@@ -153,6 +166,10 @@ class _SimpleEventCard extends StatelessWidget {
   }
 }
 
+// ── by you event card ───────────────────────────────────────────────────────
+//
+//   used for: displaying events created by the current user.
+//   design: image background with action buttons (edit, guests) and RSVP totals.
 class _ByYouEventCard extends StatelessWidget {
   const _ByYouEventCard({
     required this.event,
@@ -166,6 +183,7 @@ class _ByYouEventCard extends StatelessWidget {
   final VoidCallback? onGuestListTap;
   final VoidCallback? onEditTap;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -264,17 +282,16 @@ class _ByYouEventCard extends StatelessWidget {
                       ],
                     ),
                     const Spacer(),
-                    Align(
-                      alignment: Alignment.center,
-                      child: Opacity(
-                        opacity: event.canInviteGuests ? 1.0 : 0.45,
+                    if (event.canInviteGuests) ...[
+                      Align(
+                        alignment: Alignment.center,
                         child: _CardPillButton(
                           label: StringRes.at('add_guests'),
-                          onTap: event.canInviteGuests ? onAddGuestsTap : null,
+                          onTap: onAddGuestsTap,
                         ),
                       ),
-                    ),
-                    SizedBox(height: 14 * s),
+                      SizedBox(height: 14 * s),
+                    ],
                     Text(
                       event.title.isNotEmpty ? event.title : 'Untitled Event',
                       maxLines: 2,
@@ -330,6 +347,10 @@ class _ByYouEventCard extends StatelessWidget {
   }
 }
 
+// ── card icon circle ────────────────────────────────────────────────────────
+//
+//   used for: displaying status icons or action buttons on event cards.
+//   design: glass-morphism circular container with blur and optional highlight.
 class _CardIconCircle extends StatelessWidget {
   const _CardIconCircle({
     required this.iconPath,
@@ -345,6 +366,7 @@ class _CardIconCircle extends StatelessWidget {
   final double size;
   final double iconSize;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final Widget child = ClipOval(
@@ -391,12 +413,17 @@ class _CardIconCircle extends StatelessWidget {
   }
 }
 
+// ── card pill button ────────────────────────────────────────────────────────
+//
+//   used for: call-to-action buttons (like "Add Guests") on event cards.
+//   design: frosted-glass pill-shaped capsule with bold text.
 class _CardPillButton extends StatelessWidget {
   const _CardPillButton({required this.label, this.onTap});
 
   final String label;
   final VoidCallback? onTap;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final Widget child = ClipRRect(
@@ -439,12 +466,17 @@ class _CardPillButton extends StatelessWidget {
   }
 }
 
+// ── guest state banner ──────────────────────────────────────────────────────
+//
+//   used for: displaying a summary of RSVP totals (Going, Not Going, Maybe).
+//   design: horizontal glass banner with three count segments.
 class _GuestStateBanner extends StatelessWidget {
   const _GuestStateBanner({required this.counts, required this.s});
 
   final HomeEventGuestCounts counts;
   final double s;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -499,6 +531,10 @@ class _GuestStateBanner extends StatelessWidget {
   }
 }
 
+// ── guest state item ────────────────────────────────────────────────────────
+//
+//   used for: a single RSVP category within the guest state banner.
+//   design: vertical arrangement of icon, label, and numeric value.
 class _GuestStateItem extends StatelessWidget {
   const _GuestStateItem({
     required this.iconPath,
@@ -512,6 +548,7 @@ class _GuestStateItem extends StatelessWidget {
   final int value;
   final double s;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Column(

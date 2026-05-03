@@ -13,10 +13,22 @@ import 'create_event/create_event_screen.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
 
+// ── guest audience filter ──────────────────────────────────────────────────
+//
+//   used for: defining the target audience when inviting guests.
+//   design: enum representing friends, followed users, or anyone.
 enum _GuestAudienceFilter { friends, following, anyone }
 
+// ── guest state filter ─────────────────────────────────────────────────────
+//
+//   used for: filtering the guest list by their RSVP status.
+//   design: enum covering all, going, not going, and maybe statuses.
 enum _GuestStateFilter { all, going, notGoing, maybe }
 
+// ── home page ──────────────────────────────────────────────────────────────
+//
+//   used for: the primary landing screen of the application.
+//   design: a stateful widget that orchestrates event feeds and navigation.
 class HomePage extends StatefulWidget {
   const HomePage({super.key, this.initialFilterIndex = 0, this.initialEventId});
 
@@ -27,18 +39,22 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+// ── home page state ────────────────────────────────────────────────────────
+//
+//   used for: managing the lifecycle and UI state of the home screen.
+//   design: handles data fetching, filtering, and popup orchestration.
 class _HomePageState extends State<HomePage> {
   static const String _emptyStateIcon =
       'assets/icons/home_page/no_event_found.png';
 
   static const List<Map<String, dynamic>> _filterIcons = [
     {
-      'icon': 'assets/icons/home_page/by_you_events.png',
-      'type': EventType.byYou,
-    },
-    {
       'icon': 'assets/icons/home_page/invited_events.png',
       'type': EventType.invited,
+    },
+    {
+      'icon': 'assets/icons/home_page/by_you_events.png',
+      'type': EventType.byYou,
     },
     {
       'icon': 'assets/icons/home_page/nearby_events.png',
@@ -51,6 +67,9 @@ class _HomePageState extends State<HomePage> {
 
   late int _filterIndex;
 
+  // ── init state ─────────────────────────────────────────────────────────────
+  //
+  //   used for: initializing controllers and loading initial page data.
   @override
   void initState() {
     super.initState();
@@ -60,6 +79,9 @@ class _HomePageState extends State<HomePage> {
     _controller.loadPageData();
   }
 
+  // ── dispose ────────────────────────────────────────────────────────────────
+  //
+  //   used for: cleaning up resources to prevent memory leaks.
   @override
   void dispose() {
     _controller
@@ -69,18 +91,33 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  // ── on controller changed ──────────────────────────────────────────────────
+  //
+  //   used for: triggering a UI rebuild when the home controller updates.
   void _onControllerChanged() {
     if (mounted) setState(() {});
   }
 
+  // ── selected type ──────────────────────────────────────────────────────────
+  //
+  //   used for: identifying the currently active event category filter.
   EventType get _selectedType =>
       _filterIcons[_filterIndex]['type'] as EventType;
 
+  // ── visible events ─────────────────────────────────────────────────────────
+  //
+  //   used for: retrieving the list of events to display based on selected filter.
   List<HomeEventCardData> get _visibleEvents =>
       _controller.eventsByType[_selectedType] ?? const [];
 
+  // ── is nearby selected ─────────────────────────────────────────────────────
+  //
+  //   used for: determining if the "nearby" filter tab is currently active.
   bool get _isNearbySelected => _selectedType == EventType.nearby;
 
+  // ── go to profile ──────────────────────────────────────────────────────────
+  //
+  //   used for: navigating to the user profile screen and refreshing data on return.
   void _goToProfile() {
     Navigator.push(
       context,
@@ -94,6 +131,9 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // ── go to create event ─────────────────────────────────────────────────────
+  //
+  //   used for: navigating to the event creation flow with haptic feedback.
   void _goToCreateEvent() {
     HapticService.tap();
     Navigator.push<bool>(
@@ -106,6 +146,9 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // ── go to notifications ────────────────────────────────────────────────────
+  //
+  //   used for: navigating to the notifications list screen.
   void _goToNotifications() {
     Navigator.push(
       context,
@@ -113,6 +156,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ── select filter ──────────────────────────────────────────────────────────
+  //
+  //   used for: switching between event categories (Invited, By You, Nearby).
   void _selectFilter(int index) {
     setState(() => _filterIndex = index);
     final selectedType = _filterIcons[index]['type'] as EventType;
@@ -121,6 +167,9 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // ── edit event ─────────────────────────────────────────────────────────────
+  //
+  //   used for: opening the creation screen in edit mode for an existing event.
   void _editEvent(HomeEventCardData event) {
     HapticService.tap();
     Navigator.push<bool>(
@@ -133,6 +182,10 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // ── show guest list popup ──────────────────────────────────────────────────
+  //
+  //   used for: displaying and managing the list of people invited to an event.
+  //   design: popup with search, status filters, and guest removal options.
   void _showGuestListPopup(HomeEventCardData event) {
     final TextEditingController searchController = TextEditingController();
     HomeEventCardData currentEvent = event;
@@ -292,6 +345,10 @@ class _HomePageState extends State<HomePage> {
     ).whenComplete(searchController.dispose);
   }
 
+  // ── show add guest popup ───────────────────────────────────────────────────
+  //
+  //   used for: inviting new users to an event.
+  //   design: popup with directory search and relationship filters.
   Future<void> _showAddGuestPopup(HomeEventCardData event) async {
     await _controller.ensureUserDirectoryLoaded();
     if (!mounted) return;
@@ -445,6 +502,9 @@ class _HomePageState extends State<HomePage> {
     ).whenComplete(searchController.dispose);
   }
 
+  // ── matches guest state filter ─────────────────────────────────────────────
+  //
+  //   used for: logic to filter guests by their current RSVP state.
   bool _matchesGuestStateFilter(
     HomeEventGuestData guest,
     _GuestStateFilter filter,
@@ -461,6 +521,9 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // ── show snack bar ─────────────────────────────────────────────────────────
+  //
+  //   used for: providing brief feedback or error messages to the user.
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -473,6 +536,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ── empty state title ──────────────────────────────────────────────────────
+  //
+  //   used for: retrieving the appropriate title for the empty state UI.
   String _emptyStateTitle() {
     switch (_selectedType) {
       case EventType.byYou:
@@ -484,6 +550,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final double sw = MediaQuery.of(context).size.width;
@@ -540,6 +607,10 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+// ── nearby range control ────────────────────────────────────────────────────
+//
+//   used for: adjusting the distance radius for nearby event discovery.
+//   design: glassy container with radius display, refresh button, and slider.
 class _NearbyRangeControl extends StatelessWidget {
   const _NearbyRangeControl({
     required this.s,
@@ -559,6 +630,7 @@ class _NearbyRangeControl extends StatelessWidget {
   final ValueChanged<double> onRadiusChanged;
   final VoidCallback onRefreshPosition;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final roundedRadius = radiusKm.round();
@@ -630,6 +702,10 @@ class _NearbyRangeControl extends StatelessWidget {
   }
 }
 
+// ── event carousel ──────────────────────────────────────────────────────────
+//
+//   used for: displaying a vertical list of event cards.
+//   design: vertical PageView that supports highlighting specific events.
 class _EventCarousel extends StatefulWidget {
   const _EventCarousel({
     required this.events,
@@ -657,10 +733,16 @@ class _EventCarousel extends StatefulWidget {
   State<_EventCarousel> createState() => _EventCarouselState();
 }
 
+// ── event carousel state ────────────────────────────────────────────────────
+//
+//   used for: managing carousel scroll position and event highlighting logic.
 class _EventCarouselState extends State<_EventCarousel> {
   late final PageController _controller;
   String? _lastJumpedEventId;
 
+  // ── init state ─────────────────────────────────────────────────────────────
+  //
+  //   used for: initializing the page controller and handling post-frame jumps.
   @override
   void initState() {
     super.initState();
@@ -668,6 +750,9 @@ class _EventCarouselState extends State<_EventCarousel> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeJumpToEvent());
   }
 
+  // ── did update widget ──────────────────────────────────────────────────────
+  //
+  //   used for: checking if the highlighted event has changed to perform a jump.
   @override
   void didUpdateWidget(covariant _EventCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -677,6 +762,9 @@ class _EventCarouselState extends State<_EventCarousel> {
     }
   }
 
+  // ── maybe jump to event ────────────────────────────────────────────────────
+  //
+  //   used for: automatically scrolling to a specific event ID if requested.
   void _maybeJumpToEvent() {
     if (!mounted || !_controller.hasClients) return;
 
@@ -694,12 +782,16 @@ class _EventCarouselState extends State<_EventCarousel> {
     _lastJumpedEventId = eventId;
   }
 
+  // ── dispose ────────────────────────────────────────────────────────────────
+  //
+  //   used for: disposing the page controller.
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading) {
@@ -740,6 +832,10 @@ class _EventCarouselState extends State<_EventCarousel> {
   }
 }
 
+// ── empty events state ──────────────────────────────────────────────────────
+//
+//   used for: displaying a placeholder when no events match the current filter.
+//   design: centered icon and text within the event carousel area.
 class _EmptyEventsState extends StatelessWidget {
   const _EmptyEventsState({
     required this.s,
@@ -751,6 +847,7 @@ class _EmptyEventsState extends StatelessWidget {
   final String title;
   final String iconPath;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -782,6 +879,10 @@ class _EmptyEventsState extends StatelessWidget {
   }
 }
 
+// ── bottom nav pill ─────────────────────────────────────────────────────────
+//
+//   used for: main navigation controls at the bottom of the home screen.
+//   design: glassy capsule containing home, create, and notification actions.
 class _BottomNavPill extends StatelessWidget {
   const _BottomNavPill({
     required this.s,
@@ -797,6 +898,7 @@ class _BottomNavPill extends StatelessWidget {
   final VoidCallback onCreateEventTap;
   final VoidCallback onNotificationsTap;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return VezGlass.container(
@@ -837,6 +939,10 @@ class _BottomNavPill extends StatelessWidget {
   }
 }
 
+// ── popup header bar ───────────────────────────────────────────────────────
+//
+//   used for: the top section of popup windows.
+//   design: contains title, close button, and an optional custom action icon.
 class _PopupHeaderBar extends StatelessWidget {
   const _PopupHeaderBar({
     required this.title,
@@ -848,6 +954,7 @@ class _PopupHeaderBar extends StatelessWidget {
   final VoidCallback onClose;
   final Widget? action;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -877,6 +984,10 @@ class _PopupHeaderBar extends StatelessWidget {
   }
 }
 
+// ── popup search field ─────────────────────────────────────────────────────
+//
+//   used for: searching through lists within a popup.
+//   design: glassy text field with search icon and custom hints.
 class _PopupSearchField extends StatelessWidget {
   const _PopupSearchField({
     required this.controller,
@@ -888,6 +999,7 @@ class _PopupSearchField extends StatelessWidget {
   final String hint;
   final ValueChanged<String> onChanged;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return VezGlass.textField(
@@ -900,6 +1012,10 @@ class _PopupSearchField extends StatelessWidget {
   }
 }
 
+// ── popup filter chip ──────────────────────────────────────────────────────
+//
+//   used for: selecting categories or states within a popup.
+//   design: styled chip with border and translucent background.
 class _PopupFilterChip extends StatelessWidget {
   const _PopupFilterChip({
     required this.label,
@@ -911,6 +1027,7 @@ class _PopupFilterChip extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -924,7 +1041,7 @@ class _PopupFilterChip extends StatelessWidget {
               : const Color.fromARGB(45, 255, 255, 255),
           border: Border.all(
             color: isActive ? Colors.white : Colors.white30,
-            width: 1.5,
+            width: 2,
           ),
         ),
         child: Text(
@@ -939,6 +1056,10 @@ class _PopupFilterChip extends StatelessWidget {
   }
 }
 
+// ── popup guest row ────────────────────────────────────────────────────────
+//
+//   used for: displaying a single guest in the guest list popup.
+//   design: row with avatar, name, optional action, and status icon.
 class _PopupGuestRow extends StatelessWidget {
   const _PopupGuestRow({
     required this.username,
@@ -952,14 +1073,15 @@ class _PopupGuestRow extends StatelessWidget {
   final String state;
   final Widget? trailing;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: const Color.fromARGB(45, 255, 255, 255),
-        border: Border.all(color: Colors.white24, width: 1.5),
+        borderRadius: BorderRadius.circular(22),
+        color: const Color.fromARGB(51, 255, 255, 255),
+        border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
       ),
       child: Row(
         children: [
@@ -984,6 +1106,10 @@ class _PopupGuestRow extends StatelessWidget {
   }
 }
 
+// ── popup user action row ──────────────────────────────────────────────────
+//
+//   used for: displaying users that can be interacted with (e.g., invited).
+//   design: row with avatar, name, relationship label, and action icon.
 class _PopupUserActionRow extends StatelessWidget {
   const _PopupUserActionRow({
     required this.username,
@@ -1001,6 +1127,7 @@ class _PopupUserActionRow extends StatelessWidget {
   final Color iconColor;
   final VoidCallback? onTap;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1008,7 +1135,7 @@ class _PopupUserActionRow extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         color: const Color.fromARGB(45, 255, 255, 255),
-        border: Border.all(color: Colors.white24, width: 1.5),
+        border: Border.all(color: Colors.white24, width: 2),
       ),
       child: Row(
         children: [
@@ -1050,11 +1177,16 @@ class _PopupUserActionRow extends StatelessWidget {
   }
 }
 
+// ── popup user avatar ──────────────────────────────────────────────────────
+//
+//   used for: displaying a circular user profile picture within popups.
+//   design: handles both network and asset images with a placeholder icon.
 class _PopupUserAvatar extends StatelessWidget {
   const _PopupUserAvatar({required this.photo});
 
   final String photo;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final bool isNetworkImage = photo.startsWith('http');
@@ -1064,7 +1196,7 @@ class _PopupUserAvatar extends StatelessWidget {
       height: 34,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white30, width: 1.5),
+        border: Border.all(color: Colors.white30, width: 2),
       ),
       child: ClipOval(
         child: photo.isEmpty
@@ -1080,11 +1212,16 @@ class _PopupUserAvatar extends StatelessWidget {
   }
 }
 
+// ── popup state icon ───────────────────────────────────────────────────────
+//
+//   used for: visual representation of a guest's participation status.
+//   design: displays different icons for going, not going, or maybe.
 class _PopupStateIcon extends StatelessWidget {
   const _PopupStateIcon({required this.state});
 
   final String state;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final String iconPath = switch (state) {
@@ -1097,19 +1234,24 @@ class _PopupStateIcon extends StatelessWidget {
   }
 }
 
+// ── popup counts footer ────────────────────────────────────────────────────
+//
+//   used for: summarizing RSVP totals at the bottom of the guest list popup.
+//   design: horizontal bar showing counts for going, not going, and maybe.
 class _PopupCountsFooter extends StatelessWidget {
   const _PopupCountsFooter({required this.counts});
 
   final HomeEventGuestCounts counts;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: const Color.fromARGB(45, 255, 255, 255),
-        border: Border.all(color: Colors.white24, width: 1.5),
+        borderRadius: BorderRadius.circular(50),
+        color: const Color.fromARGB(51, 0, 0, 0),
+        border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
       ),
       child: Row(
         children: [
@@ -1142,6 +1284,10 @@ class _PopupCountsFooter extends StatelessWidget {
   }
 }
 
+// ── popup count item ───────────────────────────────────────────────────────
+//
+//   used for: a single statistic entry within the counts footer.
+//   design: vertical stack of icon, label, and numeric value.
 class _PopupCountItem extends StatelessWidget {
   const _PopupCountItem({
     required this.iconPath,
@@ -1153,6 +1299,7 @@ class _PopupCountItem extends StatelessWidget {
   final String label;
   final int value;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -1182,11 +1329,16 @@ class _PopupCountItem extends StatelessWidget {
   }
 }
 
+// ── popup empty state ──────────────────────────────────────────────────────
+//
+//   used for: displaying a message when a popup list has no items.
+//   design: glassy container with centered descriptive text.
 class _PopupEmptyState extends StatelessWidget {
   const _PopupEmptyState({required this.title});
 
   final String title;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1195,7 +1347,7 @@ class _PopupEmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         color: const Color.fromARGB(30, 255, 255, 255),
-        border: Border.all(color: Colors.white24, width: 1.5),
+        border: Border.all(color: Colors.white24, width: 2),
       ),
       child: Text(
         title,
@@ -1209,23 +1361,24 @@ class _PopupEmptyState extends StatelessWidget {
   }
 }
 
+// ── role badge ─────────────────────────────────────────────────────────────
+//
+//   used for: highlighting a user's role (e.g., "Host").
+//   design: small, colored capsule with bold text.
 class _RoleBadge extends StatelessWidget {
   const _RoleBadge({required this.label});
 
   final String label;
 
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: const Color.fromARGB(140, 255, 195, 0),
-      ),
       child: Text(
         label,
         style: const TextStyle(
-          color: Colors.white,
+          color: Color.fromARGB(255, 255, 195, 0),
           fontSize: 11,
           fontWeight: FontWeight.bold,
         ),
