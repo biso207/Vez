@@ -499,7 +499,7 @@ class _HomePageState extends State<HomePage> {
                     ? Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _PopupEmptyState(
-                    title: StringRes.at('no_guests_yet'),
+                    title: StringRes.at('no_guests_found'),
                   ),
                 )
                     : ListView.separated(

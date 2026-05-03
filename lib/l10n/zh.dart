@@ -46,6 +46,7 @@ const Map<String, String> zh = {
   "search_guest": "搜索",
   "host": "主办方",
   "no_guests_yet": "暂无宾客",
+  "no_guests_found": "没有可邀请的人",
   "guest_remove_failed": "无法移除宾客",
   "add_guest": "邀请",
   "friends": "好友",

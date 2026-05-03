@@ -47,6 +47,7 @@ const Map<String, String> es = {
   "search_guest": "Buscar",
   "host": "Host",
   "no_guests_yet": "Sin Invitados",
+  "no_guests_found": "Nadie Para Invitar",
   "guest_remove_failed": "Error",
   "add_guest": "Invitar",
   "friends": "Amigos",
