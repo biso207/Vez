@@ -355,6 +355,47 @@ class SetDBService {
     }
   }
 
+  Future<int> updateEventInviteResponse({
+    required String eventId,
+    required String responseState,
+  }) async {
+    try {
+      final normalizedState = _normalizeInviteResponse(responseState);
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/event_invites'
+        '?event_id=eq.$eventId&user_id=eq.$userID',
+      );
+      final response = await http.patch(
+        url,
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+        body: jsonEncode({
+          'response': normalizedState,
+          'responded_at': DateTime.now().toUtc().toIso8601String(),
+        }),
+      );
+      return response.statusCode == 204 ? 200 : response.statusCode;
+    } catch (e) {
+      print('updateEventInviteResponse error: $e');
+      return 0;
+    }
+  }
+
+  String _normalizeInviteResponse(String rawState) {
+    final normalized = rawState.trim().toLowerCase().replaceAll(' ', '_');
+    if (normalized == 'going' ||
+        normalized == 'accepted' ||
+        normalized == 'yes') {
+      return 'going';
+    }
+    if (normalized == 'not_going' ||
+        normalized == 'notgoing' ||
+        normalized == 'declined' ||
+        normalized == 'no') {
+      return 'not_going';
+    }
+    return 'maybe';
+  }
+
   Future<Map<String, dynamic>?> _buildEventPayload(
     Map<String, dynamic> eventData, {
     required String placeId,

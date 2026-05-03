@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../services/getters_service.dart';
+import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import '../views/widgets/vez_glass.dart';
@@ -20,8 +21,10 @@ class NotificationsPage extends StatefulWidget {
 class _NotificationsPageState extends State<NotificationsPage> {
   final TextEditingController _searchController = TextEditingController();
   final GetDBService _db = GetDBService(userID: UserSession().userID);
+  final SetDBService _dbSet = SetDBService(userID: UserSession().userID);
 
   bool _isLoading = true;
+  bool _isResponding = false;
   String _profilePhoto = '';
   List<Map<String, dynamic>> _notifications = const [];
 
@@ -68,6 +71,31 @@ class _NotificationsPageState extends State<NotificationsPage> {
             HomePage(initialFilterIndex: 1, initialEventId: eventId),
       ),
       (route) => false,
+    );
+  }
+
+  Future<void> _respondToInvite(String eventId, String responseState) async {
+    if (_isResponding || eventId.isEmpty) return;
+
+    setState(() => _isResponding = true);
+    final int result = await _dbSet.updateEventInviteResponse(
+      eventId: eventId,
+      responseState: responseState,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _isResponding = false);
+    if (result == 200 || result == 204) {
+      _openNotificationEvent(eventId);
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${StringRes.at("event_update_failed")} ($result)'),
+        backgroundColor: const Color.fromARGB(200, 255, 49, 49),
+      ),
     );
   }
 
@@ -157,6 +185,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   row: _visibleNotifications[index],
                   s: s,
                   onTap: _openNotificationEvent,
+                  onRespond: _respondToInvite,
                 ),
               ),
       ),
@@ -169,11 +198,13 @@ class _NotificationCard extends StatelessWidget {
     required this.row,
     required this.s,
     required this.onTap,
+    required this.onRespond,
   });
 
   final Map<String, dynamic> row;
   final double s;
   final ValueChanged<String?> onTap;
+  final void Function(String eventId, String responseState) onRespond;
 
   @override
   Widget build(BuildContext context) {
@@ -281,6 +312,15 @@ class _NotificationCard extends StatelessWidget {
                       ),
                     ),
                   ],
+                  if (eventId.isNotEmpty) ...[
+                    SizedBox(height: 12 * s),
+                    _InviteResponseActions(
+                      s: s,
+                      currentState: state,
+                      onRespond: (responseState) =>
+                          onRespond(eventId, responseState),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -317,6 +357,117 @@ class _NotificationCard extends StatelessWidget {
     } catch (_) {
       return '';
     }
+  }
+}
+
+class _InviteResponseActions extends StatelessWidget {
+  const _InviteResponseActions({
+    required this.s,
+    required this.currentState,
+    required this.onRespond,
+  });
+
+  final double s;
+  final String currentState;
+  final ValueChanged<String> onRespond;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _InviteResponseButton(
+            iconPath: 'assets/icons/event/participation_state/going.png',
+            label: StringRes.at('going'),
+            isActive: currentState == 'going',
+            s: s,
+            onTap: () => onRespond('going'),
+          ),
+        ),
+        SizedBox(width: 8 * s),
+        Expanded(
+          child: _InviteResponseButton(
+            iconPath: 'assets/icons/event/participation_state/maybe.png',
+            label: StringRes.at('maybe'),
+            isActive: currentState == 'maybe',
+            s: s,
+            onTap: () => onRespond('maybe'),
+          ),
+        ),
+        SizedBox(width: 8 * s),
+        Expanded(
+          child: _InviteResponseButton(
+            iconPath: 'assets/icons/event/participation_state/not_going.png',
+            label: StringRes.at('not_going'),
+            isActive: currentState == 'not_going',
+            s: s,
+            onTap: () => onRespond('not_going'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InviteResponseButton extends StatelessWidget {
+  const _InviteResponseButton({
+    required this.iconPath,
+    required this.label,
+    required this.isActive,
+    required this.s,
+    required this.onTap,
+  });
+
+  final String iconPath;
+  final String label;
+  final bool isActive;
+  final double s;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 42 * s,
+        padding: EdgeInsets.symmetric(horizontal: 6 * s),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18 * s),
+          color: isActive
+              ? const Color.fromARGB(100, 255, 255, 255)
+              : const Color.fromARGB(38, 255, 255, 255),
+          border: Border.all(
+            color: isActive ? Colors.white70 : Colors.white24,
+            width: 1.3,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              iconPath,
+              width: 15 * s,
+              height: 15 * s,
+              fit: BoxFit.contain,
+            ),
+            SizedBox(width: 4 * s),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11 * s,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
