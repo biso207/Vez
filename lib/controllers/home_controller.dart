@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 
 import '../models/event_catalog.dart';
@@ -20,6 +23,11 @@ class HomeController extends ChangeNotifier {
 
   String profilePhoto = '';
   bool isLoadingEvents = true;
+  bool isLoadingNearby = false;
+  String nearbyError = '';
+  double nearbyRadiusKm = 25;
+  Position? _currentPosition;
+  List<Map<String, dynamic>> _discoverableEvents = const [];
   List<Map<String, dynamic>> allUsers = const [];
   Set<String> followingIds = const {};
   Set<String> followerIds = const {};
@@ -55,13 +63,42 @@ class HomeController extends ChangeNotifier {
         .getCreatedEvents();
     final List<Map<String, dynamic>> invitedEvents = await _db
         .getInvitedEvents();
+    _discoverableEvents = await _db.getDiscoverableEvents();
 
     eventsByType = {
       EventType.byYou: _mapEvents(createdEvents, EventType.byYou),
       EventType.invited: _mapEvents(invitedEvents, EventType.invited),
-      EventType.nearby: const [],
+      EventType.nearby: _buildNearbyEvents(),
     };
     isLoadingEvents = false;
+    _notify();
+  }
+
+  Future<void> loadNearbyEvents({bool refreshPosition = false}) async {
+    isLoadingNearby = true;
+    nearbyError = '';
+    _notify();
+
+    try {
+      if (refreshPosition || _currentPosition == null) {
+        _currentPosition = await _getCurrentPosition();
+      }
+      if (_discoverableEvents.isEmpty) {
+        _discoverableEvents = await _db.getDiscoverableEvents();
+      }
+      eventsByType = {...eventsByType, EventType.nearby: _buildNearbyEvents()};
+    } catch (e) {
+      nearbyError = e.toString().replaceAll('Exception: ', '');
+      eventsByType = {...eventsByType, EventType.nearby: const []};
+    } finally {
+      isLoadingNearby = false;
+      _notify();
+    }
+  }
+
+  void updateNearbyRadius(double radiusKm) {
+    nearbyRadiusKm = radiusKm.clamp(1, 100).toDouble();
+    eventsByType = {...eventsByType, EventType.nearby: _buildNearbyEvents()};
     _notify();
   }
 
@@ -158,7 +195,11 @@ class HomeController extends ChangeNotifier {
     return rawEvents.map((event) => _mapEvent(event, type)).toList();
   }
 
-  HomeEventCardData _mapEvent(Map<String, dynamic> rawEvent, EventType type) {
+  HomeEventCardData _mapEvent(
+    Map<String, dynamic> rawEvent,
+    EventType type, {
+    double? distanceKm,
+  }) {
     final Map<String, dynamic> place = rawEvent['place'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(rawEvent['place'] as Map<String, dynamic>)
         : rawEvent['place'] is Map
@@ -218,8 +259,95 @@ class HomeController extends ChangeNotifier {
       price: (rawEvent['price'] as num?)?.toInt(),
       guestCounts: guestCounts,
       guests: guests,
+      distanceKm: distanceKm,
     );
   }
+
+  List<HomeEventCardData> _buildNearbyEvents() {
+    final Position? position = _currentPosition;
+    if (position == null) return const [];
+
+    final List<HomeEventCardData> nearbyEvents = [];
+    for (final rawEvent in _discoverableEvents) {
+      if ((rawEvent['creator_user_id'] ?? '').toString() == _db.userID) {
+        continue;
+      }
+
+      final Map<String, dynamic> place = rawEvent['place'] is Map
+          ? Map<String, dynamic>.from(rawEvent['place'] as Map)
+          : <String, dynamic>{};
+      final latitude = (place['latitude'] as num?)?.toDouble();
+      final longitude = (place['longitude'] as num?)?.toDouble();
+      final bool isPrecise = place['is_precise'] == true;
+
+      if (!isPrecise || latitude == null || longitude == null) continue;
+      if (latitude == 0.0 && longitude == 0.0) continue;
+
+      final distanceKm = _distanceKm(
+        position.latitude,
+        position.longitude,
+        latitude,
+        longitude,
+      );
+      if (distanceKm > nearbyRadiusKm) continue;
+
+      nearbyEvents.add(
+        _mapEvent(rawEvent, EventType.nearby, distanceKm: distanceKm),
+      );
+    }
+
+    nearbyEvents.sort(
+      (a, b) => (a.distanceKm ?? double.infinity).compareTo(
+        b.distanceKm ?? double.infinity,
+      ),
+    );
+    return nearbyEvents;
+  }
+
+  Future<Position> _getCurrentPosition() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      throw Exception(StringRes.at('enable_location_services'));
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied) {
+      throw Exception(StringRes.at('location_permissions_denied'));
+    }
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception(StringRes.at('location_permissions_permanently_denied'));
+    }
+
+    return Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
+  }
+
+  double _distanceKm(
+    double startLat,
+    double startLng,
+    double endLat,
+    double endLng,
+  ) {
+    const earthRadiusKm = 6371.0;
+    final dLat = _degreesToRadians(endLat - startLat);
+    final dLng = _degreesToRadians(endLng - startLng);
+    final lat1 = _degreesToRadians(startLat);
+    final lat2 = _degreesToRadians(endLat);
+
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.sin(dLng / 2) *
+            math.sin(dLng / 2) *
+            math.cos(lat1) *
+            math.cos(lat2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return earthRadiusKm * c;
+  }
+
+  double _degreesToRadians(double degrees) => degrees * math.pi / 180;
 
   List<HomeEventGuestData> _mapGuests(
     Map<String, dynamic> rawEvent,

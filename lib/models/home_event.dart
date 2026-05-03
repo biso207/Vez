@@ -57,6 +57,7 @@ class HomeEventCardData {
     this.price,
     this.guestCounts = const HomeEventGuestCounts(),
     this.guests = const [],
+    this.distanceKm,
   });
 
   final String eventId;
@@ -84,6 +85,7 @@ class HomeEventCardData {
   final int? price;
   final HomeEventGuestCounts guestCounts;
   final List<HomeEventGuestData> guests;
+  final double? distanceKm;
 
   bool get isByYou => type == EventType.byYou;
 

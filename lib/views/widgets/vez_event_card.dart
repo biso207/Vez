@@ -123,6 +123,19 @@ class _SimpleEventCard extends StatelessWidget {
                       ),
                     ),
                   ],
+                  if (event.distanceKm != null) ...[
+                    SizedBox(height: 8 * s),
+                    Text(
+                      _formatDistance(event.distanceKm!),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14 * s,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -130,6 +143,13 @@ class _SimpleEventCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatDistance(double distanceKm) {
+    if (distanceKm < 1) {
+      return '${(distanceKm * 1000).round()} m';
+    }
+    return '${distanceKm.toStringAsFixed(distanceKm < 10 ? 1 : 0)} km';
   }
 }
 

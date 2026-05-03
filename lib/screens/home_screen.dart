@@ -79,6 +79,8 @@ class _HomePageState extends State<HomePage> {
   List<HomeEventCardData> get _visibleEvents =>
       _controller.eventsByType[_selectedType] ?? const [];
 
+  bool get _isNearbySelected => _selectedType == EventType.nearby;
+
   void _goToProfile() {
     Navigator.push(
       context,
@@ -109,6 +111,14 @@ class _HomePageState extends State<HomePage> {
       context,
       MaterialPageRoute(builder: (_) => const NotificationsPage()),
     );
+  }
+
+  void _selectFilter(int index) {
+    setState(() => _filterIndex = index);
+    final selectedType = _filterIcons[index]['type'] as EventType;
+    if (selectedType == EventType.nearby) {
+      _controller.loadNearbyEvents();
+    }
   }
 
   void _editEvent(HomeEventCardData event) {
@@ -486,7 +496,7 @@ class _HomePageState extends State<HomePage> {
       isProfileAvatar: true,
       onProfileTap: _goToProfile,
       filterIconPath: _filterIcons[_filterIndex]['icon'] as String,
-      onFilterSelected: (index) => setState(() => _filterIndex = index),
+      onFilterSelected: _selectFilter,
       bottomNavBar: _BottomNavPill(
         s: s,
         activeIndex: 0,
@@ -494,16 +504,127 @@ class _HomePageState extends State<HomePage> {
         onCreateEventTap: _goToCreateEvent,
         onNotificationsTap: _goToNotifications,
       ),
-      body: _EventCarousel(
-        events: _visibleEvents,
-        s: s,
-        isLoading: _controller.isLoadingEvents,
-        emptyStateTitle: _emptyStateTitle(),
-        emptyStateIconPath: _emptyStateIcon,
-        highlightedEventId: widget.initialEventId,
-        onAddGuestsTap: _showAddGuestPopup,
-        onGuestListTap: _showGuestListPopup,
-        onEditTap: _editEvent,
+      body: Padding(
+        padding: EdgeInsets.only(top: _isNearbySelected ? 108 * s : 0),
+        child: Column(
+          children: [
+            if (_isNearbySelected)
+              _NearbyRangeControl(
+                s: s,
+                radiusKm: _controller.nearbyRadiusKm,
+                isLoading: _controller.isLoadingNearby,
+                error: _controller.nearbyError,
+                eventCount: _visibleEvents.length,
+                onRadiusChanged: _controller.updateNearbyRadius,
+                onRefreshPosition: () =>
+                    _controller.loadNearbyEvents(refreshPosition: true),
+              ),
+            Expanded(
+              child: _EventCarousel(
+                events: _visibleEvents,
+                s: s,
+                isLoading:
+                    _controller.isLoadingEvents || _controller.isLoadingNearby,
+                emptyStateTitle: _emptyStateTitle(),
+                emptyStateIconPath: _emptyStateIcon,
+                highlightedEventId: widget.initialEventId,
+                onAddGuestsTap: _showAddGuestPopup,
+                onGuestListTap: _showGuestListPopup,
+                onEditTap: _editEvent,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NearbyRangeControl extends StatelessWidget {
+  const _NearbyRangeControl({
+    required this.s,
+    required this.radiusKm,
+    required this.isLoading,
+    required this.error,
+    required this.eventCount,
+    required this.onRadiusChanged,
+    required this.onRefreshPosition,
+  });
+
+  final double s;
+  final double radiusKm;
+  final bool isLoading;
+  final String error;
+  final int eventCount;
+  final ValueChanged<double> onRadiusChanged;
+  final VoidCallback onRefreshPosition;
+
+  @override
+  Widget build(BuildContext context) {
+    final roundedRadius = radiusKm.round();
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20 * s, 0, 20 * s, 8 * s),
+      child: VezGlass.container(
+        padding: EdgeInsets.fromLTRB(16 * s, 12 * s, 12 * s, 10 * s),
+        radius: BorderRadius.circular(28 * s),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    error.isNotEmpty
+                        ? error
+                        : '$roundedRadius km - $eventCount eventi',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15 * s,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: isLoading ? null : onRefreshPosition,
+                  icon: isLoading
+                      ? SizedBox(
+                          width: 18 * s,
+                          height: 18 * s,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.my_location, color: Colors.white),
+                ),
+              ],
+            ),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: Colors.white,
+                inactiveTrackColor: Colors.white24,
+                thumbColor: Colors.white,
+                overlayColor: const Color.fromARGB(40, 255, 255, 255),
+                valueIndicatorColor: Colors.white,
+                valueIndicatorTextStyle: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              child: Slider(
+                min: 1,
+                max: 100,
+                divisions: 99,
+                label: '$roundedRadius km',
+                value: radiusKm.clamp(1, 100),
+                onChanged: isLoading ? null : onRadiusChanged,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -224,6 +224,30 @@ class GetDBService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getDiscoverableEvents() async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/events'
+        '?type=in.(Public,Exclusive)'
+        '&select=$_eventSelect'
+        '&order=date_event.asc',
+      );
+
+      final response = await http.get(url, headers: _headers);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getInviteNotifications() async {
     try {
       final Uri url = Uri.parse(
