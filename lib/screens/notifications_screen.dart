@@ -1,3 +1,6 @@
+// notifications screen.
+// handles invite responses in real-time and shows colored icons for the state.
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -40,6 +43,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     super.dispose();
   }
 
+  // fetch user data and notifications list
   Future<void> _loadPageData() async {
     final results = await Future.wait([
       _db.getUserData('profile_photo'),
@@ -50,7 +54,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     setState(() {
       _profilePhoto = (results[0] as String?)?.trim() ?? '';
-      _notifications = results[1] as List<Map<String, dynamic>>;
+      _notifications = List<Map<String, dynamic>>.from(results[1] as List);
       _isLoading = false;
     });
   }
@@ -59,7 +63,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const HomePage(initialFilterIndex: 0)),
-      (route) => false,
+          (route) => false,
     );
   }
 
@@ -70,14 +74,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
         builder: (_) =>
             HomePage(initialFilterIndex: 0, initialEventId: eventId),
       ),
-      (route) => false,
+          (route) => false,
     );
   }
 
+  // respond to an invite and update the ui in real-time without redirecting
   Future<void> _respondToInvite(String eventId, String responseState) async {
     if (_isResponding || eventId.isEmpty) return;
 
     setState(() => _isResponding = true);
+
+    // update state in db
     final int result = await _dbSet.updateEventInviteResponse(
       eventId: eventId,
       responseState: responseState,
@@ -86,8 +93,23 @@ class _NotificationsPageState extends State<NotificationsPage> {
     if (!mounted) return;
 
     setState(() => _isResponding = false);
+
+    // if successful, update the notification list locally for real-time banner update
     if (result == 200 || result == 204) {
-      _openNotificationEvent(eventId);
+      setState(() {
+        for (int i = 0; i < _notifications.length; i++) {
+          final row = _notifications[i];
+          final eventMap = row['event'] is Map ? row['event'] : {};
+          final String eId = (eventMap['event_id'] ?? row['event_id'] ?? '').toString().trim();
+
+          if (eId == eventId) {
+            // copy map to avoid modifying an unmodifiable map
+            final updatedRow = Map<String, dynamic>.from(row);
+            updatedRow['response'] = responseState;
+            _notifications[i] = updatedRow;
+          }
+        }
+      });
       return;
     }
 
@@ -113,6 +135,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     ).then((_) => _loadPageData());
   }
 
+  // filter visible notifications based on search text
   List<Map<String, dynamic>> get _visibleNotifications {
     final String query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) return _notifications;
@@ -124,7 +147,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ? Map<String, dynamic>.from(row['event'] as Map)
           : <String, dynamic>{};
       final Map<String, dynamic> creator =
-          event['creator'] is Map<String, dynamic>
+      event['creator'] is Map<String, dynamic>
           ? Map<String, dynamic>.from(event['creator'] as Map<String, dynamic>)
           : event['creator'] is Map
           ? Map<String, dynamic>.from(event['creator'] as Map)
@@ -170,24 +193,24 @@ class _NotificationsPageState extends State<NotificationsPage> {
         padding: EdgeInsets.only(top: topInset),
         child: _isLoading
             ? const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              )
+          child: CircularProgressIndicator(color: Colors.white),
+        )
             : _visibleNotifications.isEmpty
             ? _EmptyNotificationsState(
-                s: s,
-                title: StringRes.at('no_events_invited'),
-              )
+          s: s,
+          title: StringRes.at('no_events_invited'),
+        )
             : ListView.separated(
-                padding: EdgeInsets.fromLTRB(20 * s, 0, 20 * s, 140 * s),
-                itemCount: _visibleNotifications.length,
-                separatorBuilder: (_, _) => SizedBox(height: 14 * s),
-                itemBuilder: (_, index) => _NotificationCard(
-                  row: _visibleNotifications[index],
-                  s: s,
-                  onTap: _openNotificationEvent,
-                  onRespond: _respondToInvite,
-                ),
-              ),
+          padding: EdgeInsets.fromLTRB(20 * s, 0, 20 * s, 140 * s),
+          itemCount: _visibleNotifications.length,
+          separatorBuilder: (_, _) => SizedBox(height: 14 * s),
+          itemBuilder: (_, index) => _NotificationCard(
+            row: _visibleNotifications[index],
+            s: s,
+            onTap: _openNotificationEvent,
+            onRespond: _respondToInvite,
+          ),
+        ),
       ),
     );
   }
@@ -214,7 +237,7 @@ class _NotificationCard extends StatelessWidget {
         ? Map<String, dynamic>.from(row['event'] as Map)
         : <String, dynamic>{};
     final Map<String, dynamic> creator =
-        event['creator'] is Map<String, dynamic>
+    event['creator'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(event['creator'] as Map<String, dynamic>)
         : event['creator'] is Map
         ? Map<String, dynamic>.from(event['creator'] as Map)
@@ -267,6 +290,7 @@ class _NotificationCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 10 * s),
+                      // displays the colored icon state pill
                       _NotificationStatePill(state: state),
                     ],
                   ),
@@ -330,20 +354,13 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
+  // normalize raw database states
   static String _normalizeState(String rawState) {
-    final String normalized = rawState.trim().toLowerCase().replaceAll(
-      ' ',
-      '_',
-    );
-    if (normalized == 'going' ||
-        normalized == 'accepted' ||
-        normalized == 'yes') {
+    final String normalized = rawState.trim().toLowerCase().replaceAll(' ', '_');
+    if (normalized == 'going' || normalized == 'accepted' || normalized == 'yes') {
       return 'going';
     }
-    if (normalized == 'not_going' ||
-        normalized == 'notgoing' ||
-        normalized == 'declined' ||
-        normalized == 'no') {
+    if (normalized == 'not_going' || normalized == 'notgoing' || normalized == 'declined' || normalized == 'no') {
       return 'not_going';
     }
     return 'maybe';
@@ -491,16 +508,17 @@ class _NotificationAvatar extends StatelessWidget {
         child: photo.isEmpty
             ? const Icon(Icons.person, color: Colors.white70)
             : Image(
-                image: isNetworkImage
-                    ? NetworkImage(photo)
-                    : AssetImage(photo) as ImageProvider,
-                fit: BoxFit.cover,
-              ),
+          image: isNetworkImage
+              ? NetworkImage(photo)
+              : AssetImage(photo) as ImageProvider,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
 }
 
+// notification state pill updated to show colored icons only
 class _NotificationStatePill extends StatelessWidget {
   const _NotificationStatePill({required this.state});
 
@@ -508,26 +526,32 @@ class _NotificationStatePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String label = switch (state) {
-      'going' => StringRes.at('going'),
-      'not_going' => StringRes.at('not_going'),
-      _ => StringRes.at('maybe'),
+    // pick the right icon
+    final String iconPath = switch (state) {
+      'going' => 'assets/icons/event/participation_state/going.png',
+      'not_going' => 'assets/icons/event/participation_state/not_going.png',
+      _ => 'assets/icons/event/participation_state/maybe.png',
+    };
+
+    // pick the corresponding color
+    final Color iconColor = switch (state) {
+      'going' => const Color(0xFF4CAF50), // green
+      'not_going' => const Color(0xFFF44336), // red
+      _ => const Color(0xFFFF9800), // orange
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        shape: BoxShape.circle,
         color: const Color.fromARGB(60, 255, 255, 255),
         border: Border.all(color: Colors.white24, width: 1.3),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
+      child: Image.asset(
+        iconPath,
+        width: 16,
+        height: 16,
+        color: iconColor, // applies the solid color tint over the icon
       ),
     );
   }

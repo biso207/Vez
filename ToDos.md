@@ -5,7 +5,7 @@
 - [ ] 3) Migliorare la scelta del luogo nella creazione eventi e specificare di usare la mappa per mostrare l'evento in "Nearby"
 - [x] 4) Completare la UI preview per eventi "Invited" e "Nearby"
 - [x] 5) Migliorare i menù popup per aggiungere e gestire gli invitati
-- [ ] 6) Nella pagina delle notifiche l'utente deve vedere il cambio scelta immediatamente e non al cambio pagina
+- [x] 6) Nella pagina delle notifiche l'utente deve vedere il cambio scelta immediatamente e deve rimanere in quella pagina
 - [ ] 7) Aggiungere il refresh nella "Home Page" automatico ogni X secondi
 - [x] 8) Togliere il pulsante "Add Guests" dalla preview degli eventi pubblici
 - [x] 9) Impostare gli eventi "Invited" come i principali nella "Home Page"
@@ -13,7 +13,7 @@
 - [x] 11) Migliorare la grafica della preview per gli eventi "By You" seguendo lo stile del mockup
 - [x] 12) Migliorare le scritte delle lingue
 - [x] 13) Obbligare l'utente a cambiare l'immagine di sfondo nella creazione evento
-- [ ] 14) Correggere il bug del contatore di lunghezza del titolo alla creazione evento
+- [x] 14) Correggere il bug del contatore di lunghezza del titolo alla creazione evento
 
 # ───────────────────────────────────────────────────
 

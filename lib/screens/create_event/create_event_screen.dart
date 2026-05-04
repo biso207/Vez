@@ -87,8 +87,13 @@ class _CreateEventState extends State<CreateEvent> {
     if (_isEditMode) {
       _applyEventData(widget.editingEvent!);
     }
+
     // rebuild on focus change for the title counter / alignment
     _titleFocus.addListener(() => setState(() {}));
+
+    // added listener on controller to force rebuild during real-time typing
+    // this keeps the character counter perfectly updated on screen.
+    _titleController.addListener(() => setState(() {}));
   }
 
   @override
@@ -108,10 +113,10 @@ class _CreateEventState extends State<CreateEvent> {
   // boolean to validate an event and be saved
   bool get _isValid =>
       _titleController.text.isNotEmpty &&
-      _date != null &&
-      _time != null &&
-      _locationName.isNotEmpty &&
-      _bgImage.isNotEmpty && !_bgImage.startsWith('assets/');
+          _date != null &&
+          _time != null &&
+          _locationName.isNotEmpty &&
+          _bgImage.isNotEmpty && !_bgImage.startsWith('assets/');
 
   // populate all fields when the screen edits an existing event.
   void _applyEventData(HomeEventCardData event) {
@@ -336,7 +341,7 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
-  /// scrollable list of event categories
+  // scrollable list of event categories
   void _showCategoryPopup() {
     _titleFocus.unfocus();
     final double pw = MediaQuery.of(context).size.width * 0.50;
@@ -346,8 +351,8 @@ class _CreateEventState extends State<CreateEvent> {
       context: context,
       width: pw,
       height: ph,
-      backgroundColor: const Color.fromARGB(128, 6, 0, 92), // todo: change
-      borderColor: const Color.fromARGB(128, 0, 10, 218), // todo: change
+      backgroundColor: const Color.fromARGB(128, 6, 0, 92),
+      borderColor: const Color.fromARGB(128, 0, 10, 218),
       child: ListView.separated(
         physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
@@ -387,7 +392,7 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
-  /// three event-type options (exclusive / private / public)
+  // three event-type options (exclusive / private / public)
   void _showTypePopup() {
     _titleFocus.unfocus();
     final double pw = MediaQuery.of(context).size.width * 0.50;
@@ -399,7 +404,7 @@ class _CreateEventState extends State<CreateEvent> {
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
           _eventTypes.length,
-          (i) => Column(
+              (i) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _PopupListItem(
@@ -458,7 +463,7 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
-  /// location type selector: simple name vs map
+  // location type selector: simple name vs map
   void _showLocationSelectorPopup() {
     _titleFocus.unfocus();
     VezEventPopups.showLocationSelector(
@@ -493,7 +498,7 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
-  /// save confirmation
+  // save confirmation
   void _showSaveConfirmation() {
     VezEventPopups.showConfirmation(
       context,
@@ -505,7 +510,7 @@ class _CreateEventState extends State<CreateEvent> {
     );
   }
 
-  /// delete / reset confirmation
+  // delete / reset confirmation
   void _showDeleteConfirmation() {
     VezEventPopups.showConfirmation(
       context,
