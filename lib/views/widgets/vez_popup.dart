@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+const double kBlurValue = 10.0;
+
 class VezPopup {
   static Future<T?> show<T>({
     required BuildContext context,
@@ -25,7 +27,7 @@ class VezPopup {
             child: Material(
               color: Colors.transparent,
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
                 child: Container(
                   width: width,
                   height: height,

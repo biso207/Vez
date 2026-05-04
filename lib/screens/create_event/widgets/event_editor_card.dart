@@ -3,6 +3,8 @@ part of '../create_event_screen.dart';
 // event editor card and its small action/detail widgets.
 // this file stays visual-only; saving, validation, and navigation remain in the screen state.
 
+const double kBlurValue = 5.0;
+
 class _EventCard extends StatelessWidget {
   final double width, height, rOuter, rInner, s;
   final String bgImage, categoryIcon, typeIcon;
@@ -191,7 +193,7 @@ class _GlassCircleButton extends StatelessWidget {
       },
       child: ClipOval(
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
           child: Container(
             padding: EdgeInsets.all(6 * s),
             decoration: BoxDecoration(
@@ -216,7 +218,7 @@ class _PreviewBadge extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
@@ -253,7 +255,7 @@ class _EditBgButton extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16 * s, vertical: 4),
             decoration: BoxDecoration(
@@ -295,7 +297,7 @@ class _DeleteEventButton extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 18 * s, vertical: 8 * s),
             decoration: BoxDecoration(
@@ -364,7 +366,7 @@ class _InfoGrid extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(rInner),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
         child: Container(
           decoration: BoxDecoration(
             color: const Color.fromARGB(51, 0, 0, 0),
@@ -606,7 +608,7 @@ class _CardActionCircle extends StatelessWidget {
           : null,
       child: ClipOval(
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
           child: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(

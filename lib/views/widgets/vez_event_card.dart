@@ -1,15 +1,22 @@
-import 'dart:ui';
+// ── card pill button ────────────────────────────────────────────────────────
+//
+// used for: call-to-action buttons (like "Add Guests") on event cards.
+// design: frosted-glass pill-shaped capsule with bold text.
 
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../models/home_event.dart';
 import '../../services/haptic_service.dart';
 import '../../services/translation_service.dart';
+import '../../services/user_session.dart';
+
+const double kBlurValue = 5.0;
 
 // ── vez event card ──────────────────────────────────────────────────────────
 //
-//   used for: polymorphic entry point for event cards.
-//   design: decides whether to show a simple or a "by you" event card.
+// used for: polymorphic entry point for event cards.
+// design: decides whether to show a detailed "by you" card or a preview rsvp card.
 class VezEventCard extends StatelessWidget {
   const VezEventCard({
     super.key,
@@ -17,16 +24,19 @@ class VezEventCard extends StatelessWidget {
     this.onAddGuestsTap,
     this.onGuestListTap,
     this.onEditTap,
+    this.onResponseSelected,
   });
 
   final HomeEventCardData event;
   final VoidCallback? onAddGuestsTap;
   final VoidCallback? onGuestListTap;
   final VoidCallback? onEditTap;
+  final ValueChanged<String>? onResponseSelected;
 
   // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    // if the event is created by the user, use the management style card.
     if (event.isByYou) {
       return _ByYouEventCard(
         event: event,
@@ -36,20 +46,52 @@ class VezEventCard extends StatelessWidget {
       );
     }
 
-    return _SimpleEventCard(event: event);
+    // for both invited and nearby events, use the preview rsvp style card.
+    // nearby events are only shown here if they have a precise location (logic handled in controller).
+    return _PreviewEventCard(
+      event: event,
+      onResponseSelected: onResponseSelected,
+    );
   }
 }
 
-// ── simple event card ───────────────────────────────────────────────────────
+// ── preview event card ───────────────────────────────────────────────────────
 //
-//   used for: displaying basic info for invited or nearby events.
-//   design: full-bleed background image with bottom text overlay.
-class _SimpleEventCard extends StatelessWidget {
-  const _SimpleEventCard({required this.event});
+// used for: displaying info and rsvp slider for invited or nearby events.
+// design: full-bleed background image with bottom rsvp and metrics overlay.
+class _PreviewEventCard extends StatefulWidget {
+  const _PreviewEventCard({
+    required this.event,
+    required this.onResponseSelected,
+  });
 
   final HomeEventCardData event;
+  final ValueChanged<String>? onResponseSelected;
 
-  // ── build ──────────────────────────────────────────────────────────────────
+  @override
+  State<_PreviewEventCard> createState() => _PreviewEventCardState();
+}
+
+class _PreviewEventCardState extends State<_PreviewEventCard> {
+  int _selectedIndex = 2;
+  bool _isStepping = false;
+
+  static const List<String> _states = ['going', 'not_going', 'maybe'];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = _indexForState(_currentUserState());
+  }
+
+  @override
+  void didUpdateWidget(covariant _PreviewEventCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.event != widget.event) {
+      _selectedIndex = _indexForState(_currentUserState());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -57,7 +99,7 @@ class _SimpleEventCard extends StatelessWidget {
     final double cardHeight = screenHeight * 0.65;
     final double cardWidth = screenWidth * 0.85;
     final double s = (screenWidth / 390).clamp(0.8, 1.2);
-    final bool isNetworkImage = event.resolvedImagePath.startsWith('http');
+    final bool isNetworkImage = widget.event.resolvedImagePath.startsWith('http');
 
     return Center(
       child: Container(
@@ -65,12 +107,6 @@ class _SimpleEventCard extends StatelessWidget {
         height: cardHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(40),
-          image: DecorationImage(
-            image: isNetworkImage
-                ? NetworkImage(event.resolvedImagePath)
-                : AssetImage(event.resolvedImagePath) as ImageProvider,
-            fit: BoxFit.cover,
-          ),
           boxShadow: const [
             BoxShadow(
               color: Colors.white54,
@@ -79,97 +115,468 @@ class _SimpleEventCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Stack(
-          children: [
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 250,
-              child: Container(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(40),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // 1. background image
+              DecoratedBox(
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(40),
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      const Color.fromRGBO(0, 0, 0, 0.88),
-                      Colors.transparent,
-                    ],
+                  image: DecorationImage(
+                    image: isNetworkImage
+                        ? NetworkImage(widget.event.resolvedImagePath)
+                        : AssetImage(widget.event.resolvedImagePath) as ImageProvider,
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 24 * s,
-              right: 24 * s,
-              bottom: 28 * s,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    event.title.isNotEmpty ? event.title : 'Untitled Event',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 26 * s,
-                      fontWeight: FontWeight.bold,
+              // 2. dark gradient overlay for text readability
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        const Color.fromRGBO(0, 0, 0, 0.24),
+                        const Color.fromRGBO(0, 0, 0, 0.10),
+                        const Color.fromRGBO(0, 0, 0, 0.92),
+                      ],
+                      stops: const [0.0, 0.42, 1.0],
                     ),
                   ),
-                  if (event.subtitle.isNotEmpty) ...[
-                    SizedBox(height: 6 * s),
+                ),
+              ),
+              // 3. content layer
+              Padding(
+                padding: EdgeInsets.fromLTRB(14 * s, 14 * s, 14 * s, 16 * s),
+                child: Column(
+                  children: [
+                    _PreviewTopBar(event: widget.event, s: s),
+                    const Spacer(),
                     Text(
-                      event.subtitle,
+                      widget.event.title.isNotEmpty ? widget.event.title : 'Untitled Event',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 15 * s,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                  if (event.distanceKm != null) ...[
-                    SizedBox(height: 8 * s),
-                    Text(
-                      _formatDistance(event.distanceKm!),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 14 * s,
+                        fontSize: 40 * s,
                         fontWeight: FontWeight.bold,
+                        height: 1.0,
                       ),
                     ),
+                    SizedBox(height: 8 * s),
+                    if (widget.event.dateLabel.isNotEmpty)
+                      _PreviewInfoText(text: widget.event.dateLabel, s: s),
+                    if (widget.event.locationLabel.isNotEmpty) ...[
+                      SizedBox(height: 2 * s),
+                      _PreviewInfoText(text: widget.event.locationLabel, s: s),
+                    ],
+                    // distance is particularly relevant for "nearby" events
+                    if (widget.event.distanceKm != null) ...[
+                      SizedBox(height: 2 * s),
+                      _PreviewInfoText(
+                        text: _formatDistance(widget.event.distanceKm!),
+                        s: s,
+                      ),
+                    ],
+                    SizedBox(height: 12 * s),
+                    _ResponseSlider(
+                      s: s,
+                      selectedIndex: _selectedIndex,
+                      onSelected: _selectState,
+                    ),
+                    SizedBox(height: 10 * s),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _GuestLimitPill(event: widget.event, s: s),
+                        ),
+                        SizedBox(width: 36 * s),
+                        Expanded(
+                          child: _PricePill(event: widget.event, s: s),
+                        ),
+                      ],
+                    ),
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ── format distance ────────────────────────────────────────────────────────
-  //
-  //   used for: converting numeric km values into readable strings (m/km).
-  String _formatDistance(double distanceKm) {
-    if (distanceKm < 1) {
-      return '${(distanceKm * 1000).round()} m';
+  // ── helpers ────────────────────────────────────────────────────────────────
+
+  Future<void> _selectState(int targetIndex) async {
+    if (_isStepping || targetIndex == _selectedIndex) return;
+    HapticService.tap();
+    _isStepping = true;
+    while (mounted && _selectedIndex != targetIndex) {
+      setState(() {
+        _selectedIndex += targetIndex > _selectedIndex ? 1 : -1;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 130));
     }
+    _isStepping = false;
+    widget.onResponseSelected?.call(_states[_selectedIndex]);
+  }
+
+  String _currentUserState() {
+    final String userId = UserSession().userID;
+    for (final HomeEventGuestData guest in widget.event.guests) {
+      if (guest.userId == userId) return guest.state;
+    }
+    return 'maybe';
+  }
+
+  int _indexForState(String state) {
+    final int index = _states.indexOf(state);
+    return index < 0 ? 2 : index;
+  }
+
+  String _formatDistance(double distanceKm) {
+    if (distanceKm < 1) return '${(distanceKm * 1000).round()} m';
     return '${distanceKm.toStringAsFixed(distanceKm < 10 ? 1 : 0)} km';
   }
 }
 
+// ── preview top bar ─────────────────────────────────────────────────────────
+class _PreviewTopBar extends StatelessWidget {
+  const _PreviewTopBar({required this.event, required this.s});
+  final HomeEventCardData event;
+  final double s;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            _CardIconCircle(
+              iconPath: event.categoryIconPath,
+              isBlueAccent: true,
+              size: 44 * s,
+              iconSize: 28 * s,
+            ),
+            SizedBox(width: 12 * s),
+            _CardIconCircle(
+              iconPath: event.typeIconPath,
+              size: 44 * s,
+              iconSize: 28 * s,
+            ),
+          ],
+        ),
+        _HostBadge(photo: event.creatorProfilePhoto, s: s),
+      ],
+    );
+  }
+}
+
+// ── host badge ──────────────────────────────────────────────────────────────
+class _HostBadge extends StatelessWidget {
+  const _HostBadge({required this.photo, required this.s});
+  final String photo;
+  final double s;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.centerRight,
+      clipBehavior: Clip.none,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(right: 32 * s),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24 * s),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
+              child: Container(
+                height: 44 * s,
+                padding: EdgeInsets.only(left: 14 * s, right: 18 * s),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(128, 255, 195, 0),
+                  borderRadius: BorderRadius.circular(24 * s),
+                  border: Border.all(
+                    color: const Color.fromARGB(204, 255, 195, 0),
+                    width: 2,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  StringRes.at('host'),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20 * s,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        _ProfilePhotoCircle(photo: photo, size: 44 * s),
+      ],
+    );
+  }
+}
+
+// ── response slider ─────────────────────────────────────────────────────────
+class _ResponseSlider extends StatelessWidget {
+  const _ResponseSlider({
+    required this.s,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final double s;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  static const List<_ResponseSliderItemData> _items = [
+    _ResponseSliderItemData(
+      state: 'going',
+      iconPath: 'assets/icons/event/participation_state/going.png',
+    ),
+    _ResponseSliderItemData(
+      state: 'not_going',
+      iconPath: 'assets/icons/event/participation_state/not_going.png',
+    ),
+    _ResponseSliderItemData(
+      state: 'maybe',
+      iconPath: 'assets/icons/event/participation_state/maybe.png',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final double height = 60 * s;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30 * s),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
+        child: SizedBox(
+          height: height,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double segmentWidth = constraints.maxWidth / _items.length;
+              return Stack(
+                children: [
+                  Container(
+                    width: constraints.maxWidth,
+                    height: constraints.maxHeight,
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(51, 0, 0, 0),
+                      borderRadius: BorderRadius.circular(30 * s),
+                      border: Border.all(
+                        color: const Color.fromARGB(128, 255, 255, 255),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeInOutCubic,
+                    left: segmentWidth * selectedIndex,
+                    top: 0,
+                    bottom: 0,
+                    width: segmentWidth,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(51, 255, 255, 255),
+                        borderRadius: BorderRadius.circular(30 * s),
+                        border: Border.all(
+                          color: const Color.fromARGB(128, 255, 255, 255),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      for (int i = 0; i < _items.length; i++)
+                        Expanded(
+                          child: _ResponseSliderItem(
+                            data: _items[i],
+                            s: s,
+                            onTap: () => onSelected(i),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ResponseSliderItem extends StatelessWidget {
+  const _ResponseSliderItem({
+    required this.data,
+    required this.s,
+    required this.onTap,
+  });
+  final _ResponseSliderItemData data;
+  final double s;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final String label = switch (data.state) {
+      'going' => StringRes.at('going'),
+      'not_going' => StringRes.at('not_going'),
+      _ => StringRes.at('maybe'),
+    };
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(data.iconPath, width: 22 * s, height: 22 * s),
+          SizedBox(height: 3 * s),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12 * s,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResponseSliderItemData {
+  const _ResponseSliderItemData({required this.state, required this.iconPath});
+  final String state;
+  final String iconPath;
+}
+
+// ── guest limit pill ────────────────────────────────────────────────────────
+class _GuestLimitPill extends StatelessWidget {
+  const _GuestLimitPill({required this.event, required this.s});
+  final HomeEventCardData event;
+  final double s;
+
+  @override
+  Widget build(BuildContext context) {
+    final int? maxGuests = event.maxGuests;
+    final int going = event.guestCounts.going;
+    final String value = (maxGuests == null || maxGuests <= 0) ? '$going' : '$going/$maxGuests';
+    final double progress = (maxGuests == null || maxGuests <= 0) ? 0 : (going / maxGuests).clamp(0.0, 1.0);
+
+    return _MetricPill(
+      s: s,
+      iconPath: 'assets/icons/event/guests.png',
+      value: value,
+      progress: progress,
+      progressColor: const Color(0xFF2E8B22),
+    );
+  }
+}
+
+// ── price pill ──────────────────────────────────────────────────────────────
+class _PricePill extends StatelessWidget {
+  const _PricePill({required this.event, required this.s});
+  final HomeEventCardData event;
+  final double s;
+
+  @override
+  Widget build(BuildContext context) {
+    final int? price = event.price;
+    final String value = (price == null || price <= 0) ? '-' : '€ $price,00';
+    return _MetricPill(
+      s: s,
+      iconPath: 'assets/icons/event/price.png',
+      fallbackIcon: Icons.payments_outlined,
+      value: value,
+      progress: 0,
+      progressColor: Colors.transparent,
+    );
+  }
+}
+
+// ── metric pill ─────────────────────────────────────────────────────────────
+class _MetricPill extends StatelessWidget {
+  const _MetricPill({
+    required this.s,
+    required this.iconPath,
+    required this.value,
+    required this.progress,
+    required this.progressColor,
+    this.fallbackIcon,
+  });
+  final double s;
+  final String iconPath;
+  final String value;
+  final double progress;
+  final Color progressColor;
+  final IconData? fallbackIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30 * s),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
+        child: Container(
+          height: 56 * s,
+          decoration: const BoxDecoration(color: Color.fromARGB(51, 0, 0, 0)),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(
+                children: [
+                  if (progress > 0)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 260),
+                      width: constraints.maxWidth * progress,
+                      height: constraints.maxHeight,
+                      color: progressColor.withAlpha(199),
+                    ),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _SafeAssetIcon(iconPath: iconPath, fallbackIcon: fallbackIcon, size: 20 * s),
+                        SizedBox(height: 2 * s),
+                        Text(
+                          value,
+                          style: TextStyle(color: Colors.white, fontSize: 16 * s, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30 * s),
+                        border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── by you event card ───────────────────────────────────────────────────────
-//
-//   used for: displaying events created by the current user.
-//   design: image background with action buttons (edit, guests) and RSVP totals.
 class _ByYouEventCard extends StatelessWidget {
   const _ByYouEventCard({
     required this.event,
@@ -183,7 +590,6 @@ class _ByYouEventCard extends StatelessWidget {
   final VoidCallback? onGuestListTap;
   final VoidCallback? onEditTap;
 
-  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
@@ -199,13 +605,7 @@ class _ByYouEventCard extends StatelessWidget {
         height: cardHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(40),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.white54,
-              blurRadius: 5,
-              offset: Offset(0, -1),
-            ),
-          ],
+          boxShadow: const [BoxShadow(color: Colors.white54, blurRadius: 5, offset: Offset(0, -1))],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(40),
@@ -241,111 +641,44 @@ class _ByYouEventCard extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.fromLTRB(14 * s, 14 * s, 14 * s, 16 * s),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // left buttons
                         Row(
                           children: [
-                            _CardIconCircle(
-                              iconPath: event.categoryIconPath,
-                              isBlueAccent: true,
-                              size: 44 * s,
-                              iconSize: 28 * s,
-                            ),
-                            SizedBox(width: 10 * s),
-                            _CardIconCircle(
-                              iconPath: event.typeIconPath,
-                              size: 44 * s,
-                              iconSize: 28 * s,
-                            ),
+                            _CardIconCircle(iconPath: event.categoryIconPath, isBlueAccent: true, size: 44 * s, iconSize: 28 * s),
+                            SizedBox(width: 12 * s),
+                            _CardIconCircle(iconPath: event.typeIconPath, size: 44 * s, iconSize: 28 * s),
                           ],
                         ),
-
-                        // right buttons
                         Row(
                           children: [
-                            _CardIconCircle(
-                              iconPath: 'assets/icons/event/guests.png',
-                              onTap: onGuestListTap,
-                              size: 44 * s,
-                              iconSize: 28 * s,
-                            ),
-                            SizedBox(width: 10 * s),
-                            _CardIconCircle(
-                              iconPath: 'assets/icons/event/edit.png',
-                              onTap: onEditTap,
-                              size: 44 * s,
-                              iconSize: 28 * s,
-                            ),
+                            _CardIconCircle(iconPath: 'assets/icons/event/guests.png', onTap: onGuestListTap, size: 44 * s, iconSize: 28 * s),
+                            SizedBox(width: 12 * s),
+                            _CardIconCircle(iconPath: 'assets/icons/event/edit.png', onTap: onEditTap, size: 44 * s, iconSize: 28 * s),
                           ],
                         ),
                       ],
                     ),
                     const Spacer(),
                     if (event.canInviteGuests) ...[
-                      Align(
-                        alignment: Alignment.center,
-                        child: _CardPillButton(
-                          label: StringRes.at('add_guest'),
-                          onTap: onAddGuestsTap,
-                        ),
-                      ),
+                      _CardPillButton(label: StringRes.at('add_guest'), onTap: onAddGuestsTap),
                       SizedBox(height: 14 * s),
                     ],
                     Text(
                       event.title.isNotEmpty ? event.title : 'Untitled Event',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 40 * s,
-                        fontWeight: FontWeight.bold,
-                        height: 1.0,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 40 * s, fontWeight: FontWeight.bold, height: 1.0),
                     ),
-
                     SizedBox(height: 8 * s),
-
-                    // date
-                    if (event.dateLabel.isNotEmpty)
-                      Text(
-                        event.dateLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15 * s,
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
-                    // location
+                    if (event.dateLabel.isNotEmpty) _PreviewInfoText(text: event.dateLabel, s: s),
                     if (event.locationLabel.isNotEmpty) ...[
                       SizedBox(height: 2 * s),
-                      Text(
-                        event.locationLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15 * s,
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
+                      _PreviewInfoText(text: event.locationLabel, s: s),
                     ],
-
                     SizedBox(height: 14 * s),
-
-                    // guests state banner
-                    Align(
-                      alignment: Alignment.center,
-                      child: _GuestStateBanner(counts: event.guestCounts, s: s),
-                    ),
+                    _GuestStateBanner(counts: event.guestCounts, s: s),
                   ],
                 ),
               ),
@@ -357,247 +690,162 @@ class _ByYouEventCard extends StatelessWidget {
   }
 }
 
-// ── card icon circle ────────────────────────────────────────────────────────
-//
-//   used for: displaying status icons or action buttons on event cards.
-//   design: glass-morphism circular container with blur and optional highlight.
-class _CardIconCircle extends StatelessWidget {
-  const _CardIconCircle({
-    required this.iconPath,
-    this.onTap,
-    this.isBlueAccent = false,
-    this.size = 40,
-    this.iconSize = 20,
-  });
+// ── shared widgets ──────────────────────────────────────────────────────────
 
+class _PreviewInfoText extends StatelessWidget {
+  const _PreviewInfoText({required this.text, required this.s});
+  final String text;
+  final double s;
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: TextStyle(color: Colors.white, fontSize: 15 * s, fontWeight: FontWeight.normal),
+    );
+  }
+}
+
+class _CardIconCircle extends StatelessWidget {
+  const _CardIconCircle({required this.iconPath, this.onTap, this.isBlueAccent = false, this.size = 40, this.iconSize = 20});
   final String iconPath;
   final VoidCallback? onTap;
   final bool isBlueAccent;
   final double size;
   final double iconSize;
 
-  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final Widget child = ClipOval(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
         child: Container(
           width: size,
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isBlueAccent
-                ? const Color.fromARGB(51, 6, 0, 92)
-                : const Color.fromARGB(70, 0, 0, 0),
-            border: Border.all(
-              color: isBlueAccent
-                  ? const Color.fromARGB(128, 0, 10, 218)
-                  : const Color.fromARGB(150, 255, 255, 255),
-              width: 2,
-            ),
+            color: isBlueAccent ? const Color.fromARGB(51, 6, 0, 92) : const Color.fromARGB(51, 0, 0, 0),
+            border: Border.all(color: isBlueAccent ? const Color.fromARGB(128, 0, 10, 218) : const Color.fromARGB(128, 255, 255, 255), width: 2),
           ),
-          child: Center(
-            child: Image.asset(
-              iconPath,
-              width: iconSize,
-              height: iconSize,
-              fit: BoxFit.contain,
-            ),
-          ),
+          child: Center(child: Image.asset(iconPath, width: iconSize, height: iconSize)),
         ),
       ),
     );
-
-    if (onTap == null) {
-      return child;
-    }
-
-    return GestureDetector(
-      onTap: () {
-        HapticService.tap();
-        onTap!();
-      },
-      child: child,
-    );
+    return onTap == null ? child : GestureDetector(onTap: () { HapticService.tap(); onTap!(); }, child: child);
   }
 }
 
-// ── card pill button ────────────────────────────────────────────────────────
-//
-//   used for: call-to-action buttons (like "Add Guests") on event cards.
-//   design: frosted-glass pill-shaped capsule with bold text.
 class _CardPillButton extends StatelessWidget {
   const _CardPillButton({required this.label, this.onTap});
-
   final String label;
   final VoidCallback? onTap;
 
-  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final Widget child = ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(51, 255, 255, 255),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color.fromARGB(128, 255, 255, 255),
-              width: 2,
+    return GestureDetector(
+      onTap: () { HapticService.tap(); onTap?.call(); },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(51, 255, 255, 255),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
             ),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ),
       ),
     );
-
-    if (onTap == null) {
-      return child;
-    }
-
-    return GestureDetector(
-      onTap: () {
-        HapticService.tap();
-        onTap!();
-      },
-      child: child,
-    );
   }
 }
 
-// ── guest state banner ──────────────────────────────────────────────────────
-//
-//   used for: displaying a summary of RSVP totals (Going, Not Going, Maybe).
-//   design: horizontal glass banner with three count segments.
 class _GuestStateBanner extends StatelessWidget {
   const _GuestStateBanner({required this.counts, required this.s});
-
   final HomeEventGuestCounts counts;
   final double s;
 
-  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(35 * s),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
         child: Container(
           constraints: BoxConstraints(minWidth: 230 * s, maxWidth: 280 * s),
           padding: EdgeInsets.symmetric(horizontal: 14 * s, vertical: 11 * s),
           decoration: BoxDecoration(
             color: const Color.fromARGB(51, 0, 0, 0),
             borderRadius: BorderRadius.circular(35 * s),
-            border: Border.all(
-              color: const Color.fromARGB(128, 255, 255, 255),
-              width: 2,
-            ),
+            border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
           ),
           child: Row(
             children: [
-              Expanded(
-                child: _GuestStateItem(
-                  iconPath: 'assets/icons/event/participation_state/going.png',
-                  label: StringRes.at('going'),
-                  value: counts.going,
-                  s: s,
-                ),
-              ),
-              //Container(width: 1.25, height: 34 * s, color: Colors.white24),
-              Expanded(
-                child: _GuestStateItem(
-                  iconPath:
-                      'assets/icons/event/participation_state/not_going.png',
-                  label: StringRes.at('not_going'),
-                  value: counts.notGoing,
-                  s: s,
-                ),
-              ),
-              //Container(width: 1.25, height: 34 * s, color: Colors.white24),
-              Expanded(
-                child: _GuestStateItem(
-                  iconPath: 'assets/icons/event/participation_state/maybe.png',
-                  label: StringRes.at('maybe'),
-                  value: counts.maybe,
-                  s: s,
-                ),
-              ),
+              _stateItem('going', counts.going),
+              _stateItem('not_going', counts.notGoing),
+              _stateItem('maybe', counts.maybe),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _stateItem(String state, int val) {
+    final String path = 'assets/icons/event/participation_state/$state.png';
+    return Expanded(
+      child: Column(
+        children: [
+          Image.asset(path, width: 20 * s, height: 20 * s),
+          SizedBox(height: 4 * s),
+          Text('$val', style: TextStyle(color: Colors.white, fontSize: 20 * s, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
 }
 
-// ── guest state item ────────────────────────────────────────────────────────
-//
-//   used for: a single RSVP category within the guest state banner.
-//   design: vertical arrangement of icon, label, and numeric value.
-class _GuestStateItem extends StatelessWidget {
-  const _GuestStateItem({
-    required this.iconPath,
-    required this.label,
-    required this.value,
-    required this.s,
-  });
+class _ProfilePhotoCircle extends StatelessWidget {
+  const _ProfilePhotoCircle({required this.photo, required this.size});
+  final String photo;
+  final double size;
 
-  final String iconPath;
-  final String label;
-  final int value;
-  final double s;
-
-  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // state icone
-        Image.asset(
-          iconPath,
-          width: 20 * s,
-          height: 20 * s,
-          fit: BoxFit.contain,
-        ),
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color.fromARGB(204, 255, 195, 0), width: 2),
+      ),
+      child: ClipOval(
+        child: photo.isEmpty
+            ? Icon(Icons.person, color: Colors.white70, size: size * 0.52)
+            : Image(image: photo.startsWith('http') ? NetworkImage(photo) : AssetImage(photo) as ImageProvider, fit: BoxFit.cover),
+      ),
+    );
+  }
+}
 
-        SizedBox(height: 4 * s), // distance
+class _SafeAssetIcon extends StatelessWidget {
+  const _SafeAssetIcon({required this.iconPath, required this.size, this.fallbackIcon});
+  final String iconPath;
+  final double size;
+  final IconData? fallbackIcon;
 
-        // state name
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12 * s,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-
-        SizedBox(height: 4 * s), // distance
-
-        // number of guests
-        Text(
-          '$value',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20 * s,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      iconPath,
+      width: size,
+      height: size,
+      errorBuilder: (_, _, _) => Icon(fallbackIcon ?? Icons.info_outline, color: Colors.white, size: size),
     );
   }
 }

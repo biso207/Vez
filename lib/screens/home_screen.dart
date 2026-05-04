@@ -156,6 +156,26 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // save the card response selected from invited and nearby previews
+  Future<void> _updateEventCardResponse(
+    HomeEventCardData event,
+    String responseState,
+  ) async {
+    final int result = await _controller.updateEventResponse(
+      event: event,
+      responseState: responseState,
+    );
+
+    if (!mounted || result == 200 || result == 204) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${StringRes.at("event_update_failed")} ($result)'),
+        backgroundColor: const Color.fromARGB(200, 255, 49, 49),
+      ),
+    );
+  }
+
   // ── select filter ──────────────────────────────────────────────────────────
   //
   //   used for: switching between event categories (Invited, By You, Nearby).
@@ -204,9 +224,9 @@ class _HomePageState extends State<HomePage> {
               .where((guest) => _matchesGuestStateFilter(guest, statusFilter))
               .where(
                 (guest) => guest.username.toLowerCase().contains(
-              searchController.text.trim().toLowerCase(),
-            ),
-          )
+                  searchController.text.trim().toLowerCase(),
+                ),
+              )
               .toList();
 
           Future<void> refreshCurrentEvent() async {
@@ -262,12 +282,19 @@ class _HomePageState extends State<HomePage> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: const Color.fromARGB(51, 0, 0, 0),
-                            border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+                            border: Border.all(
+                              color: const Color.fromARGB(128, 255, 255, 255),
+                              width: 2,
+                            ),
                           ),
-                          child: const Icon(Icons.add, color: Colors.white, size: 25),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 25,
+                          ),
                         ),
                       ),
-                    ]
+                    ],
                   ],
                 ),
               ),
@@ -279,32 +306,36 @@ class _HomePageState extends State<HomePage> {
                   runSpacing: 8,
                   children: [
                     _PopupFilterChip(
-                      iconPath: 'assets/icons/event/participation_state/whoever_state.png',
+                      iconPath:
+                          'assets/icons/event/participation_state/whoever_state.png',
                       fallbackIcon: Icons.group,
                       isActive: statusFilter == _GuestStateFilter.all,
                       onTap: () => setPopupState(
-                            () => statusFilter = _GuestStateFilter.all,
+                        () => statusFilter = _GuestStateFilter.all,
                       ),
                     ),
                     _PopupFilterChip(
-                      iconPath: 'assets/icons/event/participation_state/going.png',
+                      iconPath:
+                          'assets/icons/event/participation_state/going.png',
                       isActive: statusFilter == _GuestStateFilter.going,
                       onTap: () => setPopupState(
-                            () => statusFilter = _GuestStateFilter.going,
+                        () => statusFilter = _GuestStateFilter.going,
                       ),
                     ),
                     _PopupFilterChip(
-                      iconPath: 'assets/icons/event/participation_state/not_going.png',
+                      iconPath:
+                          'assets/icons/event/participation_state/not_going.png',
                       isActive: statusFilter == _GuestStateFilter.notGoing,
                       onTap: () => setPopupState(
-                            () => statusFilter = _GuestStateFilter.notGoing,
+                        () => statusFilter = _GuestStateFilter.notGoing,
                       ),
                     ),
                     _PopupFilterChip(
-                      iconPath: 'assets/icons/event/participation_state/maybe.png',
+                      iconPath:
+                          'assets/icons/event/participation_state/maybe.png',
                       isActive: statusFilter == _GuestStateFilter.maybe,
                       onTap: () => setPopupState(
-                            () => statusFilter = _GuestStateFilter.maybe,
+                        () => statusFilter = _GuestStateFilter.maybe,
                       ),
                     ),
                   ],
@@ -328,7 +359,7 @@ class _HomePageState extends State<HomePage> {
                       _PopupEmptyState(title: StringRes.at('no_guests_yet'))
                     else
                       ...visibleGuests.map(
-                            (guest) => Padding(
+                        (guest) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: _PopupGuestRow(
                             username: guest.username,
@@ -336,29 +367,39 @@ class _HomePageState extends State<HomePage> {
                             state: guest.state,
                             trailing: currentEvent.canInviteGuests
                                 ? GestureDetector(
-                              onTap: isBusy
-                                  ? null
-                                  : () => removeGuest(guest.userId),
-                              child: Container(
-                                width: 22,
-                                height: 22,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: const Color.fromARGB(128, 255, 49, 49),
-                                  border: Border.all(
-                                    color: const Color.fromARGB(204, 255, 49, 49),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Image.asset(
-                                    'assets/icons/profile_page/delete.png',
-                                    width: 13,
-                                    height: 13,
-                                  ),
-                                ),
-                              ),
-                            )
+                                    onTap: isBusy
+                                        ? null
+                                        : () => removeGuest(guest.userId),
+                                    child: Container(
+                                      width: 22,
+                                      height: 22,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: const Color.fromARGB(
+                                          128,
+                                          255,
+                                          49,
+                                          49,
+                                        ),
+                                        border: Border.all(
+                                          color: const Color.fromARGB(
+                                            204,
+                                            255,
+                                            49,
+                                            49,
+                                          ),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Image.asset(
+                                          'assets/icons/profile_page/delete.png',
+                                          width: 13,
+                                          height: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  )
                                 : null,
                           ),
                         ),
@@ -473,21 +514,22 @@ class _HomePageState extends State<HomePage> {
                       iconPath: 'assets/icons/event/friends.png',
                       isActive: audienceFilter == _GuestAudienceFilter.friends,
                       onTap: () => setPopupState(
-                            () => audienceFilter = _GuestAudienceFilter.friends,
+                        () => audienceFilter = _GuestAudienceFilter.friends,
                       ),
                     ),
                     _PopupFilterChip(
                       iconPath: 'assets/icons/event/following.png',
-                      isActive: audienceFilter == _GuestAudienceFilter.following,
+                      isActive:
+                          audienceFilter == _GuestAudienceFilter.following,
                       onTap: () => setPopupState(
-                            () => audienceFilter = _GuestAudienceFilter.following,
+                        () => audienceFilter = _GuestAudienceFilter.following,
                       ),
                     ),
                     _PopupFilterChip(
                       iconPath: 'assets/icons/event/public.png',
                       isActive: audienceFilter == _GuestAudienceFilter.anyone,
                       onTap: () => setPopupState(
-                            () => audienceFilter = _GuestAudienceFilter.anyone,
+                        () => audienceFilter = _GuestAudienceFilter.anyone,
                       ),
                     ),
                   ],
@@ -497,37 +539,42 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: candidates.isEmpty
                     ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _PopupEmptyState(
-                    title: StringRes.at('no_guests_found'),
-                  ),
-                )
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _PopupEmptyState(
+                          title: StringRes.at('no_guests_found'),
+                        ),
+                      )
                     : ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: candidates.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (_, index) {
-                    final Map<String, dynamic> user = candidates[index];
-                    final String userId = (user['user_id'] ?? '').toString();
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: candidates.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (_, index) {
+                          final Map<String, dynamic> user = candidates[index];
+                          final String userId = (user['user_id'] ?? '')
+                              .toString();
 
-                    // Determiniamo l'icona della relazione
-                    String relationIconPath;
-                    if (friendIds.contains(userId)) {
-                      relationIconPath = 'assets/icons/event/friends.png';
-                    } else if (_controller.followingIds.contains(userId)) {
-                      relationIconPath = 'assets/icons/event/following.png';
-                    } else {
-                      relationIconPath = 'assets/icons/event/public.png';
-                    }
+                          // Determiniamo l'icona della relazione
+                          String relationIconPath;
+                          if (friendIds.contains(userId)) {
+                            relationIconPath = 'assets/icons/event/friends.png';
+                          } else if (_controller.followingIds.contains(
+                            userId,
+                          )) {
+                            relationIconPath =
+                                'assets/icons/event/following.png';
+                          } else {
+                            relationIconPath = 'assets/icons/event/public.png';
+                          }
 
-                    return _PopupUserSelectionRow(
-                      username: (user['username'] ?? '').toString(),
-                      profilePhoto: (user['profile_photo'] ?? '').toString(),
-                      relationIconPath: relationIconPath,
-                      onAdd: isBusy ? null : () => addGuest(userId),
-                    );
-                  },
-                ),
+                          return _PopupUserSelectionRow(
+                            username: (user['username'] ?? '').toString(),
+                            profilePhoto: (user['profile_photo'] ?? '')
+                                .toString(),
+                            relationIconPath: relationIconPath,
+                            onAdd: isBusy ? null : () => addGuest(userId),
+                          );
+                        },
+                      ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -544,9 +591,9 @@ class _HomePageState extends State<HomePage> {
   //
   //   used for: logic to filter guests by their current RSVP state.
   bool _matchesGuestStateFilter(
-      HomeEventGuestData guest,
-      _GuestStateFilter filter,
-      ) {
+    HomeEventGuestData guest,
+    _GuestStateFilter filter,
+  ) {
     switch (filter) {
       case _GuestStateFilter.all:
         return true;
@@ -629,13 +676,14 @@ class _HomePageState extends State<HomePage> {
                 events: _visibleEvents,
                 s: s,
                 isLoading:
-                _controller.isLoadingEvents || _controller.isLoadingNearby,
+                    _controller.isLoadingEvents || _controller.isLoadingNearby,
                 emptyStateTitle: _emptyStateTitle(),
                 emptyStateIconPath: _emptyStateIcon,
                 highlightedEventId: widget.initialEventId,
                 onAddGuestsTap: _showAddGuestPopup,
                 onGuestListTap: _showGuestListPopup,
                 onEditTap: _editEvent,
+                onResponseSelected: _updateEventCardResponse,
               ),
             ),
           ],
@@ -701,13 +749,13 @@ class _NearbyRangeControl extends StatelessWidget {
                   onPressed: isLoading ? null : onRefreshPosition,
                   icon: isLoading
                       ? SizedBox(
-                    width: 18 * s,
-                    height: 18 * s,
-                    child: const CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
+                          width: 18 * s,
+                          height: 18 * s,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Icon(Icons.my_location, color: Colors.white),
                 ),
               ],
@@ -755,6 +803,7 @@ class _EventCarousel extends StatefulWidget {
     required this.onAddGuestsTap,
     required this.onGuestListTap,
     required this.onEditTap,
+    required this.onResponseSelected,
   });
 
   final List<HomeEventCardData> events;
@@ -766,6 +815,8 @@ class _EventCarousel extends StatefulWidget {
   final ValueChanged<HomeEventCardData> onAddGuestsTap;
   final ValueChanged<HomeEventCardData> onGuestListTap;
   final ValueChanged<HomeEventCardData> onEditTap;
+  final void Function(HomeEventCardData event, String responseState)
+  onResponseSelected;
 
   @override
   State<_EventCarousel> createState() => _EventCarouselState();
@@ -812,7 +863,7 @@ class _EventCarouselState extends State<_EventCarousel> {
     }
 
     final int targetIndex = widget.events.indexWhere(
-          (event) => event.eventId == eventId,
+      (event) => event.eventId == eventId,
     );
     if (targetIndex < 0) return;
 
@@ -863,6 +914,10 @@ class _EventCarouselState extends State<_EventCarousel> {
                 ? () => widget.onGuestListTap(event)
                 : null,
             onEditTap: event.isByYou ? () => widget.onEditTap(event) : null,
+            onResponseSelected: !event.isByYou
+                ? (responseState) =>
+                      widget.onResponseSelected(event, responseState)
+                : null,
           ),
         );
       },
@@ -982,10 +1037,7 @@ class _BottomNavPill extends StatelessWidget {
 //   used for: the top section of popup windows.
 //   design: contains title, close button, and an optional custom action icon.
 class _PopupHeaderBar extends StatelessWidget {
-  const _PopupHeaderBar({
-    required this.title,
-    required this.onClose,
-  });
+  const _PopupHeaderBar({required this.title, required this.onClose});
 
   final String title;
   final VoidCallback onClose;
@@ -1016,7 +1068,10 @@ class _PopupHeaderBar extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color.fromARGB(51, 0, 0, 0),
-                border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+                border: Border.all(
+                  color: const Color.fromARGB(128, 255, 255, 255),
+                  width: 2,
+                ),
               ),
               child: const Icon(Icons.close, color: Colors.white, size: 25),
             ),
@@ -1124,7 +1179,10 @@ class _PopupGuestRow extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         color: const Color.fromARGB(51, 0, 0, 0),
-        border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+        border: Border.all(
+          color: const Color.fromARGB(128, 255, 255, 255),
+          width: 2,
+        ),
       ),
       child: Row(
         children: [
@@ -1139,7 +1197,7 @@ class _PopupGuestRow extends StatelessWidget {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 17
+                      fontSize: 17,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1148,12 +1206,15 @@ class _PopupGuestRow extends StatelessWidget {
               ],
             ),
           ),
-          if (roleLabel == null) _PopupStateIcon(state: state), // no state for the host
-          if (roleLabel != null) _RoleBadge(label: roleLabel!), // "host" target for the host
+          if (roleLabel == null)
+            _PopupStateIcon(state: state), // no state for the host
+          if (roleLabel != null)
+            _RoleBadge(label: roleLabel!), // "host" target for the host
 
-          if (trailing != null) ...[ // remove guest buttons
+          if (trailing != null) ...[
+            // remove guest buttons
             const SizedBox(width: 13), // space from the state icon
-            trailing!
+            trailing!,
           ],
         ],
       ),
@@ -1218,7 +1279,8 @@ class _PopupUserSelectionRow extends StatelessWidget {
           GestureDetector(
             onTap: onAdd,
             child: const Icon(
-              Icons.person_add_alt_1_rounded, // Quella che usavi prima o la tua custom
+              Icons
+                  .person_add_alt_1_rounded, // Quella che usavi prima o la tua custom
               color: Color(0xFF089D0D),
               size: 28,
             ),
@@ -1254,11 +1316,11 @@ class _PopupUserAvatar extends StatelessWidget {
         child: photo.isEmpty
             ? const Icon(Icons.person, color: Colors.white70, size: 18)
             : Image(
-          image: isNetworkImage
-              ? NetworkImage(photo)
-              : AssetImage(photo) as ImageProvider,
-          fit: BoxFit.cover,
-        ),
+                image: isNetworkImage
+                    ? NetworkImage(photo)
+                    : AssetImage(photo) as ImageProvider,
+                fit: BoxFit.cover,
+              ),
       ),
     );
   }
@@ -1303,7 +1365,10 @@ class _PopupCountsFooter extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         color: const Color.fromARGB(51, 0, 0, 0),
-        border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+        border: Border.all(
+          color: const Color.fromARGB(128, 255, 255, 255),
+          width: 2,
+        ),
       ),
       child: Row(
         children: [
@@ -1399,7 +1464,10 @@ class _PopupEmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         color: const Color.fromARGB(51, 0, 0, 0),
-        border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+        border: Border.all(
+          color: const Color.fromARGB(128, 255, 255, 255),
+          width: 2,
+        ),
       ),
       child: Text(
         title,
@@ -1407,7 +1475,7 @@ class _PopupEmptyState extends StatelessWidget {
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
-          fontSize: 30
+          fontSize: 30,
         ),
       ),
     );

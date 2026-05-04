@@ -33,6 +33,8 @@ import 'auth/login_screen.dart';
 import 'create_event/create_event_screen.dart';
 import 'notifications_screen.dart';
 
+const double kBlurValue = 5.0;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // stateful widget wrapper
 // ─────────────────────────────────────────────────────────────────────────────
@@ -588,7 +590,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // username field
               _PopupInput(
-                hint: StringRes.at('new_username'),
+                hint: _username,
                 controller: _usernameCtrl,
                 maxLength: 15,
                 onChanged: (v) => setPopupState(() {}),
@@ -618,7 +620,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // city aka-name field
               _PopupInput(
-                hint: StringRes.at('city_aka_name'),
+                hint: _cityAkaName,
                 controller: _cityAkaNameCtrl,
                 maxLength: 10,
                 onChanged: (v) => setPopupState(() {}),
@@ -626,7 +628,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // bio field
               _PopupInput(
-                hint: StringRes.at('bio'),
+                hint: _bio,
                 controller: _bioCtrl,
                 maxLength: 30,
                 onChanged: (v) => setPopupState(() {}),
@@ -980,7 +982,7 @@ class _AvatarWithBadge extends StatelessWidget {
             right: -4,
             child: ClipOval(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
                 child: Container(
                   width: 28,
                   height: 28,

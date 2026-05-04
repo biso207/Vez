@@ -380,6 +380,52 @@ class SetDBService {
     }
   }
 
+  Future<int> upsertEventParticipation({
+    required String eventId,
+    required String participationState,
+  }) async {
+    try {
+      final String normalizedState = _normalizeInviteResponse(
+        participationState,
+      );
+      final int? existingParticipationId = await _getExistingParticipationId(
+        eventId: eventId,
+      );
+
+      if (existingParticipationId != null) {
+        final url = Uri.parse(
+          '$_baseUrl/rest/v1/participation'
+          '?participation_id=eq.$existingParticipationId',
+        );
+        final response = await http.patch(
+          url,
+          headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+          body: jsonEncode({
+            'participation_state': normalizedState,
+            'participation_date': DateTime.now().toUtc().toIso8601String(),
+          }),
+        );
+        return response.statusCode == 204 ? 200 : response.statusCode;
+      }
+
+      final url = Uri.parse('$_baseUrl/rest/v1/participation');
+      final response = await http.post(
+        url,
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+        body: jsonEncode({
+          'event_id': eventId,
+          'user_id': userID,
+          'participation_state': normalizedState,
+          'participation_date': DateTime.now().toUtc().toIso8601String(),
+        }),
+      );
+      return response.statusCode == 201 ? 200 : response.statusCode;
+    } catch (e) {
+      print('upsertEventParticipation error: $e');
+      return 0;
+    }
+  }
+
   String _normalizeInviteResponse(String rawState) {
     final normalized = rawState.trim().toLowerCase().replaceAll(' ', '_');
     if (normalized == 'going' ||
@@ -525,6 +571,25 @@ class SetDBService {
       return data.first['id_invite'] as int?;
     } catch (e) {
       print('getExistingInviteId error: $e');
+      return null;
+    }
+  }
+
+  Future<int?> _getExistingParticipationId({required String eventId}) async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/participation'
+        '?event_id=eq.$eventId&user_id=eq.$userID&select=participation_id'
+        '&limit=1',
+      );
+      final response = await http.get(url, headers: _jsonHeaders);
+      if (response.statusCode != 200) return null;
+
+      final List<dynamic> data = jsonDecode(response.body);
+      if (data.isEmpty) return null;
+      return data.first['participation_id'] as int?;
+    } catch (e) {
+      print('getExistingParticipationId error: $e');
       return null;
     }
   }

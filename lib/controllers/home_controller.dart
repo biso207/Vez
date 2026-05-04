@@ -208,6 +208,31 @@ class HomeController extends ChangeNotifier {
     );
   }
 
+  // update current user's visible response for invited or nearby cards
+  Future<int> updateEventResponse({
+    required HomeEventCardData event,
+    required String responseState,
+  }) async {
+    final int result = event.type == EventType.invited
+        ? await _dbSet.updateEventInviteResponse(
+            eventId: event.eventId,
+            responseState: responseState,
+          )
+        : await _dbSet.upsertEventParticipation(
+            eventId: event.eventId,
+            participationState: responseState,
+          );
+
+    if (result == 200 || result == 204) {
+      final HomeEventCardData? refreshed = await _refreshEventForType(event);
+      if (refreshed != null) {
+        _replaceEvent(refreshed);
+      }
+    }
+
+    return result;
+  }
+
   // ── relation label ─────────────────────────────────────────────────────────
   //
   //   used for: determining the social relationship label for a given user.
@@ -235,6 +260,33 @@ class HomeController extends ChangeNotifier {
   //   used for: triggering UI updates if the controller is still active.
   void _notify() {
     if (!_isDisposed) notifyListeners();
+  }
+
+  // refresh a single card after a status change
+  Future<HomeEventCardData?> _refreshEventForType(
+    HomeEventCardData event,
+  ) async {
+    final Map<String, dynamic>? rawEvent = await _db.getEventById(
+      event.eventId,
+    );
+    if (rawEvent == null) return null;
+    return _mapEvent(rawEvent, event.type, distanceKm: event.distanceKm);
+  }
+
+  // replace the changed card without rebuilding unrelated lists
+  void _replaceEvent(HomeEventCardData event) {
+    final List<HomeEventCardData> updatedEvents = [
+      ...(eventsByType[event.type] ?? const []),
+    ];
+    final int index = updatedEvents.indexWhere(
+      (item) => item.eventId == event.eventId,
+    );
+
+    if (index < 0) return;
+
+    updatedEvents[index] = event;
+    eventsByType = {...eventsByType, event.type: updatedEvents};
+    _notify();
   }
 
   // ── map events ─────────────────────────────────────────────────────────────
