@@ -228,7 +228,7 @@ class GetDBService {
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/events'
-        '?type=in.(Public,Exclusive)'
+        '?type=eq.Public'
         '&select=$_eventSelect'
         '&order=date_event.asc',
       );

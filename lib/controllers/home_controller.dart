@@ -359,9 +359,9 @@ class HomeController extends ChangeNotifier {
       description: (rawEvent['description'] ?? '').toString().trim(),
       placeId: (rawEvent['place_id'] ?? '').toString(),
       placeAddress: (place['address'] ?? '').toString().trim(),
-      locationPrecise: place['is_precise'] == true,
-      latitude: (place['latitude'] as num?)?.toDouble(),
-      longitude: (place['longitude'] as num?)?.toDouble(),
+      locationPrecise: _asBool(place['is_precise']),
+      latitude: _asDouble(place['latitude']),
+      longitude: _asDouble(place['longitude']),
       maxGuests: (rawEvent['max_participants'] as num?)?.toInt(),
       price: (rawEvent['price'] as num?)?.toInt(),
       guestCounts: guestCounts,
@@ -379,6 +379,7 @@ class HomeController extends ChangeNotifier {
 
     final List<HomeEventCardData> nearbyEvents = [];
     for (final rawEvent in _discoverableEvents) {
+      if (!_isPublicEvent(rawEvent)) continue;
       if ((rawEvent['creator_user_id'] ?? '').toString() == _db.userID) {
         continue;
       }
@@ -386,9 +387,9 @@ class HomeController extends ChangeNotifier {
       final Map<String, dynamic> place = rawEvent['place'] is Map
           ? Map<String, dynamic>.from(rawEvent['place'] as Map)
           : <String, dynamic>{};
-      final latitude = (place['latitude'] as num?)?.toDouble();
-      final longitude = (place['longitude'] as num?)?.toDouble();
-      final bool isPrecise = place['is_precise'] == true;
+      final latitude = _asDouble(place['latitude']);
+      final longitude = _asDouble(place['longitude']);
+      final bool isPrecise = _asBool(place['is_precise']);
 
       if (!isPrecise || latitude == null || longitude == null) continue;
       if (latitude == 0.0 && longitude == 0.0) continue;
@@ -467,6 +468,27 @@ class HomeController extends ChangeNotifier {
   //
   //   used for: converting angle degrees to radians for trigonometric calculations.
   double _degreesToRadians(double degrees) => degrees * math.pi / 180;
+
+  bool _isPublicEvent(Map<String, dynamic> rawEvent) {
+    return EventCatalog.normalizeTypeName(rawEvent['type']?.toString()) ==
+        'Public';
+  }
+
+  double? _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value.trim());
+    return null;
+  }
+
+  bool _asBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'true' || normalized == '1';
+    }
+    return false;
+  }
 
   // ── map guests ─────────────────────────────────────────────────────────────
   //

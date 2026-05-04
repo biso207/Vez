@@ -101,7 +101,7 @@ const Map<String, String> de = {
   "confirm_location": "Standort Bestätigen",
   "confirm": "Ja",
   "cancel": "Nein",
-  "delete_event": "Event Löschen",
+  "delete_event": "Löschen",
   "event_saved_success": "Event Gespeichert",
   "event_save_failed": "Speichern Fehlgeschlagen",
   "event_place_save_failed": "Ort Speichern Fehlgeschlagen",

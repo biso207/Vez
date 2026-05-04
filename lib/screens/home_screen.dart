@@ -656,38 +656,39 @@ class _HomePageState extends State<HomePage> {
         onCreateEventTap: _goToCreateEvent,
         onNotificationsTap: _goToNotifications,
       ),
-      body: Padding(
-        padding: EdgeInsets.only(top: _isNearbySelected ? 108 * s : 0),
-        child: Column(
-          children: [
-            if (_isNearbySelected)
-              _NearbyRangeControl(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: _EventCarousel(
+              events: _visibleEvents,
+              s: s,
+              isLoading:
+                  _controller.isLoadingEvents || _controller.isLoadingNearby,
+              emptyStateTitle: _emptyStateTitle(),
+              emptyStateIconPath: _emptyStateIcon,
+              highlightedEventId: widget.initialEventId,
+              onAddGuestsTap: _showAddGuestPopup,
+              onGuestListTap: _showGuestListPopup,
+              onEditTap: _editEvent,
+              onResponseSelected: _updateEventCardResponse,
+            ),
+          ),
+          if (_isNearbySelected)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 82 * s,
+              left: 0,
+              right: 0,
+              child: _NearbyRangeControl(
                 s: s,
                 radiusKm: _controller.nearbyRadiusKm,
                 isLoading: _controller.isLoadingNearby,
                 error: _controller.nearbyError,
-                eventCount: _visibleEvents.length,
                 onRadiusChanged: _controller.updateNearbyRadius,
                 onRefreshPosition: () =>
                     _controller.loadNearbyEvents(refreshPosition: true),
               ),
-            Expanded(
-              child: _EventCarousel(
-                events: _visibleEvents,
-                s: s,
-                isLoading:
-                    _controller.isLoadingEvents || _controller.isLoadingNearby,
-                emptyStateTitle: _emptyStateTitle(),
-                emptyStateIconPath: _emptyStateIcon,
-                highlightedEventId: widget.initialEventId,
-                onAddGuestsTap: _showAddGuestPopup,
-                onGuestListTap: _showGuestListPopup,
-                onEditTap: _editEvent,
-                onResponseSelected: _updateEventCardResponse,
-              ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -696,14 +697,13 @@ class _HomePageState extends State<HomePage> {
 // ── nearby range control ────────────────────────────────────────────────────
 //
 //   used for: adjusting the distance radius for nearby event discovery.
-//   design: glassy container with radius display, refresh button, and slider.
+//   design: compact glassy strip placed between the top navbar and event card.
 class _NearbyRangeControl extends StatelessWidget {
   const _NearbyRangeControl({
     required this.s,
     required this.radiusKm,
     required this.isLoading,
     required this.error,
-    required this.eventCount,
     required this.onRadiusChanged,
     required this.onRefreshPosition,
   });
@@ -712,7 +712,6 @@ class _NearbyRangeControl extends StatelessWidget {
   final double radiusKm;
   final bool isLoading;
   final String error;
-  final int eventCount;
   final ValueChanged<double> onRadiusChanged;
   final VoidCallback onRefreshPosition;
 
@@ -720,68 +719,90 @@ class _NearbyRangeControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roundedRadius = radiusKm.round();
+    final bool hasError = error.isNotEmpty;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20 * s, 0, 20 * s, 8 * s),
+    return Center(
       child: VezGlass.container(
-        padding: EdgeInsets.fromLTRB(16 * s, 12 * s, 12 * s, 10 * s),
-        radius: BorderRadius.circular(28 * s),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    error.isNotEmpty
-                        ? error
-                        : '$roundedRadius km - $eventCount eventi',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15 * s,
-                      fontWeight: FontWeight.bold,
+        padding: EdgeInsets.symmetric(horizontal: 8 * s),
+        radius: BorderRadius.circular(22 * s),
+        child: SizedBox(
+          width: 280 * s,
+          height: 30 * s,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 44 * s,
+                child: Text(
+                  hasError ? '!' : '${roundedRadius}Km',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: hasError ? const Color(0xFFFF3131) : Colors.white,
+                    fontSize: 12 * s,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    activeTrackColor: Colors.white,
+                    inactiveTrackColor: Colors.white38,
+                    thumbColor: Colors.white,
+                    overlayColor: const Color.fromARGB(45, 255, 255, 255),
+                    trackHeight: 2 * s,
+                    thumbShape: RoundSliderThumbShape(
+                      enabledThumbRadius: 5.5 * s,
+                      disabledThumbRadius: 5.5 * s,
+                    ),
+                    overlayShape: RoundSliderOverlayShape(
+                      overlayRadius: 12 * s,
+                    ),
+                    trackShape: const RoundedRectSliderTrackShape(),
+                  ),
+                  child: Slider(
+                    min: 1,
+                    max: 100,
+                    divisions: 99,
+                    value: radiusKm.clamp(1, 100),
+                    onChanged: isLoading ? null : onRadiusChanged,
+                  ),
+                ),
+              ),
+              Tooltip(
+                message: hasError ? error : StringRes.at('filter_nearby'),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: isLoading ? null : onRefreshPosition,
+                  child: SizedBox(
+                    width: 28 * s,
+                    height: 26 * s,
+                    child: Center(
+                      child: isLoading
+                          ? SizedBox(
+                              width: 14 * s,
+                              height: 14 * s,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Image.asset(
+                              "assets/icons/event/my_location.png",
+                              color: hasError
+                                  ? const Color(0xFFFF3131)
+                                  : Colors.white,
+                              width: 20 * s,
+                              height: 20 * s,
+                            ),
                     ),
                   ),
                 ),
-                IconButton(
-                  onPressed: isLoading ? null : onRefreshPosition,
-                  icon: isLoading
-                      ? SizedBox(
-                          width: 18 * s,
-                          height: 18 * s,
-                          child: const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.my_location, color: Colors.white),
-                ),
-              ],
-            ),
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                activeTrackColor: Colors.white,
-                inactiveTrackColor: Colors.white24,
-                thumbColor: Colors.white,
-                overlayColor: const Color.fromARGB(40, 255, 255, 255),
-                valueIndicatorColor: Colors.white,
-                valueIndicatorTextStyle: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
               ),
-              child: Slider(
-                min: 1,
-                max: 100,
-                divisions: 99,
-                label: '$roundedRadius km',
-                value: radiusKm.clamp(1, 100),
-                onChanged: isLoading ? null : onRadiusChanged,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

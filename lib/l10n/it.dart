@@ -103,7 +103,7 @@ const Map<String, String> it = {
   "confirm_location": "Conferma Posizione",
   "confirm": "Si",
   "cancel": "No",
-  "delete_event": "Elimina Evento",
+  "delete_event": "Elimina",
   "event_saved_success": "Evento Salvato",
   "event_save_failed": "Salvataggio Fallito",
   "event_place_save_failed": "Salvataggio Luogo Fallito",

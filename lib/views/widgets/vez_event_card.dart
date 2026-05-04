@@ -57,7 +57,7 @@ class VezEventCard extends StatelessWidget {
 
 // ── preview event card ───────────────────────────────────────────────────────
 //
-// used for: displaying info and rsvp slider for invited or nearby events.
+// used for: displaying info and RSVP slider for invited or nearby events.
 // design: full-bleed background image with bottom rsvp and metrics overlay.
 class _PreviewEventCard extends StatefulWidget {
   const _PreviewEventCard({
@@ -177,10 +177,7 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
                     // distance is particularly relevant for "nearby" events
                     if (widget.event.distanceKm != null) ...[
                       SizedBox(height: 2 * s),
-                      _PreviewInfoText(
-                        text: _formatDistance(widget.event.distanceKm!),
-                        s: s,
-                      ),
+                      _PreviewInfoText(text: _formatDistance(widget.event.distanceKm!), s: s,),
                     ],
                     SizedBox(height: 12 * s),
                     _ResponseSlider(

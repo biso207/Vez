@@ -101,7 +101,7 @@ const Map<String, String> zh = {
   "confirm_location": "确认位置",
   "confirm": "是",
   "cancel": "否",
-  "delete_event": "删除活动",
+  "delete_event": "删除",
   "event_saved_success": "活动已成功保存",
   "event_save_failed": "无法保存活动",
   "event_place_save_failed": "无法保存地点",
