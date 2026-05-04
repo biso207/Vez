@@ -1,12 +1,5 @@
-// developed and designed by outly • © 2026
-// signup screen — 3-step flow: (1) avatar + username, (2) email + password,
-//                               (3) date of birth + city.
-//
-// layout notes:
-//   the bottom section (error slot → step-dots → action button → pill)
-//   uses the EXACT same fixed heights as login_screen.dart so that
-//   "action button" and "pill button" land at the same vertical position
-//   on both screens regardless of screen size.
+// Developed and Designed by Outly • © 2026
+// signup screen — 3-step flow for user registration.
 
 import 'dart:io';
 import 'dart:ui';
@@ -23,25 +16,16 @@ import '../../services/translation_service.dart';
 import '../../views/widgets/vez_glass.dart';
 import '../home_screen.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// layout constants — keep in sync with login_screen.dart
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// height always reserved for the error banner (visible or not)
+// ── layout constants ─────────────────────────────────────────────────────────
 const double _kErrorSlotH = 56.0;
-/// height always reserved for the step-dots row
 const double _kDotsSlotH  = 24.0;
-/// vertical gap between fixed bottom items
 const double _kGapH       = 20.0;
-/// gap between the action button and the pill button
 const double _kBelowBtnH  = 50.0;
-/// bottom padding below the pill button
 const double _kBottomPadH = 36.0;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// stateful widget wrapper
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── signup page ──────────────────────────────────────────────────────────────
+//
+//   used for: handling multi-step user registration.
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
 
@@ -49,14 +33,10 @@ class SignupPage extends StatefulWidget {
   State<SignupPage> createState() => _SignupPageState();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// state
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── signup page state ────────────────────────────────────────────────────────
+//
+//   used for: managing the registration flow and data validation.
 class _SignupPageState extends State<SignupPage> {
-
-  // ── controllers & services ─────────────────────────────────────────────────
-
   final TextEditingController _emailCtrl    = TextEditingController();
   final TextEditingController _passwordCtrl = TextEditingController();
   final TextEditingController _usernameCtrl = TextEditingController();
@@ -66,12 +46,8 @@ class _SignupPageState extends State<SignupPage> {
   final ImagePicker    _picker   = ImagePicker();
   final RemoteDbService _db      = RemoteDbService();
 
-  // ── form data ──────────────────────────────────────────────────────────────
-
-  DateTime? _dob;            // date of birth
+  DateTime? _dob;
   File?     _profileImage;
-
-  // ── ui state ───────────────────────────────────────────────────────────────
 
   int     _page         = 0;
   String? _error;
@@ -79,8 +55,7 @@ class _SignupPageState extends State<SignupPage> {
   bool    _showPassword = false;
   bool    _locatingCity = false;
 
-  // ── lifecycle ──────────────────────────────────────────────────────────────
-
+  // ── dispose ────────────────────────────────────────────────────────────────
   @override
   void dispose() {
     _pageCtrl.dispose();
@@ -91,20 +66,19 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  // ── step navigation ────────────────────────────────────────────────────────
-
+  // ── next ───────────────────────────────────────────────────────────────────
   void _next() => _pageCtrl.nextPage(
     duration: const Duration(milliseconds: 300),
     curve:    Curves.easeInOut,
   );
 
+  // ── back ───────────────────────────────────────────────────────────────────
   void _back() => _pageCtrl.previousPage(
     duration: const Duration(milliseconds: 300),
     curve:    Curves.easeInOut,
   );
 
   // ── build ──────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final double sw = MediaQuery.of(context).size.width;
@@ -117,38 +91,30 @@ class _SignupPageState extends State<SignupPage> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-
-          // ── background image ───────────────────────────────────────────
           Positioned.fill(
             child: Image.asset('assets/images/bg/bg_signup.jpg', fit: BoxFit.cover),
           ),
 
-          // ── main content ───────────────────────────────────────────────
           SafeArea(
             child: SizedBox(
-              // extend height when keyboard is open so content stays visible
               height: (sh - pt) + (kb > 0 ? 300 : 0),
               child: Column(
                 children: [
-
-                  // ── title block ─────────────────────────────────────────
                   const Spacer(flex: 2),
                   _TitleBlock(
                     top:    StringRes.at('top_title_signup'),
                     bottom: StringRes.at('under_title_signup'),
                   ),
 
-                  // ── form area (fixed height, same as login) ─────────────
                   const Spacer(flex: 3),
                   SizedBox(
                     height: 300,
                     child: PageView(
                       controller: _pageCtrl,
-                      // disable manual swipe — navigation is controlled via buttons
                       physics: const NeverScrollableScrollPhysics(),
                       onPageChanged: (i) => setState(() {
                         _page  = i;
-                        _error = null;   // clear errors when changing step
+                        _error = null;
                       }),
                       children: [
                         _StepOne(
@@ -177,28 +143,16 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                   ),
 
-                  // ── elastic spacer fills the remaining vertical room ─────
                   const Spacer(),
 
-                  // ═══════════════════════════════════════════════════════
-                  // FIXED BOTTOM BLOCK — identical structure to login_screen
-                  // so action button + pill button land at the same Y position
-                  // ═══════════════════════════════════════════════════════
-
-                  // error banner slot — always the same height; only opacity changes
                   _ErrorSlot(message: _error),
-
                   const SizedBox(height: _kGapH),
-
-                  // step-dots row — fixed height matches login's placeholder
                   SizedBox(
                     height: _kDotsSlotH,
                     child: _StepDots(currentPage: _page, total: 3),
                   ),
-
                   const SizedBox(height: _kGapH),
 
-                  // action button — next / submit depending on current step
                   _StepNavButtons(
                     page:    _page,
                     onBack:  _back,
@@ -207,7 +161,6 @@ class _SignupPageState extends State<SignupPage> {
 
                   const SizedBox(height: _kBelowBtnH),
 
-                  // navigate pill — go back to login
                   _AuthPillButton(
                     text:  StringRes.at('login'),
                     onTap: () => Navigator.pop(context),
@@ -219,17 +172,14 @@ class _SignupPageState extends State<SignupPage> {
             ),
           ),
 
-          // ── loading overlay ────────────────────────────────────────────
           if (_loading) const VezLoadingOverlay(),
         ],
       ),
     );
   }
 
-  // ── step validation & progression ─────────────────────────────────────────
-
+  // ── handle next ────────────────────────────────────────────────────────────
   void _handleNext() {
-    // clear any previous error first
     setState(() => _error = null);
 
     final String username = _usernameCtrl.text.trim();
@@ -281,14 +231,13 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  // ── logic ──────────────────────────────────────────────────────────────────
-
-  /// returns true if the device has an active internet connection
+  // ── has internet ───────────────────────────────────────────────────────────
   Future<bool> _hasInternet() async {
     final result = await Connectivity().checkConnectivity();
     return !result.contains(ConnectivityResult.none);
   }
 
+  // ── signup ─────────────────────────────────────────────────────────────────
   Future<void> _signup() async {
     if (!await _hasInternet()) {
       setState(() => _error = StringRes.at('no_internet_connection'));
@@ -313,7 +262,7 @@ class _SignupPageState extends State<SignupPage> {
       if (res == 200 || res == 201) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(StringRes.at('signup_successful'))));
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomePage()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
       } else if (res == 409) {
         setState(() => _error = StringRes.at('user_already_exists'));
       } else {
@@ -325,10 +274,11 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  /// validates password strength; returns a localized error string or null
+  // ── validate password ──────────────────────────────────────────────────────
   String? _validatePassword(String password) =>
       _isValidPsw(password) ? null : StringRes.at('invalid_password');
 
+  // ── is valid password ──────────────────────────────────────────────────────
   bool _isValidPsw(String p) =>
       p.length >= 8 &&
       RegExp(r'[A-Z]').hasMatch(p) &&
@@ -336,10 +286,11 @@ class _SignupPageState extends State<SignupPage> {
       RegExp(r'[0-9]').hasMatch(p) &&
       RegExp(r'[!@#$&*~£€?§+]').hasMatch(p);
 
+  // ── is valid email ─────────────────────────────────────────────────────────
   bool _isValidEmail(String e) =>
       RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(e);
 
-  /// opens the system date picker and stores the selected date of birth
+  // ── pick date ──────────────────────────────────────────────────────────────
   Future<void> _pickDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -350,7 +301,7 @@ class _SignupPageState extends State<SignupPage> {
     if (picked != null) setState(() => _dob = picked);
   }
 
-  /// opens the gallery so the user can pick a profile photo
+  // ── pick image ─────────────────────────────────────────────────────────────
   Future<void> _pickImage() async {
     final XFile? file = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -359,7 +310,7 @@ class _SignupPageState extends State<SignupPage> {
     if (file != null) setState(() => _profileImage = File(file.path));
   }
 
-  /// uses device GPS + reverse geocoding to auto-fill the city field
+  // ── fetch city ─────────────────────────────────────────────────────────────
   Future<void> _fetchCity() async {
     setState(() { _locatingCity = true; _error = null; });
 
@@ -401,12 +352,7 @@ class _SignupPageState extends State<SignupPage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// step widgets (stateless, receive all data + callbacks from the parent state)
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── step 1: avatar picker + username field ────────────────────────────────────
-
+// ── step 1: avatar picker + username field ───────────────────────────────────
 class _StepOne extends StatelessWidget {
   final double sw;
   final File?  profileImage;
@@ -428,7 +374,6 @@ class _StepOne extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // avatar picker circle
           GestureDetector(
             onTap: onPickImage,
             child: SizedBox(
@@ -441,7 +386,6 @@ class _StepOne extends StatelessWidget {
                     onTap: onPickImage,
                     size: 100, iconSize: 50,
                   ),
-                  // overlay selected photo when available
                   if (profileImage != null)
                     Container(
                       decoration: BoxDecoration(
@@ -459,10 +403,7 @@ class _StepOne extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // username field with live character counter
           VezGlass.textField(
             controller: ctrl,
             hint:  StringRes.at('username'),
@@ -486,8 +427,7 @@ class _StepOne extends StatelessWidget {
   }
 }
 
-// ── step 2: email + password ──────────────────────────────────────────────────
-
+// ── step 2: email + password ─────────────────────────────────────────────────
 class _StepTwo extends StatelessWidget {
   final double sw;
   final TextEditingController emailCtrl;
@@ -541,8 +481,7 @@ class _StepTwo extends StatelessWidget {
   }
 }
 
-// ── step 3: date of birth + city (with GPS auto-fill) ────────────────────────
-
+// ── step 3: date of birth + city ─────────────────────────────────────────────
 class _StepThree extends StatelessWidget {
   final double sw;
   final DateTime?  dob;
@@ -566,7 +505,6 @@ class _StepThree extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // date of birth field — tapping opens the date picker
           InkWell(
             onTap: onPickDate,
             child: AbsorbPointer(
@@ -584,10 +522,7 @@ class _StepThree extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // city field — tapping triggers GPS lookup instead of keyboard
           GestureDetector(
             onTap: onFetchCity,
             child: AbsorbPointer(
@@ -602,7 +537,6 @@ class _StepThree extends StatelessWidget {
                     width: sw * 0.75,
                     color: Colors.white54,
                   ),
-                  // spinner shown while the GPS is working
                   if (locating)
                     const Padding(
                       padding: EdgeInsets.only(right: 15),
@@ -623,8 +557,7 @@ class _StepThree extends StatelessWidget {
   }
 }
 
-// ── _StepNavButtons — back arrow (from step 2+) + next/save arrow ────────────
-
+// ── step nav buttons ─────────────────────────────────────────────────────────
 class _StepNavButtons extends StatelessWidget {
   final int page;
   final VoidCallback onBack;
@@ -641,17 +574,14 @@ class _StepNavButtons extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // back button — hidden on step 0 so it doesn't shift the "next" button
         if (page > 0) ...[
           VezGlass.circleButton(
             assetIcon: 'assets/icons/auth/icon_next.png',
-            rotation:  3.1416,   // flip the arrow icon to point left
+            rotation:  3.1416,
             onTap:     onBack,
           ),
           const SizedBox(width: 40),
         ],
-
-        // next / save button
         VezGlass.circleButton(
           assetIcon: page == 2
               ? 'assets/icons/auth/icon_save.png'
@@ -663,12 +593,36 @@ class _StepNavButtons extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// shared auth-screen sub-widgets
-// ─────────────────────────────────────────────────────────────────────────────
+// ── step dots ────────────────────────────────────────────────────────────────
+class _StepDots extends StatelessWidget {
+  final int currentPage;
+  final int total;
 
-// ── _TitleBlock — large bold title + lighter subtitle ────────────────────────
+  const _StepDots({required this.currentPage, required this.total});
 
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(total, (i) {
+        final bool active = i == currentPage;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          curve:    Curves.easeInOut,
+          margin:   const EdgeInsets.symmetric(horizontal: 5),
+          width:    active ? 22 : 8,
+          height:   8,
+          decoration: BoxDecoration(
+            color: active ? Colors.white : Colors.white.withOpacity(0.35),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ── title block ──────────────────────────────────────────────────────────────
 class _TitleBlock extends StatelessWidget {
   final String top;
   final String bottom;
@@ -700,11 +654,7 @@ class _TitleBlock extends StatelessWidget {
   }
 }
 
-// ── _ErrorSlot — fixed-height container; content fades in/out via opacity ─────
-//
-// using a fixed SizedBox instead of AnimatedSize prevents the error banner
-// from shifting the action button and pill button when it appears or disappears.
-
+// ── error slot ───────────────────────────────────────────────────────────────
 class _ErrorSlot extends StatelessWidget {
   final String? message;
 
@@ -729,11 +679,7 @@ class _ErrorSlot extends StatelessWidget {
   }
 }
 
-// ── _AuthPillButton — frosted-glass pill button where text scales to fit ──────
-//
-// ClipRRect + BackdropFilter creates the blur effect against the background.
-// FittedBox with BoxFit.scaleDown shrinks the label when translations are long.
-
+// ── auth pill button ─────────────────────────────────────────────────────────
 class _AuthPillButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
@@ -745,7 +691,6 @@ class _AuthPillButton extends StatelessWidget {
     final double w = MediaQuery.of(context).size.width * 0.40;
     return GestureDetector(
       onTap: onTap,
-      // ClipRRect must wrap BackdropFilter so the blur is clipped to the pill shape
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40),
         child: BackdropFilter(
@@ -758,7 +703,6 @@ class _AuthPillButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(40),
               border: Border.all(color: Colors.white54, width: 1.5),
             ),
-            // FittedBox scales the text down if wider than available space
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
@@ -772,36 +716,6 @@ class _AuthPillButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ── _StepDots — animated progress indicator for the 3 signup steps ────────────
-
-class _StepDots extends StatelessWidget {
-  final int currentPage;
-  final int total;
-
-  const _StepDots({required this.currentPage, required this.total});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(total, (i) {
-        final bool active = i == currentPage;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 280),
-          curve:    Curves.easeInOut,
-          margin:   const EdgeInsets.symmetric(horizontal: 5),
-          width:    active ? 22 : 8,
-          height:   8,
-          decoration: BoxDecoration(
-            color: active ? Colors.white : Colors.white.withOpacity(0.35),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        );
-      }),
     );
   }
 }

@@ -1,7 +1,16 @@
+// Developed and Designed by Outly • © 2026
+// data models for events shown on the home screen.
+
 import 'event_catalog.dart';
 
+// ── event type ───────────────────────────────────────────────────────────────
+//
+//   used for: categorizing events into feed tabs.
 enum EventType { byYou, invited, nearby }
 
+// ── home event guest counts ──────────────────────────────────────────────────
+//
+//   used for: storing aggregated RSVP totals for an event.
 class HomeEventGuestCounts {
   const HomeEventGuestCounts({
     this.going = 0,
@@ -14,6 +23,9 @@ class HomeEventGuestCounts {
   final int maybe;
 }
 
+// ── home event guest data ────────────────────────────────────────────────────
+//
+//   used for: representing a single user invited to or participating in an event.
 class HomeEventGuestData {
   const HomeEventGuestData({
     required this.userId,
@@ -30,6 +42,9 @@ class HomeEventGuestData {
   final String role;
 }
 
+// ── home event card data ─────────────────────────────────────────────────────
+//
+//   used for: providing all necessary data to render an event card.
 class HomeEventCardData {
   const HomeEventCardData({
     required this.eventId,
@@ -87,12 +102,21 @@ class HomeEventCardData {
   final List<HomeEventGuestData> guests;
   final double? distanceKm;
 
+  // ── is by you ──────────────────────────────────────────────────────────────
+  //
+  //   used for: checking if the event was created by the current user.
   bool get isByYou => type == EventType.byYou;
 
+  // ── can invite guests ──────────────────────────────────────────────────────
+  //
+  //   used for: checking if the event type allows manual guest invitations.
   bool get canInviteGuests {
     return isByYou && EventCatalog.canInviteGuests(typeLabel);
   }
 
+  // ── resolved image path ────────────────────────────────────────────────────
+  //
+  //   used for: returning the custom image path or a default fallback.
   String get resolvedImagePath {
     final String trimmed = imagePath.trim();
     return trimmed.isEmpty ? EventCatalog.defaultBackgroundImage : trimmed;

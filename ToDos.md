@@ -13,6 +13,7 @@
 - [x] 11) Migliorare la grafica della preview per gli eventi "By You" seguendo lo stile del mockup
 - [x] 12) Migliorare le scritte delle lingue
 - [x] 13) Obbligare l'utente a cambiare l'immagine di sfondo nella creazione evento
+- [ ] 14) Correggere il bug del contatore di lunghezza del titolo alla creazione evento
 
 # ───────────────────────────────────────────────────
 

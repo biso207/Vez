@@ -1,4 +1,4 @@
-// developed and designed by outly • © 2026
+// Developed and Designed by outly • © 2026
 // unified popup system for all event-detail interactions.
 //
 // every popup in this file shares the same design language:

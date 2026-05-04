@@ -1,4 +1,4 @@
-// developed and designed by Outly • © 2026
+// Developed and Designed by Outly • © 2026
 // profile screen — zone-2 content: user info card + stats pill + event grid.
 //
 // layout zones used:

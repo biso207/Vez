@@ -1,5 +1,5 @@
 // Developed and Designed by Outly • © 2026
-// Screen to manage the app's loading process
+// screen to manage the app's loading process.
 
 import 'package:flutter/material.dart';
 import '../../services/notification_service.dart';
@@ -8,6 +8,9 @@ import '../home_screen.dart';
 import '../../services/translation_service.dart';
 import 'login_screen.dart';
 
+// ── loading page ─────────────────────────────────────────────────────────────
+//
+//   used for: standardizing the initial loading state of the app.
 class LoadingPage extends StatefulWidget {
   const LoadingPage({super.key});
 
@@ -15,17 +18,25 @@ class LoadingPage extends StatefulWidget {
   State<LoadingPage> createState() => _LoadingPageState();
 }
 
+// ── loading page state ───────────────────────────────────────────────────────
+//
+//   used for: handling app bootstrap, animations, and initial routing.
 class _LoadingPageState extends State<LoadingPage> {
-  // Variabili per gestire gli stati dell'animazione
   bool _showLogo = false;
   bool _fadeOut = false;
 
+  // ── init state ─────────────────────────────────────────────────────────────
+  //
+  //   used for: starting the bootstrap process.
   @override
   void initState() {
     super.initState();
     _bootstrapApp();
   }
 
+  // ── bootstrap app ──────────────────────────────────────────────────────────
+  //
+  //   used for: initializing session, locale, and notifications.
   Future<void> _bootstrapApp() async {
     await UserSession().restore();
 
@@ -40,26 +51,29 @@ class _LoadingPageState extends State<LoadingPage> {
     await startAppAnimations();
   }
 
+  // ── start app animations ───────────────────────────────────────────────────
+  //
+  //   used for: orchestrating the brand intro animation and navigation.
   Future<void> startAppAnimations() async {
-    // 1. Pausa iniziale
+    // 1. Initial pause
     await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
 
-    // 2. Avvia l'animazione "all-in-one"
+    // 2. Start "all-in-one" animation
     setState(() {
       _showLogo = true;
     });
 
-    // 3. Mantieni visibile il logo completo "VEZ"
+    // 3. Keep full "VEZ" logo visible
     await Future.delayed(const Duration(milliseconds: 2500));
     if (!mounted) return;
 
-    // 4. Inizia a far sparire tutto (fade-out) con un leggero zoom
+    // 4. Start fade-out with a slight zoom
     setState(() {
       _fadeOut = true;
     });
 
-    // 5. Attendi la fine dell'animazione di scomparsa
+    // 5. Wait for disappearance animation to end
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
 
@@ -67,7 +81,7 @@ class _LoadingPageState extends State<LoadingPage> {
         ? const HomePage()
         : const LoginPage();
 
-    // 6. Naviga verso la schermata iniziale corretta
+    // 6. Navigate to correct initial screen
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
@@ -80,11 +94,13 @@ class _LoadingPageState extends State<LoadingPage> {
     );
   }
 
-  // --- PAGE LAYOUT ---
+  // ── build ──────────────────────────────────────────────────────────────────
+  //
+  //   used for: rendering the animated splash screen.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Sfondo tutto nero
+      backgroundColor: Colors.black,
       body: Center(
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 1000),
@@ -97,8 +113,6 @@ class _LoadingPageState extends State<LoadingPage> {
             child: ClipRect(
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 1800),
-                // Effetto "da sinistra a destra": allineiamo a sinistra e espandiamo il width factor.
-                // Questo fa sì che il logo appaia gradualmente dalla sinistra verso la destra.
                 alignment: Alignment.centerLeft,
                 widthFactor: _showLogo ? 1.0 : 0.0,
                 curve: Curves.easeInOutQuart,

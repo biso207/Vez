@@ -1,11 +1,5 @@
-// developed and designed by outly • © 2026
+// Developed and Designed by Outly • © 2026
 // login screen — lets the user authenticate with username + password.
-//
-// layout notes:
-//   the bottom section (error slot → dots placeholder → action button → pill)
-//   uses the EXACT same fixed heights as signup_screen.dart so that
-//   "action button" and "pill button" land at the same vertical position
-//   on both screens regardless of screen size.
 
 import 'dart:ui';
 
@@ -18,25 +12,16 @@ import '../../views/widgets/vez_glass.dart';
 import '../home_screen.dart';
 import 'signup_screen.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// layout constants — keep in sync with signup_screen.dart
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// height always reserved for the error banner (visible or not)
+// ── layout constants ─────────────────────────────────────────────────────────
 const double _kErrorSlotH  = 56.0;
-/// height always reserved for the step-dots row (login has no dots → placeholder)
 const double _kDotsSlotH   = 24.0;
-/// vertical gap between fixed bottom items
 const double _kGapH        = 20.0;
-/// gap between the action button and the pill button
 const double _kBelowBtnH   = 50.0;
-/// bottom padding below the pill button
 const double _kBottomPadH  = 36.0;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// stateful widget wrapper
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── login page ───────────────────────────────────────────────────────────────
+//
+//   used for: handling user login credentials and authentication.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -44,26 +29,21 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// state
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ── login page state ─────────────────────────────────────────────────────────
+//
+//   used for: managing the login form state and authentication logic.
 class _LoginPageState extends State<LoginPage> {
-
-  // ── controllers & services ─────────────────────────────────────────────────
-
   final TextEditingController _usernameCtrl = TextEditingController();
   final TextEditingController _passwordCtrl = TextEditingController();
   final RemoteDbService _db = RemoteDbService();
-
-  // ── ui state ───────────────────────────────────────────────────────────────
 
   String? _error;
   bool    _loading      = false;
   bool    _showPassword = false;
 
-  // ── lifecycle ──────────────────────────────────────────────────────────────
-
+  // ── dispose ────────────────────────────────────────────────────────────────
+  //
+  //   used for: disposing text controllers.
   @override
   void dispose() {
     _usernameCtrl.dispose();
@@ -72,7 +52,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // ── build ──────────────────────────────────────────────────────────────────
-
+  //
+  //   used for: rendering the login screen UI.
   @override
   Widget build(BuildContext context) {
     final double sw = MediaQuery.of(context).size.width;
@@ -85,28 +66,22 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-
-          // ── background image ───────────────────────────────────────────
+          // background image
           Positioned.fill(
             child: Image.asset('assets/images/bg/bg_login.jpg', fit: BoxFit.cover),
           ),
 
-          // ── main content ───────────────────────────────────────────────
           SafeArea(
             child: SizedBox(
-              // extend height when keyboard is open so content stays visible
               height: (sh - pt) + (kb > 0 ? 300 : 0),
               child: Column(
                 children: [
-
-                  // ── title block ─────────────────────────────────────────
                   const Spacer(flex: 2),
                   _TitleBlock(
                     top:    StringRes.at('top_title_login'),
                     bottom: StringRes.at('under_title_login'),
                   ),
 
-                  // ── form area (fixed height, same as signup) ────────────
                   const Spacer(flex: 3),
                   SizedBox(
                     height: 300,
@@ -145,26 +120,13 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
 
-                  // ── elastic spacer fills the remaining vertical room ─────
                   const Spacer(),
 
-                  // ═══════════════════════════════════════════════════════
-                  // FIXED BOTTOM BLOCK — identical structure to signup_screen
-                  // so action button + pill button land at the same Y position
-                  // ═══════════════════════════════════════════════════════
-
-                  // error banner slot — always the same height; only opacity changes
                   _ErrorSlot(message: _error),
-
                   const SizedBox(height: _kGapH),
-
-                  // dots placeholder — same height as signup's step-dots row
-                  // (login has no dots, but we reserve the space for alignment)
                   const SizedBox(height: _kDotsSlotH),
-
                   const SizedBox(height: _kGapH),
 
-                  // action button — login submit
                   VezGlass.circleButton(
                     assetIcon: 'assets/icons/auth/icon_login.png',
                     iconSize:  30,
@@ -173,7 +135,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: _kBelowBtnH),
 
-                  // navigate pill — go to signup
                   _AuthPillButton(
                     text:  StringRes.at('signup'),
                     onTap: () {
@@ -188,21 +149,23 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // ── loading overlay ────────────────────────────────────────────
           if (_loading) const VezLoadingOverlay(),
         ],
       ),
     );
   }
 
-  // ── logic ──────────────────────────────────────────────────────────────────
-
-  /// returns true if the device has an active internet connection
+  // ── has internet ───────────────────────────────────────────────────────────
+  //
+  //   used for: checking connectivity before authentication attempts.
   Future<bool> _hasInternet() async {
     final result = await Connectivity().checkConnectivity();
     return !result.contains(ConnectivityResult.none);
   }
 
+  // ── login ──────────────────────────────────────────────────────────────────
+  //
+  //   used for: validating inputs and executing the login request.
   Future<void> _login() async {
     final String username = _usernameCtrl.text.trim();
     final String password = _passwordCtrl.text;
@@ -225,7 +188,7 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _loading = false);
 
       if (res == 200 || res == 201) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomePage()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
       } else if (res == 401) {
         setState(() => _error = StringRes.at('invalid_credentials'));
       } else {
@@ -238,13 +201,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// shared auth-screen sub-widgets
-// (defined here; signup_screen.dart imports them or redeclares its own copies)
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── _TitleBlock — large bold title + lighter subtitle ────────────────────────
-
+// ── title block ──────────────────────────────────────────────────────────────
+//
+//   used for: displaying page headers with a main title and subtitle.
 class _TitleBlock extends StatelessWidget {
   final String top;
   final String bottom;
@@ -276,11 +235,9 @@ class _TitleBlock extends StatelessWidget {
   }
 }
 
-// ── _ErrorSlot — fixed-height container; content fades in/out via opacity ─────
+// ── error slot ───────────────────────────────────────────────────────────────
 //
-// using a fixed SizedBox instead of AnimatedSize prevents the error banner
-// from shifting the action button and pill button when it appears or disappears.
-
+//   used for: providing a reserved space for error banners to avoid layout shifts.
 class _ErrorSlot extends StatelessWidget {
   final String? message;
 
@@ -305,11 +262,9 @@ class _ErrorSlot extends StatelessWidget {
   }
 }
 
-// ── _AuthPillButton — frosted-glass pill button where text scales to fit ──────
+// ── auth pill button ─────────────────────────────────────────────────────────
 //
-// ClipRRect + BackdropFilter creates the blur effect against the background.
-// FittedBox with BoxFit.scaleDown shrinks the label when translations are long.
-
+//   used for: navigating between login and signup screens.
 class _AuthPillButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
@@ -321,7 +276,6 @@ class _AuthPillButton extends StatelessWidget {
     final double w = MediaQuery.of(context).size.width * 0.40;
     return GestureDetector(
       onTap: onTap,
-      // ClipRRect must wrap BackdropFilter so the blur is clipped to the pill shape
       child: ClipRRect(
         borderRadius: BorderRadius.circular(40),
         child: BackdropFilter(
@@ -334,7 +288,6 @@ class _AuthPillButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(40),
               border: Border.all(color: Colors.white54, width: 3),
             ),
-            // FittedBox scales the text down if wider than available space
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
@@ -352,20 +305,15 @@ class _AuthPillButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _fadeSlideRoute — lightweight custom page transition (fade + subtle slide)
+// ── fade slide route ─────────────────────────────────────────────────────────
 //
-// much lighter than the default MaterialPageRoute hero animation, works well
-// on older devices. used for login ↔ signup navigation.
-// ─────────────────────────────────────────────────────────────────────────────
-
+//   used for: creating a smooth transition between auth pages.
 Route<T> _fadeSlideRoute<T>(Widget page) {
   return PageRouteBuilder<T>(
     transitionDuration:        const Duration(milliseconds: 280),
     reverseTransitionDuration: const Duration(milliseconds: 220),
     pageBuilder: (_, __, ___) => page,
     transitionsBuilder: (_, animation, __, child) {
-      // a very small x-offset keeps the motion subtle and cheap to render
       final slide = Tween<Offset>(
         begin: const Offset(0.06, 0),
         end:   Offset.zero,

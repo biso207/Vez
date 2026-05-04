@@ -1,4 +1,4 @@
-// developed and designed by Outly • © 2026
+// Developed and Designed by Outly • © 2026
 // universal 4-zone page layout template used by every screen in the app.
 //
 // zone architecture (bottom → top in the stack):

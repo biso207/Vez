@@ -1,3 +1,6 @@
+// Developed and Designed by Outly • © 2026
+// logic controller for the home screen.
+
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -10,6 +13,10 @@ import '../services/getters_service.dart';
 import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 
+// ── home controller ──────────────────────────────────────────────────────────
+//
+//   used for: managing data fetching and state for the home screen.
+//   design: extends ChangeNotifier to provide reactive updates to the UI.
 class HomeController extends ChangeNotifier {
   HomeController({required String userId})
     : _db = GetDBService(userID: userId),
@@ -37,17 +44,26 @@ class HomeController extends ChangeNotifier {
     EventType.nearby: const [],
   };
 
+  // ── load page data ─────────────────────────────────────────────────────────
+  //
+  //   used for: loading initial data required for the home screen.
   Future<void> loadPageData() async {
     await _loadUserLanguage();
     await Future.wait([loadProfilePhoto(), loadEvents()]);
   }
 
+  // ── load profile photo ─────────────────────────────────────────────────────
+  //
+  //   used for: fetching and setting the user's profile photo.
   Future<void> loadProfilePhoto() async {
     final String? photo = await _db.getUserData('profile_photo');
     profilePhoto = photo?.trim() ?? '';
     _notify();
   }
 
+  // ── load user language ─────────────────────────────────────────────────────
+  //
+  //   used for: fetching and setting the app's locale from user settings.
   Future<void> _loadUserLanguage() async {
     final String? lan = await _db.getUserData('language');
     if (lan != null && lan.isNotEmpty) {
@@ -55,6 +71,9 @@ class HomeController extends ChangeNotifier {
     }
   }
 
+  // ── load events ────────────────────────────────────────────────────────────
+  //
+  //   used for: fetching all event types (Created, Invited, Discoverable).
   Future<void> loadEvents() async {
     isLoadingEvents = true;
     _notify();
@@ -74,6 +93,9 @@ class HomeController extends ChangeNotifier {
     _notify();
   }
 
+  // ── load nearby events ─────────────────────────────────────────────────────
+  //
+  //   used for: fetching events based on the user's geographic location.
   Future<void> loadNearbyEvents({bool refreshPosition = false}) async {
     isLoadingNearby = true;
     nearbyError = '';
@@ -96,12 +118,18 @@ class HomeController extends ChangeNotifier {
     }
   }
 
+  // ── update nearby radius ───────────────────────────────────────────────────
+  //
+  //   used for: changing the search radius for discoverable events.
   void updateNearbyRadius(double radiusKm) {
     nearbyRadiusKm = radiusKm.clamp(1, 100).toDouble();
     eventsByType = {...eventsByType, EventType.nearby: _buildNearbyEvents()};
     _notify();
   }
 
+  // ── ensure user directory loaded ───────────────────────────────────────────
+  //
+  //   used for: pre-loading user information and social connections.
   Future<void> ensureUserDirectoryLoaded() async {
     if (allUsers.isNotEmpty) return;
 
@@ -123,12 +151,18 @@ class HomeController extends ChangeNotifier {
     _notify();
   }
 
+  // ── refresh by you event ───────────────────────────────────────────────────
+  //
+  //   used for: fetching the latest data for a specific event created by the user.
   Future<HomeEventCardData?> refreshByYouEvent(String eventId) async {
     final Map<String, dynamic>? rawEvent = await _db.getEventById(eventId);
     if (rawEvent == null) return null;
     return _mapEvent(rawEvent, EventType.byYou);
   }
 
+  // ── upsert by you event ────────────────────────────────────────────────────
+  //
+  //   used for: updating or inserting an event in the local list.
   void upsertByYouEvent(HomeEventCardData event) {
     final List<HomeEventCardData> updatedEvents = [
       ...(eventsByType[EventType.byYou] ?? const []),
@@ -148,6 +182,9 @@ class HomeController extends ChangeNotifier {
     _notify();
   }
 
+  // ── add or update event invite ─────────────────────────────────────────────
+  //
+  //   used for: sending or modifying invitations for a specific event.
   Future<int> addOrUpdateEventInvite({
     required String eventId,
     required String invitedUserId,
@@ -158,6 +195,9 @@ class HomeController extends ChangeNotifier {
     );
   }
 
+  // ── remove event invite ────────────────────────────────────────────────────
+  //
+  //   used for: canceling or removing an invitation from an event.
   Future<int> removeEventInvite({
     required String eventId,
     required String invitedUserId,
@@ -168,6 +208,9 @@ class HomeController extends ChangeNotifier {
     );
   }
 
+  // ── relation label ─────────────────────────────────────────────────────────
+  //
+  //   used for: determining the social relationship label for a given user.
   String relationLabel(String userId) {
     if (followingIds.contains(userId) && followerIds.contains(userId)) {
       return StringRes.at('friends');
@@ -178,16 +221,25 @@ class HomeController extends ChangeNotifier {
     return StringRes.at('anyone');
   }
 
+  // ── dispose ────────────────────────────────────────────────────────────────
+  //
+  //   used for: cleaning up controller resources.
   @override
   void dispose() {
     _isDisposed = true;
     super.dispose();
   }
 
+  // ── notify ─────────────────────────────────────────────────────────────────
+  //
+  //   used for: triggering UI updates if the controller is still active.
   void _notify() {
     if (!_isDisposed) notifyListeners();
   }
 
+  // ── map events ─────────────────────────────────────────────────────────────
+  //
+  //   used for: converting a list of raw database maps into HomeEventCardData objects.
   List<HomeEventCardData> _mapEvents(
     List<Map<String, dynamic>> rawEvents,
     EventType type,
@@ -195,6 +247,9 @@ class HomeController extends ChangeNotifier {
     return rawEvents.map((event) => _mapEvent(event, type)).toList();
   }
 
+  // ── map event ──────────────────────────────────────────────────────────────
+  //
+  //   used for: converting a single database map into a HomeEventCardData object.
   HomeEventCardData _mapEvent(
     Map<String, dynamic> rawEvent,
     EventType type, {
@@ -263,6 +318,9 @@ class HomeController extends ChangeNotifier {
     );
   }
 
+  // ── build nearby events ────────────────────────────────────────────────────
+  //
+  //   used for: filtering discoverable events based on location and radius.
   List<HomeEventCardData> _buildNearbyEvents() {
     final Position? position = _currentPosition;
     if (position == null) return const [];
@@ -304,6 +362,9 @@ class HomeController extends ChangeNotifier {
     return nearbyEvents;
   }
 
+  // ── get current position ───────────────────────────────────────────────────
+  //
+  //   used for: requesting and obtaining the device's GPS coordinates.
   Future<Position> _getCurrentPosition() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
       throw Exception(StringRes.at('enable_location_services'));
@@ -325,6 +386,9 @@ class HomeController extends ChangeNotifier {
     );
   }
 
+  // ── distance km ────────────────────────────────────────────────────────────
+  //
+  //   used for: calculating the spherical distance between two sets of coordinates.
   double _distanceKm(
     double startLat,
     double startLng,
@@ -347,8 +411,14 @@ class HomeController extends ChangeNotifier {
     return earthRadiusKm * c;
   }
 
+  // ── degrees to radians ─────────────────────────────────────────────────────
+  //
+  //   used for: converting angle degrees to radians for trigonometric calculations.
   double _degreesToRadians(double degrees) => degrees * math.pi / 180;
 
+  // ── map guests ─────────────────────────────────────────────────────────────
+  //
+  //   used for: determining whether to process invites or participation rows.
   List<HomeEventGuestData> _mapGuests(
     Map<String, dynamic> rawEvent,
     String visibility,
@@ -370,6 +440,9 @@ class HomeController extends ChangeNotifier {
         .toList();
   }
 
+  // ── map invite guest ───────────────────────────────────────────────────────
+  //
+  //   used for: converting a raw invite database map into HomeEventGuestData.
   HomeEventGuestData _mapInviteGuest(Map<String, dynamic> row) {
     final Map<String, dynamic> user = row['users'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(row['users'] as Map<String, dynamic>)
@@ -390,6 +463,9 @@ class HomeController extends ChangeNotifier {
     );
   }
 
+  // ── map participation guest ────────────────────────────────────────────────
+  //
+  //   used for: converting a raw participation database map into HomeEventGuestData.
   HomeEventGuestData _mapParticipationGuest(Map<String, dynamic> row) {
     final Map<String, dynamic> user = row['users'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(row['users'] as Map<String, dynamic>)
@@ -407,6 +483,9 @@ class HomeController extends ChangeNotifier {
     );
   }
 
+  // ── count guests ───────────────────────────────────────────────────────────
+  //
+  //   used for: calculating RSVP totals from a list of guests.
   HomeEventGuestCounts _countGuests(List<HomeEventGuestData> guests) {
     int going = 0;
     int notGoing = 0;
@@ -428,6 +507,9 @@ class HomeController extends ChangeNotifier {
     return HomeEventGuestCounts(going: going, notGoing: notGoing, maybe: maybe);
   }
 
+  // ── normalize invite state ─────────────────────────────────────────────────
+  //
+  //   used for: converting raw invite strings into standard state values.
   String _normalizeInviteState(String? rawState, {String? referenceTimestamp}) {
     final String normalized = (rawState ?? '').trim().toLowerCase().replaceAll(
       ' ',
@@ -459,6 +541,9 @@ class HomeController extends ChangeNotifier {
     return _isInviteExpired(referenceTimestamp) ? 'not_going' : 'maybe';
   }
 
+  // ── normalize participation state ──────────────────────────────────────────
+  //
+  //   used for: converting raw participation strings into standard state values.
   String _normalizeParticipationState(String? rawState) {
     final String normalized = (rawState ?? '').trim().toLowerCase().replaceAll(
       ' ',
@@ -479,6 +564,9 @@ class HomeController extends ChangeNotifier {
     return 'maybe';
   }
 
+  // ── is invite expired ──────────────────────────────────────────────────────
+  //
+  //   used for: determining if a pending invitation has timed out.
   bool _isInviteExpired(String? rawTimestamp) {
     if (rawTimestamp == null || rawTimestamp.isEmpty) return false;
 
@@ -489,6 +577,9 @@ class HomeController extends ChangeNotifier {
         _inviteMaybeTimeout;
   }
 
+  // ── build subtitle ─────────────────────────────────────────────────────────
+  //
+  //   used for: concatenating formatted date and place name for the UI.
   String _buildSubtitle(String rawDate, String placeName) {
     final String date = _formatEventDate(rawDate);
     if (date.isEmpty) return placeName;
@@ -496,6 +587,9 @@ class HomeController extends ChangeNotifier {
     return '$date - $placeName';
   }
 
+  // ── format card date ───────────────────────────────────────────────────────
+  //
+  //   used for: formatting the event date for display on a card.
   String _formatCardDate(String rawDate) {
     if (rawDate.isEmpty) return '';
     try {
@@ -506,6 +600,9 @@ class HomeController extends ChangeNotifier {
     }
   }
 
+  // ── format event date ──────────────────────────────────────────────────────
+  //
+  //   used for: formatting the event date for subtitle display.
   String _formatEventDate(String? rawDate) {
     if (rawDate == null || rawDate.isEmpty) return '';
 

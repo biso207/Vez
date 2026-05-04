@@ -1,3 +1,6 @@
+// Developed and Designed by Outly • © 2026
+// entry point for the application.
+
 import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +10,9 @@ import 'package:vez/screens/auth/loading_screen.dart';
 import 'package:vez/services/notification_service.dart';
 import 'package:vez/services/translation_service.dart';
 
+// ── main ─────────────────────────────────────────────────────────────────────
+//
+//   used for: initializing services and running the app.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -28,9 +34,15 @@ Future<void> main() async {
   );
 }
 
+// ── my app ───────────────────────────────────────────────────────────────────
+//
+//   used for: defining the global theme and localized materials.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // ── build ──────────────────────────────────────────────────────────────────
+  //
+  //   used for: rendering the root MaterialApp.
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
