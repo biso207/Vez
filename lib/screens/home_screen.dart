@@ -218,7 +218,7 @@ class _HomePageState extends State<HomePage> {
 
   // ── select filter ──────────────────────────────────────────────────────────
   //
-  //   used for: switching between event categories (Invited, By You, Nearby).
+  //   used for: switching between event groups (Invited, By You, Nearby).
   void _selectFilter(int index) {
     if (_isVenueAccount) {
       _showSnackBar(StringRes.at('venue_filter_locked'));
@@ -420,19 +420,9 @@ class _HomePageState extends State<HomePage> {
                                       height: 22,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: const Color.fromARGB(
-                                          128,
-                                          255,
-                                          49,
-                                          49,
-                                        ),
+                                        color: const Color.fromARGB(128, 255, 49, 49,),
                                         border: Border.all(
-                                          color: const Color.fromARGB(
-                                            204,
-                                            255,
-                                            49,
-                                            49,
-                                          ),
+                                          color: const Color.fromARGB(204, 255, 49, 49,),
                                           width: 1.5,
                                         ),
                                       ),
@@ -979,9 +969,7 @@ class _EventCarouselState extends State<_EventCarousel> {
             onAddGuestsTap: event.canInviteGuests
                 ? () => widget.onAddGuestsTap(event)
                 : null,
-            onGuestListTap: event.isByYou
-                ? () => widget.onGuestListTap(event)
-                : null,
+            onGuestListTap: () => widget.onGuestListTap(event),
             onEditTap: event.isByYou ? () => widget.onEditTap(event) : null,
             onResponseSelected: !event.isByYou
                 ? (responseState) =>

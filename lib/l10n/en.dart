@@ -139,6 +139,8 @@ const Map<String, String> en = {
   "event_update_failed": "Update Failed",
   "event_deleted_success": "Event Deleted",
   "event_delete_failed": "Delete Failed",
+  "no_price": "No Price",
+  "no_limit": "No Limit",
 
   // event typologies //
   "exclusive": "Exclusive",

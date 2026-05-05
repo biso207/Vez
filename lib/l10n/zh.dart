@@ -136,6 +136,8 @@ const Map<String, String> zh = {
   "event_update_failed": "无法更新活动",
   "event_deleted_success": "活动已删除",
   "event_delete_failed": "无法删除活动",
+  "no_price": "无价格",
+  "no_limit": "无限制",
 
   // event typologies //
   "exclusive": "专属",

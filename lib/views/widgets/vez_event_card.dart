@@ -50,6 +50,7 @@ class VezEventCard extends StatelessWidget {
     // nearby events are only shown here if they have a precise location (logic handled in controller).
     return _PreviewEventCard(
       event: event,
+      onGuestListTap: onGuestListTap,
       onResponseSelected: onResponseSelected,
     );
   }
@@ -62,10 +63,12 @@ class VezEventCard extends StatelessWidget {
 class _PreviewEventCard extends StatefulWidget {
   const _PreviewEventCard({
     required this.event,
+    required this.onGuestListTap,
     required this.onResponseSelected,
   });
 
   final HomeEventCardData event;
+  final VoidCallback? onGuestListTap;
   final ValueChanged<String>? onResponseSelected;
 
   @override
@@ -150,11 +153,19 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
               ),
               // 3. content layer
               Padding(
-                padding: EdgeInsets.fromLTRB(14 * s, 14 * s, 14 * s, 16 * s),
+                padding: EdgeInsets.fromLTRB(16 * s, 16 * s, 16 * s, 16 * s),
                 child: Column(
                   children: [
-                    _PreviewTopBar(event: widget.event, s: s),
+                    // top
+                    _CardTopBar(
+                      event: widget.event,
+                      s: s,
+                      onGuestListTap: widget.onGuestListTap,
+                    ),
+
                     const Spacer(),
+
+                    // title
                     Text(
                       widget.event.title.isNotEmpty ? widget.event.title : 'Untitled Event',
                       maxLines: 2,
@@ -167,7 +178,10 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
                         height: 1.0,
                       ),
                     ),
+
                     SizedBox(height: 8 * s),
+
+                    // date and place
                     if (widget.event.dateLabel.isNotEmpty)
                       _PreviewInfoText(text: widget.event.dateLabel, s: s),
                     if (widget.event.locationLabel.isNotEmpty) ...[
@@ -177,15 +191,21 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
                     // distance is particularly relevant for "nearby" events
                     if (widget.event.distanceKm != null) ...[
                       SizedBox(height: 2 * s),
-                      _PreviewInfoText(text: _formatDistance(widget.event.distanceKm!), s: s,),
+                      _PreviewInfoText(text: _formatDistance(widget.event.distanceKm!), s: s),
                     ],
-                    SizedBox(height: 12 * s),
+
+                    SizedBox(height: 8 * s),
+
+                    // slider to make a choice
                     _ResponseSlider(
                       s: s,
                       selectedIndex: _selectedIndex,
                       onSelected: _selectState,
                     ),
-                    SizedBox(height: 10 * s),
+
+                    SizedBox(height: 12 * s),
+
+                    // bottom details
                     Row(
                       children: [
                         Expanded(
@@ -239,87 +259,6 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
   String _formatDistance(double distanceKm) {
     if (distanceKm < 1) return '${(distanceKm * 1000).round()} m';
     return '${distanceKm.toStringAsFixed(distanceKm < 10 ? 1 : 0)} km';
-  }
-}
-
-// ── preview top bar ─────────────────────────────────────────────────────────
-class _PreviewTopBar extends StatelessWidget {
-  const _PreviewTopBar({required this.event, required this.s});
-  final HomeEventCardData event;
-  final double s;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            _CardIconCircle(
-              iconPath: event.categoryIconPath,
-              isBlueAccent: true,
-              size: 44 * s,
-              iconSize: 28 * s,
-            ),
-            SizedBox(width: 12 * s),
-            _CardIconCircle(
-              iconPath: event.typeIconPath,
-              size: 44 * s,
-              iconSize: 28 * s,
-            ),
-          ],
-        ),
-        _HostBadge(photo: event.creatorProfilePhoto, s: s),
-      ],
-    );
-  }
-}
-
-// ── host badge ──────────────────────────────────────────────────────────────
-class _HostBadge extends StatelessWidget {
-  const _HostBadge({required this.photo, required this.s});
-  final String photo;
-  final double s;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.centerRight,
-      clipBehavior: Clip.none,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(right: 32 * s),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24 * s),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
-              child: Container(
-                height: 44 * s,
-                padding: EdgeInsets.only(left: 14 * s, right: 18 * s),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(128, 255, 195, 0),
-                  borderRadius: BorderRadius.circular(24 * s),
-                  border: Border.all(
-                    color: const Color.fromARGB(204, 255, 195, 0),
-                    width: 2,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  StringRes.at('host'),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20 * s,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        _ProfilePhotoCircle(photo: photo, size: 44 * s),
-      ],
-    );
   }
 }
 
@@ -471,7 +410,7 @@ class _GuestLimitPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final int? maxGuests = event.maxGuests;
     final int going = event.guestCounts.going;
-    final String value = (maxGuests == null || maxGuests <= 0) ? '$going' : '$going/$maxGuests';
+    final String value = (maxGuests == null || maxGuests <= 0) ? StringRes.at('no_limit') : '$going/$maxGuests';
     final double progress = (maxGuests == null || maxGuests <= 0) ? 0 : (going / maxGuests).clamp(0.0, 1.0);
 
     return _MetricPill(
@@ -479,7 +418,7 @@ class _GuestLimitPill extends StatelessWidget {
       iconPath: 'assets/icons/event/guests.png',
       value: value,
       progress: progress,
-      progressColor: const Color(0xFF2E8B22),
+      progressColor: const Color.fromARGB(102, 8, 157, 13),
     );
   }
 }
@@ -493,7 +432,7 @@ class _PricePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int? price = event.price;
-    final String value = (price == null || price <= 0) ? '-' : '€ $price,00';
+    final String value = (price == null || price <= 0) ? StringRes.at('no_price') : '€ $price,00';
     return _MetricPill(
       s: s,
       iconPath: 'assets/icons/event/price.png',
@@ -547,10 +486,10 @@ class _MetricPill extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _SafeAssetIcon(iconPath: iconPath, fallbackIcon: fallbackIcon, size: 20 * s),
-                        SizedBox(height: 2 * s),
+                        SizedBox(height: 4 * s),
                         Text(
                           value,
-                          style: TextStyle(color: Colors.white, fontSize: 16 * s, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: Colors.white, fontSize: 15 * s, fontWeight: FontWeight.bold, height: 1),
                         ),
                       ],
                     ),
@@ -574,6 +513,9 @@ class _MetricPill extends StatelessWidget {
 }
 
 // ── by you event card ───────────────────────────────────────────────────────
+//
+// used for: displaying info for yours events.
+// design: full-bleed background image with bottom rsvp and metrics overlay.
 class _ByYouEventCard extends StatelessWidget {
   const _ByYouEventCard({
     required this.event,
@@ -636,46 +578,53 @@ class _ByYouEventCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(14 * s, 14 * s, 14 * s, 16 * s),
+                padding: EdgeInsets.fromLTRB(16 * s, 16 * s, 16 * s, 16 * s),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            _CardIconCircle(iconPath: event.categoryIconPath, isBlueAccent: true, size: 44 * s, iconSize: 28 * s),
-                            SizedBox(width: 12 * s),
-                            _CardIconCircle(iconPath: event.typeIconPath, size: 44 * s, iconSize: 28 * s),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            _CardIconCircle(iconPath: 'assets/icons/event/guests.png', onTap: onGuestListTap, size: 44 * s, iconSize: 28 * s),
-                            SizedBox(width: 12 * s),
-                            _CardIconCircle(iconPath: 'assets/icons/event/edit.png', onTap: onEditTap, size: 44 * s, iconSize: 28 * s),
-                          ],
-                        ),
-                      ],
+                    // top
+                    _CardTopBar(
+                      event: event,
+                      s: s,
+                      onGuestListTap: onGuestListTap,
+                      onEditTap: onEditTap,
                     ),
+
                     const Spacer(),
+
+                    // add guests button
                     if (event.canInviteGuests) ...[
                       _CardPillButton(label: StringRes.at('add_guest'), onTap: onAddGuestsTap),
-                      SizedBox(height: 14 * s),
+                      SizedBox(height: 20 * s),
                     ],
+
+                    // title
                     Text(
                       event.title.isNotEmpty ? event.title : 'Untitled Event',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 40 * s, fontWeight: FontWeight.bold, height: 1.0),
+                      style: TextStyle(color: Colors.white, fontSize: 40 * s, fontWeight: FontWeight.bold, height: 1),
                     ),
-                    SizedBox(height: 8 * s),
+                    SizedBox(height: 6 * s),
+
+                    // date and place
                     if (event.dateLabel.isNotEmpty) _PreviewInfoText(text: event.dateLabel, s: s),
                     if (event.locationLabel.isNotEmpty) ...[
                       SizedBox(height: 2 * s),
                       _PreviewInfoText(text: event.locationLabel, s: s),
                     ],
-                    SizedBox(height: 14 * s),
+                    SizedBox(height: 8 * s),
+
+                    // guests state info
                     _GuestStateBanner(counts: event.guestCounts, s: s),
+                    SizedBox(height: 10 * s),
+
+                    // bottom details
+                    Row(
+                      children: [
+                        Expanded(child: _GuestLimitPill(event: event, s: s)), // guest limit
+                        SizedBox(width: 36 * s),
+                        Expanded(child: _PricePill(event: event, s: s)), // price
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -700,7 +649,7 @@ class _PreviewInfoText extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       textAlign: TextAlign.center,
-      style: TextStyle(color: Colors.white, fontSize: 15 * s, fontWeight: FontWeight.normal),
+      style: TextStyle(color: Colors.white, fontSize: 15 * s, fontWeight: FontWeight.normal, height: 1),
     );
   }
 }
@@ -774,8 +723,8 @@ class _GuestStateBanner extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
         child: Container(
-          constraints: BoxConstraints(minWidth: 230 * s, maxWidth: 280 * s),
-          padding: EdgeInsets.symmetric(horizontal: 14 * s, vertical: 11 * s),
+          constraints: BoxConstraints(minWidth: 250 * s, maxWidth: 300 * s),
+          padding: EdgeInsets.symmetric(horizontal: 5 * s, vertical: 6 * s),
           decoration: BoxDecoration(
             color: const Color.fromARGB(51, 0, 0, 0),
             borderRadius: BorderRadius.circular(35 * s),
@@ -798,9 +747,9 @@ class _GuestStateBanner extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Image.asset(path, width: 20 * s, height: 20 * s),
-          SizedBox(height: 4 * s),
-          Text('$val', style: TextStyle(color: Colors.white, fontSize: 20 * s, fontWeight: FontWeight.bold)),
+          Image.asset(path, width: 22 * s, height: 22 * s),
+          SizedBox(height: 6 * s),
+          Text('$val', style: TextStyle(color: Colors.white, fontSize: 20 * s, fontWeight: FontWeight.bold, height: 1)),
         ],
       ),
     );
@@ -843,6 +792,49 @@ class _SafeAssetIcon extends StatelessWidget {
       width: size,
       height: size,
       errorBuilder: (_, _, _) => Icon(fallbackIcon ?? Icons.info_outline, color: Colors.white, size: size),
+    );
+  }
+}
+
+class _CardTopBar extends StatelessWidget {
+  const _CardTopBar({
+    required this.event,
+    required this.s,
+    this.onGuestListTap,
+    this.onEditTap,
+  });
+
+  final HomeEventCardData event;
+  final double s;
+  final VoidCallback? onGuestListTap;
+  final VoidCallback? onEditTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Lato sinistro: Categoria e Tipo
+        Row(
+          children: [
+            _CardIconCircle(iconPath: event.categoryIconPath, isBlueAccent: true, size: 44 * s, iconSize: 28 * s),
+            SizedBox(width: 12 * s),
+            _CardIconCircle(iconPath: event.typeIconPath, size: 44 * s, iconSize: 28 * s),
+          ],
+        ),
+        // Lato destro: Ospiti + (Tasto Edit o Foto Profilo)
+        Row(
+          children: [
+            _CardIconCircle(iconPath: 'assets/icons/event/guests.png', onTap: onGuestListTap, size: 44 * s, iconSize: 28 * s),
+            SizedBox(width: 12 * s),
+            // Se l'evento è creato da te mostri Edit, altrimenti la foto del creatore
+            if (event.isByYou)
+              _CardIconCircle(iconPath: 'assets/icons/event/edit.png', onTap: onEditTap, size: 44 * s, iconSize: 28 * s)
+            else
+              _ProfilePhotoCircle(photo: event.creatorProfilePhoto, size: 44 * s),
+          ],
+        ),
+      ],
     );
   }
 }

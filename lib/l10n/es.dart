@@ -138,6 +138,8 @@ const Map<String, String> es = {
   "event_update_failed": "Error Al Actualizar",
   "event_deleted_success": "Evento Eliminado",
   "event_delete_failed": "Error Al Eliminar",
+  "no_price": "Sin Precio",
+  "no_limit": "Sin Límite",
 
   // event typologies //
   "exclusive": "Exclusivo",
