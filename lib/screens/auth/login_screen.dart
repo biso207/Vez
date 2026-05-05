@@ -8,16 +8,18 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../../services/auth_service.dart';
 import '../../services/translation_service.dart';
+import '../../services/user_session.dart';
 import '../../views/widgets/vez_glass.dart';
 import '../home_screen.dart';
-import 'signup_screen.dart';
+import 'account_type_choice_screen.dart';
+import 'venue_pending_screen.dart';
 
 // ── layout constants ─────────────────────────────────────────────────────────
-const double _kErrorSlotH  = 56.0;
-const double _kDotsSlotH   = 24.0;
-const double _kGapH        = 20.0;
-const double _kBelowBtnH   = 50.0;
-const double _kBottomPadH  = 36.0;
+const double _kErrorSlotH = 56.0;
+const double _kDotsSlotH = 24.0;
+const double _kGapH = 20.0;
+const double _kBelowBtnH = 50.0;
+const double _kBottomPadH = 36.0;
 
 // ── login page ───────────────────────────────────────────────────────────────
 //
@@ -38,8 +40,8 @@ class _LoginPageState extends State<LoginPage> {
   final RemoteDbService _db = RemoteDbService();
 
   String? _error;
-  bool    _loading      = false;
-  bool    _showPassword = false;
+  bool _loading = false;
+  bool _showPassword = false;
 
   // ── dispose ────────────────────────────────────────────────────────────────
   //
@@ -68,7 +70,10 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           // background image
           Positioned.fill(
-            child: Image.asset('assets/images/bg/bg_login.jpg', fit: BoxFit.cover),
+            child: Image.asset(
+              'assets/images/bg/bg_login.jpg',
+              fit: BoxFit.cover,
+            ),
           ),
 
           SafeArea(
@@ -78,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   const Spacer(flex: 2),
                   _TitleBlock(
-                    top:    StringRes.at('top_title_login'),
+                    top: StringRes.at('top_title_login'),
                     bottom: StringRes.at('under_title_login'),
                   ),
 
@@ -91,26 +96,29 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           VezGlass.textField(
                             controller: _usernameCtrl,
-                            hint:  StringRes.at('username'),
+                            hint: StringRes.at('username'),
                             width: sw * 0.75,
                             color: Colors.white54,
                           ),
                           const SizedBox(height: 20),
                           VezGlass.textField(
                             controller: _passwordCtrl,
-                            hint:    StringRes.at('password'),
+                            hint: StringRes.at('password'),
                             obscure: !_showPassword,
-                            width:   sw * 0.75,
-                            color:   Colors.white54,
+                            width: sw * 0.75,
+                            color: Colors.white54,
                             suffixIcon: GestureDetector(
-                              onTap: () => setState(() => _showPassword = !_showPassword),
+                              onTap: () => setState(
+                                () => _showPassword = !_showPassword,
+                              ),
                               child: Padding(
                                 padding: const EdgeInsets.only(right: 6),
                                 child: Icon(
                                   _showPassword
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
-                                  color: Colors.white54, size: 20,
+                                  color: Colors.white54,
+                                  size: 20,
                                 ),
                               ),
                             ),
@@ -129,17 +137,20 @@ class _LoginPageState extends State<LoginPage> {
 
                   VezGlass.circleButton(
                     assetIcon: 'assets/icons/auth/icon_login.png',
-                    iconSize:  30,
-                    onTap:     _login,
+                    iconSize: 30,
+                    onTap: _login,
                   ),
 
                   const SizedBox(height: _kBelowBtnH),
 
                   _AuthPillButton(
-                    text:  StringRes.at('signup'),
+                    text: StringRes.at('signup'),
                     onTap: () {
                       setState(() => _error = null);
-                      Navigator.push(context, _fadeSlideRoute(const SignupPage()));
+                      Navigator.push(
+                        context,
+                        _fadeSlideRoute(const AccountTypeChoicePage()),
+                      );
                     },
                   ),
 
@@ -180,7 +191,10 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    setState(() { _error = null; _loading = true; });
+    setState(() {
+      _error = null;
+      _loading = true;
+    });
 
     try {
       final int res = await _db.login(username: username, password: password);
@@ -188,7 +202,17 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _loading = false);
 
       if (res == 200 || res == 201) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
+        final session = UserSession();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                session.accountType == 'venue' &&
+                    session.accountState != 'active'
+                ? const VenuePendingPage()
+                : const HomePage(),
+          ),
+        );
       } else if (res == 401) {
         setState(() => _error = StringRes.at('invalid_credentials'));
       } else {
@@ -196,7 +220,10 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (_) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = StringRes.at('no_internet_connection'); });
+      setState(() {
+        _loading = false;
+        _error = StringRes.at('no_internet_connection');
+      });
     }
   }
 }
@@ -219,7 +246,9 @@ class _TitleBlock extends StatelessWidget {
           top,
           style: const TextStyle(
             fontFamily: 'InstagramSans',
-            color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
@@ -227,7 +256,9 @@ class _TitleBlock extends StatelessWidget {
           bottom,
           style: const TextStyle(
             fontFamily: 'InstagramSans',
-            color: Colors.white, fontSize: 25, fontWeight: FontWeight.normal,
+            color: Colors.white,
+            fontSize: 25,
+            fontWeight: FontWeight.normal,
           ),
         ),
       ],
@@ -250,9 +281,9 @@ class _ErrorSlot extends StatelessWidget {
       child: SizedBox(
         height: _kErrorSlotH,
         child: AnimatedOpacity(
-          opacity:  message != null ? 1.0 : 0.0,
+          opacity: message != null ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 250),
-          curve:    Curves.easeOut,
+          curve: Curves.easeOut,
           child: message != null
               ? VezErrorBanner(message: message!)
               : const SizedBox.shrink(),
@@ -294,7 +325,9 @@ class _AuthPillButton extends StatelessWidget {
                 text,
                 style: const TextStyle(
                   fontFamily: 'InstagramSans',
-                  color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -310,13 +343,13 @@ class _AuthPillButton extends StatelessWidget {
 //   used for: creating a smooth transition between auth pages.
 Route<T> _fadeSlideRoute<T>(Widget page) {
   return PageRouteBuilder<T>(
-    transitionDuration:        const Duration(milliseconds: 280),
+    transitionDuration: const Duration(milliseconds: 280),
     reverseTransitionDuration: const Duration(milliseconds: 220),
-    pageBuilder: (_, __, ___) => page,
-    transitionsBuilder: (_, animation, __, child) {
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
       final slide = Tween<Offset>(
         begin: const Offset(0.06, 0),
-        end:   Offset.zero,
+        end: Offset.zero,
       ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
 
       final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);

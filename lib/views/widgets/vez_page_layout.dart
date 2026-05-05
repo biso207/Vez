@@ -74,6 +74,9 @@ class VezPageLayout extends StatelessWidget {
   /// callback fired when a filter option is chosen from the popup (passes index)
   final ValueChanged<int>? onFilterSelected;
 
+  /// when false, the right filter icon is shown but cannot open the filter menu
+  final bool isFilterEnabled;
+
   // ---------- layout ----------
   /// horizontal margin that constrains the body on wide screens.
   /// on small phones (<600 px wide) it is clamped to [kSmallScreenMargin].
@@ -90,6 +93,7 @@ class VezPageLayout extends StatelessWidget {
     this.searchHint = 'Search',
     this.filterIconPath = '',
     this.onFilterSelected,
+    this.isFilterEnabled = true,
     this.horizontalMargin = 20.0,
   });
 
@@ -175,6 +179,7 @@ class VezPageLayout extends StatelessWidget {
               searchHint: searchHint,
               filterIconPath: filterIconPath,
               onFilterSelected: onFilterSelected,
+              isFilterEnabled: isFilterEnabled,
               filterIcons: _filterIcons,
             ),
           ),
@@ -227,7 +232,7 @@ class _ProgressiveBlur extends StatelessWidget {
             gradient: LinearGradient(
               begin: fromAlignment,
               end: toAlignment,
-              colors: [kBgColor.withOpacity(0.85), Colors.transparent],
+              colors: [kBgColor.withValues(alpha: 0.85), Colors.transparent],
             ),
           ),
         ),
@@ -249,6 +254,7 @@ class _TopNavBar extends StatelessWidget {
   final String searchHint;
   final String filterIconPath;
   final ValueChanged<int>? onFilterSelected;
+  final bool isFilterEnabled;
   final List<Map<String, dynamic>> filterIcons;
 
   const _TopNavBar({
@@ -260,6 +266,7 @@ class _TopNavBar extends StatelessWidget {
     required this.searchHint,
     required this.filterIconPath,
     required this.onFilterSelected,
+    required this.isFilterEnabled,
     required this.filterIcons,
   });
 
@@ -324,6 +331,7 @@ class _TopNavBar extends StatelessWidget {
           size: 45,
           iconSize: 28,
           onTap: () {
+            if (!isFilterEnabled) return;
             HapticService.tap();
             _showFilterPopup(context, popupWidth);
           },

@@ -4,6 +4,7 @@
 // libraries
 import 'dart:convert';
 import 'dart:io'; // library to manage files
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart'
     as http; // http packet (standard in Dart/Flutter).
 import 'package:crypto/crypto.dart'; // library for the hashing of the psw
@@ -29,8 +30,9 @@ class RemoteDbService {
   }) async {
     try {
       String photoUrl = "";
-      if (profileImage != null)
+      if (profileImage != null) {
         photoUrl = await uploadProfilePhoto(profileImage, username) ?? "";
+      }
 
       // STEP HASHING PSW //
       // password to byte with salt
@@ -41,7 +43,7 @@ class RemoteDbService {
       // --------------- //
 
       // connection to the db
-      print('Connecting to $_baseUrl to register user: $username');
+      debugPrint('Connecting to $_baseUrl to register user: $username');
 
       // 1. define the endpoint (table 'users' in 'Vez' DB)
       final url = Uri.parse('$_baseUrl/rest/v1/users');
@@ -57,6 +59,7 @@ class RemoteDbService {
         'profile_photo': photoUrl,
         'bio': "",
         'account_state': 'active',
+        'account_type': 'user',
         'num_created_events': 0,
         'num_participated_events': 0,
         'language': StringRes.locale,
@@ -75,9 +78,9 @@ class RemoteDbService {
       );
 
       // DEBUG: log the full response for diagnosis
-      print('Signup response status: ${response.statusCode}');
-      print('Signup response body: ${response.body}');
-      print('Signup request payload: ${jsonEncode(userData)}');
+      debugPrint('Signup response status: ${response.statusCode}');
+      debugPrint('Signup response body: ${response.body}');
+      debugPrint('Signup request payload: ${jsonEncode(userData)}');
 
       // success
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -86,6 +89,8 @@ class RemoteDbService {
           await UserSession().startSession(
             userID: data[0]['user_id']!.toString(),
             locale: StringRes.locale,
+            accountType: (data[0]['account_type'] ?? 'user').toString(),
+            accountState: (data[0]['account_state'] ?? 'active').toString(),
           );
           await NotificationService().syncTokenForCurrentUser();
         }
@@ -95,7 +100,7 @@ class RemoteDbService {
       // any error
       return response.statusCode;
     } catch (e) {
-      print('Signup error: $e');
+      debugPrint('Signup error: $e');
       return 0;
     }
   }
@@ -132,6 +137,8 @@ class RemoteDbService {
           await UserSession().startSession(
             userID: data[0]['user_id']!.toString(),
             locale: lan,
+            accountType: (data[0]['account_type'] ?? 'user').toString(),
+            accountState: (data[0]['account_state'] ?? 'active').toString(),
           );
           StringRes.setLocale(lan);
           await NotificationService().syncTokenForCurrentUser();
@@ -146,6 +153,119 @@ class RemoteDbService {
     } catch (e) {
       return 0;
     }
+  }
+
+  Future<int> signupVenue({
+    required String username,
+    required String email,
+    required String password,
+    required String venueName,
+    required String legalName,
+    required String vatNumber,
+    required String address,
+    required String city,
+    required String country,
+    required String publicEmail,
+    required String publicPhone,
+    required String websiteUrl,
+    required String instagramUrl,
+  }) async {
+    try {
+      final url = Uri.parse('$_baseUrl/functions/v1/submit-venue-signup');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_apiKey',
+          'apikey': _apiKey,
+        },
+        body: jsonEncode({
+          'username': username,
+          'email': email,
+          'password': password,
+          'language': StringRes.locale,
+          'venue_name': venueName,
+          'legal_name': legalName,
+          'vat_number': vatNumber,
+          'address': address,
+          'city': city,
+          'country': country,
+          'public_email': publicEmail,
+          'public_phone': publicPhone,
+          'website_url': websiteUrl,
+          'instagram_url': instagramUrl,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        await UserSession().startSession(
+          userID: (data['user_id'] ?? '').toString(),
+          locale: StringRes.locale,
+          accountType: 'venue',
+          accountState: 'pending_verification',
+        );
+        await NotificationService().syncTokenForCurrentUser();
+      }
+
+      return response.statusCode;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Future<int> verifyVenueCode(String code) async {
+    try {
+      final url = Uri.parse('$_baseUrl/functions/v1/verify-venue-code');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_apiKey',
+          'apikey': _apiKey,
+        },
+        body: jsonEncode({
+          'user_id': UserSession().userID,
+          'verification_code': code.trim().toUpperCase(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        await UserSession().updateAccountStatus(
+          accountType: 'venue',
+          accountState: 'pending_verification',
+        );
+      }
+
+      return response.statusCode;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Future<void> refreshCurrentAccountStatus() async {
+    final String userId = UserSession().userID;
+    if (userId.isEmpty) return;
+
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/users'
+        '?user_id=eq.$userId'
+        '&select=account_type,account_state'
+        '&limit=1',
+      );
+      final response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer $_apiKey', 'apikey': _apiKey},
+      );
+      if (response.statusCode != 200) return;
+      final List<dynamic> data = jsonDecode(response.body);
+      if (data.isEmpty) return;
+      await UserSession().updateAccountStatus(
+        accountType: (data[0]['account_type'] ?? 'user').toString(),
+        accountState: (data[0]['account_state'] ?? 'active').toString(),
+      );
+    } catch (_) {}
   }
 
   // method to upload a file (profile photo)
@@ -168,11 +288,11 @@ class RemoteDbService {
         return '$_baseUrl/storage/v1/object/public/avatars/$fileName';
       } else {
         // This will tell you if the file was too large (413 Payload Too Large)
-        print('Upload failed: ${response.statusCode} - ${response.body}');
+        debugPrint('Upload failed: ${response.statusCode} - ${response.body}');
         return null;
       }
     } catch (e) {
-      print('Errore upload: $e');
+      debugPrint('Errore upload: $e');
       return null;
     }
   }

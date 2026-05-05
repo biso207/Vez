@@ -3,10 +3,12 @@
 
 import 'package:flutter/material.dart';
 import '../../services/notification_service.dart';
+import '../../services/auth_service.dart';
 import '../../services/user_session.dart';
 import '../home_screen.dart';
 import '../../services/translation_service.dart';
 import 'login_screen.dart';
+import 'venue_pending_screen.dart';
 
 // ── loading page ─────────────────────────────────────────────────────────────
 //
@@ -47,6 +49,7 @@ class _LoadingPageState extends State<LoadingPage> {
     }
 
     await NotificationService().syncTokenForCurrentUser();
+    await RemoteDbService().refreshCurrentAccountStatus();
 
     await startAppAnimations();
   }
@@ -77,8 +80,11 @@ class _LoadingPageState extends State<LoadingPage> {
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
 
-    final Widget destination = UserSession().isLoggedIn
-        ? const HomePage()
+    final session = UserSession();
+    final Widget destination = session.isLoggedIn
+        ? session.accountType == 'venue' && session.accountState != 'active'
+              ? const VenuePendingPage()
+              : const HomePage()
         : const LoginPage();
 
     // 6. Navigate to correct initial screen

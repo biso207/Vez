@@ -64,6 +64,7 @@ class _HomePageState extends State<HomePage> {
       'type': EventType.nearby,
     },
   ];
+  static const int _byYouFilterIndex = 1;
 
   final TextEditingController _searchController = TextEditingController();
   late final HomeController _controller;
@@ -72,13 +73,17 @@ class _HomePageState extends State<HomePage> {
 
   late int _filterIndex;
 
+  bool get _isVenueAccount => UserSession().accountType == 'venue';
+
   // ── init state ─────────────────────────────────────────────────────────────
   //
   //   used for: initializing controllers and loading initial page data.
   @override
   void initState() {
     super.initState();
-    _filterIndex = widget.initialFilterIndex.clamp(0, _filterIcons.length - 1);
+    _filterIndex = _isVenueAccount
+        ? _byYouFilterIndex
+        : widget.initialFilterIndex.clamp(0, _filterIcons.length - 1);
     _controller = HomeController(userId: UserSession().userID)
       ..addListener(_onControllerChanged);
     _controller.loadPageData();
@@ -129,8 +134,9 @@ class _HomePageState extends State<HomePage> {
   // ── selected type ──────────────────────────────────────────────────────────
   //
   //   used for: identifying the currently active event category filter.
-  EventType get _selectedType =>
-      _filterIcons[_filterIndex]['type'] as EventType;
+  EventType get _selectedType => _isVenueAccount
+      ? EventType.byYou
+      : _filterIcons[_filterIndex]['type'] as EventType;
 
   // ── visible events ─────────────────────────────────────────────────────────
   //
@@ -141,7 +147,8 @@ class _HomePageState extends State<HomePage> {
   // ── is nearby selected ─────────────────────────────────────────────────────
   //
   //   used for: determining if the "nearby" filter tab is currently active.
-  bool get _isNearbySelected => _selectedType == EventType.nearby;
+  bool get _isNearbySelected =>
+      !_isVenueAccount && _selectedType == EventType.nearby;
 
   // ── go to profile ──────────────────────────────────────────────────────────
   //
@@ -178,6 +185,11 @@ class _HomePageState extends State<HomePage> {
   //
   //   used for: navigating to the notifications list screen.
   void _goToNotifications() {
+    if (_isVenueAccount) {
+      _showSnackBar(StringRes.at('venue_notifications_disabled'));
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const NotificationsPage()),
@@ -208,6 +220,11 @@ class _HomePageState extends State<HomePage> {
   //
   //   used for: switching between event categories (Invited, By You, Nearby).
   void _selectFilter(int index) {
+    if (_isVenueAccount) {
+      _showSnackBar(StringRes.at('venue_filter_locked'));
+      return;
+    }
+
     setState(() => _filterIndex = index);
     final selectedType = _filterIcons[index]['type'] as EventType;
     if (selectedType == EventType.nearby) {
@@ -675,8 +692,11 @@ class _HomePageState extends State<HomePage> {
       profileIconPath: _controller.profilePhoto,
       isProfileAvatar: true,
       onProfileTap: _goToProfile,
-      filterIconPath: _filterIcons[_filterIndex]['icon'] as String,
+      filterIconPath: _isVenueAccount
+          ? _filterIcons[_byYouFilterIndex]['icon'] as String
+          : _filterIcons[_filterIndex]['icon'] as String,
       onFilterSelected: _selectFilter,
+      isFilterEnabled: !_isVenueAccount,
       bottomNavBar: _BottomNavPill(
         s: s,
         activeIndex: 0,

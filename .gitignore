@@ -11,6 +11,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+**/20260505_create_venue_verification_requests.sql
 
 # IntelliJ related
 *.iml
