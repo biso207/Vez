@@ -16,6 +16,13 @@
 - [x] Correggere il bug del contatore di lunghezza del titolo alla creazione evento
 - [x] Permettere agli invitati di vedere gli altri invitati a un determinato evento
 - [x] Aggiungere numero limite ospiti e prezzo nelle card del carousel anche nel gruppo "Yours"
+- [ ] Aggiungere i dati e interazioni tra utenti:
+  - follow di un utente
+  - sblocco dello stato di "amicizia" al following reciproco
+  - conteggio followers, eventi creati, eventi partecipati, numero like ai propri eventi
+- [ ] Evento "expired" quando passata la data:
+  - mostrato in bacheca (?)
+  - sparisce dai carousels (Invites, Yours, Nearby)
 
 ## NUOVE FEATURE CORE
 
