@@ -2,7 +2,7 @@
 
 - [ ] 1) Creare account per locali (pub, bar, ristoranti, etc.)
 - [ ] 2) Migliorare il filtro "Nearby"
-- [ ] 3) Migliorare la scelta del luogo nella creazione eventi e specificare di usare la mappa per mostrare l'evento in "Nearby"
+- [x] 3) Migliorare la scelta del luogo nella creazione eventi e specificare di usare la mappa per mostrare l'evento in "Nearby"
 - [x] 4) Completare la UI preview per eventi "Invited" e "Nearby"
 - [x] 5) Migliorare i menù popup per aggiungere e gestire gli invitati
 - [x] 6) Nella pagina delle notifiche l'utente deve vedere il cambio scelta immediatamente e deve rimanere in quella pagina

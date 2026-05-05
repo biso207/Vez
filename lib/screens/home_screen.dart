@@ -48,7 +48,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   static const String _emptyStateIcon =
       'assets/icons/home_page/no_event_found.png';
-  static const Duration _autoRefreshInterval = Duration(seconds: 30);
+  static const Duration _autoRefreshInterval = Duration(seconds: 60);
 
   static const List<Map<String, dynamic>> _filterIcons = [
     {

@@ -22,13 +22,15 @@ const Map<String, String> en = {
   "user_already_exists": "User Already Exists",
   "same_username": "Same Username",
   "invalid_email": "Invalid Email",
-  "invalid_password": "Invalid Password.\n8 Chars, 1 Uppercase, 1 Lowercase, 1 Number, 1 Special.",
+  "invalid_password":
+      "Invalid Password.\n8 Chars, 1 Uppercase, 1 Lowercase, 1 Number, 1 Special.",
   "signup_failed": "Signup Failed",
   "signup_successful": "Signup Done!",
   "something_went_wrong": "Error",
   "enable_location_services": "Enable Location",
   "location_permissions_denied": "Location Denied",
-  "location_permissions_permanently_denied": "Permission Denied. Check Settings",
+  "location_permissions_permanently_denied":
+      "Permission Denied. Check Settings",
   "unknown_city": "Unknown City",
   "no_internet_connection": "No Connection",
   "login_failed": "Login Failed",
@@ -94,6 +96,9 @@ const Map<String, String> en = {
   "set_price": "Price",
   "location_simple_name": "Place Name",
   "location_map": "Map",
+  "location_selector_hint": "Choose how to save the location",
+  "location_simple_name_hint": "Name only, no coordinates",
+  "location_map_nearby_hint": "Uses coordinates, required for Nearby",
   "move_map_to_select_place": "Move Map",
   "unknown_place": "Unknown Place",
   "address_not_found": "Address Not Found",
@@ -153,5 +158,5 @@ const Map<String, String> en = {
   "type7": "{host} Thought Of You.",
   "type8": "New Event: {event}.",
   "type9": "{name}, Check: {event}.",
-  "type10": "Invite 👀 {event}"
+  "type10": "Invite 👀 {event}",
 };

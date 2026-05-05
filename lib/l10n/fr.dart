@@ -22,7 +22,8 @@ const Map<String, String> fr = {
   "user_already_exists": "Utilisateur Existe Déjà",
   "same_username": "Nom Identique Au Précédent",
   "invalid_email": "Email Invalide",
-  "invalid_password": "Mot De Passe Invalide.\n8 Car., 1 Maj., 1 Min., 1 Nombre, 1 Spécial.",
+  "invalid_password":
+      "Mot De Passe Invalide.\n8 Car., 1 Maj., 1 Min., 1 Nombre, 1 Spécial.",
   "signup_failed": "Échec De L'Inscription",
   "signup_successful": "Inscription Réussie !",
   "something_went_wrong": "Erreur",
@@ -94,6 +95,9 @@ const Map<String, String> fr = {
   "set_price": "Prix",
   "location_simple_name": "Nom Du Lieu",
   "location_map": "Carte",
+  "location_selector_hint": "Choisis comment enregistrer le lieu",
+  "location_simple_name_hint": "Nom seul, sans coordonnees",
+  "location_map_nearby_hint": "Utilise les coordonnees, requis pour Nearby",
   "move_map_to_select_place": "Bouger Carte",
   "unknown_place": "Lieu Inconnu",
   "address_not_found": "Adresse Introuvable",
@@ -153,5 +157,5 @@ const Map<String, String> fr = {
   "type7": "{host} A Pensé À Toi.",
   "type8": "Nouvel Événement : {event}.",
   "type9": "{name}, Regarde : {event}.",
-  "type10": "Invitation 👀 {event}"
+  "type10": "Invitation 👀 {event}",
 };

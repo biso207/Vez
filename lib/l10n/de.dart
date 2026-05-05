@@ -22,13 +22,15 @@ const Map<String, String> de = {
   "user_already_exists": "Benutzer Existiert Bereits",
   "same_username": "Benutzername Ist Identisch",
   "invalid_email": "Ungültige E-Mail",
-  "invalid_password": "Ungültiges Passwort.\n8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl, 1 Sonderzeichen.",
+  "invalid_password":
+      "Ungültiges Passwort.\n8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl, 1 Sonderzeichen.",
   "signup_failed": "Registrierung Fehlgeschlagen",
   "signup_successful": "Registrierung Erfolgreich!",
   "something_went_wrong": "Fehler",
   "enable_location_services": "Standortdienste Aktivieren",
   "location_permissions_denied": "Standortzugriff Verweigert",
-  "location_permissions_permanently_denied": "Standortzugriff Verweigert. Siehe Einstellungen",
+  "location_permissions_permanently_denied":
+      "Standortzugriff Verweigert. Siehe Einstellungen",
   "unknown_city": "Unbekannte Stadt",
   "no_internet_connection": "Keine Verbindung",
   "login_failed": "Anmeldung Fehlgeschlagen",
@@ -94,6 +96,9 @@ const Map<String, String> de = {
   "set_price": "Preis",
   "location_simple_name": "Ortsname",
   "location_map": "Karte",
+  "location_selector_hint": "Wahle, wie der Ort gespeichert wird",
+  "location_simple_name_hint": "Nur Name, keine Koordinaten",
+  "location_map_nearby_hint": "Nutzt Koordinaten, fur Nearby notwendig",
   "move_map_to_select_place": "Karte Bewegen",
   "unknown_place": "Unbekannter Ort",
   "address_not_found": "Adresse Nicht Gefunden",
@@ -153,5 +158,5 @@ const Map<String, String> de = {
   "type7": "{host} Hat An Dich Gedacht.",
   "type8": "Neues Event Für Dich: {event}.",
   "type9": "{name}, Schau Dir Das An: {event}.",
-  "type10": "Einladung Unterwegs 👀 {event}"
+  "type10": "Einladung Unterwegs 👀 {event}",
 };

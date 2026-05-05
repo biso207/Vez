@@ -81,7 +81,7 @@ class VezEventPopups {
     required VoidCallback onSimpleNameTap,
     required VoidCallback onMapTap,
   }) {
-    final double pw = MediaQuery.of(context).size.width * 0.78;
+    final double pw = MediaQuery.of(context).size.width * 0.82;
 
     VezPopup.show(
       context: context,
@@ -93,14 +93,14 @@ class VezEventPopups {
           _VezPopupHeader(
             icon: 'assets/icons/event/location.png',
             label: StringRes.at('set_location'),
+            subtitle: StringRes.at('location_selector_hint'),
           ),
 
-          _VezPopupDivider(parentWidth: pw),
-
           // option 1: simple text name
-          _VezPopupRow(
+          _VezPopupOptionRow(
             iconPath: 'assets/icons/event/known_place.png',
             label: StringRes.at('location_simple_name'),
+            description: StringRes.at('location_simple_name_hint'),
             onTap: () {
               Navigator.pop(context);
               onSimpleNameTap();
@@ -110,9 +110,11 @@ class VezEventPopups {
           _VezPopupDivider(parentWidth: pw),
 
           // option 2: precise map picker
-          _VezPopupRow(
+          _VezPopupOptionRow(
             iconPath: 'assets/icons/event/precise_spot.png',
             label: StringRes.at('location_map'),
+            description: StringRes.at('location_map_nearby_hint'),
+            accentColor: const Color(0xFF55D6FF),
             onTap: () {
               Navigator.pop(context);
               onMapTap();
@@ -270,30 +272,51 @@ class _TextInputContentState extends State<_TextInputContent> {
 class _VezPopupHeader extends StatelessWidget {
   final String? icon; // asset path or null
   final String label;
+  final String? subtitle;
 
-  const _VezPopupHeader({required this.label, this.icon});
+  const _VezPopupHeader({required this.label, this.icon, this.subtitle});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-      child: Row(
-        mainAxisAlignment: icon != null
-            ? MainAxisAlignment.start
-            : MainAxisAlignment.center,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            ImageIcon(AssetImage(icon!), color: Colors.white, size: 28),
-            const SizedBox(width: 12),
-          ],
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                ImageIcon(AssetImage(icon!), color: Colors.white, size: 28),
+                const SizedBox(width: 12),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
+          if (subtitle != null && subtitle!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              subtitle!,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
       ),
     );
@@ -335,6 +358,82 @@ class _VezPopupRow extends StatelessWidget {
                 fontSize: 17,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── _VezPopupOptionRow — described tappable row for location choices ─────────
+
+class _VezPopupOptionRow extends StatelessWidget {
+  final String iconPath;
+  final String label;
+  final String description;
+  final Color? accentColor;
+  final VoidCallback onTap;
+
+  const _VezPopupOptionRow({
+    required this.iconPath,
+    required this.label,
+    required this.description,
+    required this.onTap,
+    this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color c = accentColor ?? Colors.white;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color.fromARGB(45, 255, 255, 255),
+                border: Border.all(color: Colors.white30, width: 2),
+              ),
+              child: ImageIcon(AssetImage(iconPath), color: c, size: 26),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: c,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, color: Colors.white70, size: 24),
           ],
         ),
       ),

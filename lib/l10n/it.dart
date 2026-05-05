@@ -23,14 +23,14 @@ const Map<String, String> it = {
   "same_username": "Username Uguale Al Precedente",
   "invalid_email": "Email Non Valida",
   "invalid_password":
-  "Password Non Valida.\n8 Caratteri, 1 Maiuscola, 1 Minuscola, 1 Numero, 1 Speciale.",
+      "Password Non Valida.\n8 Caratteri, 1 Maiuscola, 1 Minuscola, 1 Numero, 1 Speciale.",
   "signup_failed": "Registrazione Fallita",
   "signup_successful": "Registrazione Completata!",
   "something_went_wrong": "Errore",
   "enable_location_services": "Attiva Localizzazione",
   "location_permissions_denied": "Permessi Posizione Negati",
   "location_permissions_permanently_denied":
-  "Permessi Negati. Modifica Nelle Impostazioni",
+      "Permessi Negati. Modifica Nelle Impostazioni",
   "unknown_city": "Città Sconosciuta",
   "no_internet_connection": "Nessuna Connessione",
   "login_failed": "Login Fallito",
@@ -96,6 +96,9 @@ const Map<String, String> it = {
   "set_price": "Prezzo",
   "location_simple_name": "Nome Luogo",
   "location_map": "Mappa",
+  "location_selector_hint": "Scegli come salvare il luogo",
+  "location_simple_name_hint": "Solo nome, senza coordinate",
+  "location_map_nearby_hint": "Usa coordinate, serve per Nearby",
   "move_map_to_select_place": "Muovi Mappa",
   "unknown_place": "Luogo Sconosciuto",
   "address_not_found": "Indirizzo Non Trovato",
@@ -155,5 +158,5 @@ const Map<String, String> it = {
   "type7": "{host} Ha Pensato A Te.",
   "type8": "Nuovo Evento: {event}.",
   "type9": "{name}, Guarda: {event}.",
-  "type10": "Invito 👀 {event}"
+  "type10": "Invito 👀 {event}",
 };

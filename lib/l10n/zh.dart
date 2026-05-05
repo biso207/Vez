@@ -94,6 +94,9 @@ const Map<String, String> zh = {
   "set_price": "价格",
   "location_simple_name": "地点名称",
   "location_map": "地图",
+  "location_selector_hint": "选择地点保存方式",
+  "location_simple_name_hint": "仅名称，无坐标",
+  "location_map_nearby_hint": "使用坐标，Nearby 需要",
   "move_map_to_select_place": "移动地图",
   "unknown_place": "未知地点",
   "address_not_found": "未找到地址",
@@ -153,5 +156,5 @@ const Map<String, String> zh = {
   "type7": "{host} 想到了你。",
   "type8": "为你准备的新活动：{event}。",
   "type9": "{name}，看看这个：{event}。",
-  "type10": "邀请来了 👀 {event}"
+  "type10": "邀请来了 👀 {event}",
 };
