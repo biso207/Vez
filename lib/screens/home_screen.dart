@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../controllers/home_controller.dart';
@@ -46,6 +48,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   static const String _emptyStateIcon =
       'assets/icons/home_page/no_event_found.png';
+  static const Duration _autoRefreshInterval = Duration(seconds: 30);
 
   static const List<Map<String, dynamic>> _filterIcons = [
     {
@@ -64,6 +67,8 @@ class _HomePageState extends State<HomePage> {
 
   final TextEditingController _searchController = TextEditingController();
   late final HomeController _controller;
+  Timer? _autoRefreshTimer;
+  bool _isAutoRefreshing = false;
 
   late int _filterIndex;
 
@@ -77,6 +82,7 @@ class _HomePageState extends State<HomePage> {
     _controller = HomeController(userId: UserSession().userID)
       ..addListener(_onControllerChanged);
     _controller.loadPageData();
+    _startAutoRefresh();
   }
 
   // ── dispose ────────────────────────────────────────────────────────────────
@@ -87,6 +93,7 @@ class _HomePageState extends State<HomePage> {
     _controller
       ..removeListener(_onControllerChanged)
       ..dispose();
+    _autoRefreshTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -96,6 +103,27 @@ class _HomePageState extends State<HomePage> {
   //   used for: triggering a UI rebuild when the home controller updates.
   void _onControllerChanged() {
     if (mounted) setState(() {});
+  }
+
+  // Automatically refreshes the home feeds while the Home route is visible.
+  void _startAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer.periodic(
+      _autoRefreshInterval,
+      (_) => _refreshHomeAutomatically(),
+    );
+  }
+
+  Future<void> _refreshHomeAutomatically() async {
+    if (!mounted || _isAutoRefreshing || _controller.isLoadingEvents) return;
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+
+    _isAutoRefreshing = true;
+    try {
+      await _controller.loadEvents();
+    } finally {
+      _isAutoRefreshing = false;
+    }
   }
 
   // ── selected type ──────────────────────────────────────────────────────────

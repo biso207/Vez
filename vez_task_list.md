@@ -6,7 +6,7 @@
 - [x] 4) Completare la UI preview per eventi "Invited" e "Nearby"
 - [x] 5) Migliorare i menù popup per aggiungere e gestire gli invitati
 - [x] 6) Nella pagina delle notifiche l'utente deve vedere il cambio scelta immediatamente e deve rimanere in quella pagina
-- [ ] 7) Aggiungere il refresh nella "Home Page" automatico ogni X secondi
+- [x] 7) Aggiungere il refresh nella "Home Page" automatico ogni X secondi
 - [x] 8) Togliere il pulsante "Add Guests" dalla preview degli eventi pubblici
 - [x] 9) Impostare gli eventi "Invited" come i principali nella "Home Page"
 - [x] 10) Centrare il pulsante "Delete event" nella modifica evento senza che muova gli altri elementi della pagina
