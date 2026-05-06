@@ -1,11 +1,11 @@
 // Developed and Designed by Outly â€¢ Â© 2026
-// profile screen â€” zone-2 content: user info card + stats pill + event grid.
+// profile screen : zone-2 content: user info card + stats pill + event grid.
 //
 // layout zones used:
-//   zone 1 â€” background  : kBgColor from VezPageLayout
-//   zone 2 â€” body        : SingleChildScrollView anchored from top
-//   zone 3 â€” blur veil   : handled by VezPageLayout
-//   zone 4 â€” navbars     : settings / search / follow-requests + bottom pill
+//   zone 1 : background  : kBgColor from VezPageLayout
+//   zone 2 : body        : SingleChildScrollView anchored from top
+//   zone 3 : blur veil   : handled by VezPageLayout
+//   zone 4 : navbars     : settings / search / follow-requests + bottom pill
 //
 // top-bar left button = settings icon â†’ opens _SettingsPopup (full glass panel)
 //   the settings popup replaces the old standalone language popup and groups
@@ -35,9 +35,9 @@ import 'notifications_screen.dart';
 
 const double kBlurValue = 5.0;
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 // stateful widget wrapper
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -46,12 +46,12 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 // state
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 
 class _ProfilePageState extends State<ProfilePage> {
-  // â”€â”€ controllers & services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── controllers & services ────────────────────────────────────────────────
 
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _usernameCtrl = TextEditingController();
@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
   late final GetDBService _dbGet;
   late final SetDBService _dbSet;
 
-  // â”€â”€ user data state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── user data state ────────────────────────────────────────────────────────
 
   String _profilePhoto = '';
   String _username = '';
@@ -79,7 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int _numFollowing = 0;
   int _numParticipatedEvents = 0;
 
-  // â”€â”€ ui flags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── ui flags ──────────────────────────────────────────────────────────────
 
   bool _showBadge = true;
   bool _showPassword = false;
@@ -88,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
   File? _newProfileImage;
   String? _popupError;
 
-  // â”€â”€ static data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── static data ────────────────────────────────────────────────────────────
 
   static const List<Map<String, String>> _languages = [
     {
@@ -123,7 +123,7 @@ class _ProfilePageState extends State<ProfilePage> {
     },
   ];
 
-  // â”€â”€ lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -153,7 +153,7 @@ class _ProfilePageState extends State<ProfilePage> {
       _usernameCtrl.text.trim().isNotEmpty &&
       _usernameCtrl.text.trim().length >= 4;
 
-  // â”€â”€ data loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── data loading ──────────────────────────────────────────────────────────
 
   Future<void> _loadUserData() async {
     final photo = await _dbGet.getUserData('profile_photo');
@@ -180,7 +180,7 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  // â”€â”€ save profile edits â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── save profile edits ────────────────────────────────────────────────────
 
   Future<void> _saveProfileData(StateSetter setPopupState) async {
     final String uName = _usernameCtrl.text.trim();
@@ -217,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  // â”€â”€ navigation helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── navigation helpers ────────────────────────────────────────────────────
 
   void _goToHome() {
     HapticService.tap();
@@ -351,7 +351,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // â”€â”€ build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -359,12 +359,12 @@ class _ProfilePageState extends State<ProfilePage> {
     final double s = (sw / 390).clamp(0.8, 1.2);
 
     return VezPageLayout(
-      // â”€â”€ top navbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── top navbar ──────────────────────────────────────────────────────
       // search area
       searchController: _searchController,
       searchHint: StringRes.at('search'),
 
-      // left button: settings icon â€” opens the full settings popup
+      // left button: settings icon which opens the full settings popup
       profileIconPath: 'assets/icons/profile_page/settings.png',
       isProfileAvatar: false,
       onProfileTap: () {
@@ -380,7 +380,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _showEditProfilePopup(s);
       },
       onFilterSelected: null,
-      // â”€â”€ bottom navbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── bottom navbar ────────────────────────────────────────────────────
       bottomNavBar: _BottomNavPill(
         s: s,
         activeIndex: -1,
@@ -389,7 +389,7 @@ class _ProfilePageState extends State<ProfilePage> {
         onNotificationsTap: _goToNotifications,
       ),
 
-      // â”€â”€ zone-2 body: scrollable profile content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── zone-2 body: scrollable profile content ──────────────────────────
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -398,7 +398,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // top spacer to clear the navbar + blur veil
             SizedBox(height: 130 * s),
 
-            // â”€â”€ user info card (tap to edit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── user info card (tap to edit) ──────────────────────────────
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 5 * s),
               child: _UserCard(
@@ -414,7 +414,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             SizedBox(height: 16 * s),
 
-            // â”€â”€ stats pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── stats pill ────────────────────────────────────────────────
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 50 * s),
               child: _StatsPill(
@@ -427,7 +427,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             SizedBox(height: 16 * s),
 
-            // â”€â”€ past-events grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── past-events grid ──────────────────────────────────────────
             _PastEventsGrid(s: s),
 
             SizedBox(height: 120 * s),
@@ -437,7 +437,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // â”€â”€ popup: settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── popup: settings ────────────────────────────────────────────────────────
   //
   // this is the full settings panel opened by the gear icon in the top-bar.
   // it groups all user preferences together:
@@ -460,7 +460,7 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               SizedBox(height: 20 * s),
 
-              // â”€â”€ settings title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── settings title ──────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
@@ -485,7 +485,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               SizedBox(height: 20 * s),
 
-              // â”€â”€ section: language â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── section: language ────────────────────────────────────────
               _SettingsSection(
                 label: StringRes.at('select_language'),
                 iconPath: 'assets/icons/profile_page/language.png',
@@ -515,7 +515,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(
                             0.05,
-                          ), // Un leggero sfondo per far capire che Ã¨ interattivo
+                          ),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: Colors.white10),
                         ),
@@ -528,7 +528,6 @@ class _ProfilePageState extends State<ProfilePage> {
                               height: 24,
                             ),
                             const SizedBox(width: 15),
-                            // Testo: Lingua + Sottotitolo
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -572,7 +571,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               SizedBox(height: 14 * s),
 
-              // â”€â”€ section: display preferences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── section: display preferences ────────────────────────────
               _SettingsSection(
                 label: StringRes.at('display'),
                 iconPath: 'assets/icons/profile_page/general_settings.png',
@@ -593,7 +592,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               SizedBox(height: 14 * s),
 
-              // â”€â”€ section: account â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── section: account ────────────────────────────────────────
               _SettingsSection(
                 label: StringRes.at('account'),
                 iconPath: 'assets/icons/profile_page/account.png',
@@ -666,7 +665,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // â”€â”€ popup: edit profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── popup: edit profile ────────────────────────────────────────────────────
   //
   // opened by tapping the user info card.
   // fields: username, password, city aka-name, bio, profile photo.
@@ -774,7 +773,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // â”€â”€ popup: language selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── popup: language selector ───────────────────────────────────────────────
   //
   // opened by tapping the language in the settings.
 
@@ -1018,9 +1017,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 // _PopupDivider
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 
 class _PopupDivider extends StatelessWidget {
   final double width;
@@ -1042,9 +1041,9 @@ class _PopupDivider extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 // _BottomNavPill
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 
 class _BottomNavPill extends StatelessWidget {
   final double s;
@@ -1099,11 +1098,11 @@ class _BottomNavPill extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 // zone-2 sub-widgets
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 
-// â”€â”€ _UserCard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── _UserCard ────────────────────────────────────────────────────────────────
 
 class _UserCard extends StatelessWidget {
   final double s;
@@ -1196,7 +1195,7 @@ class _UserCard extends StatelessWidget {
   }
 }
 
-// â”€â”€ _AvatarWithBadge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── _AvatarWithBadge ─────────────────────────────────────────────────────────
 
 class _AvatarWithBadge extends StatelessWidget {
   final String photo;
@@ -1267,7 +1266,7 @@ class _AvatarWithBadge extends StatelessWidget {
   }
 }
 
-// â”€â”€ _StatsPill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── _StatsPill ───────────────────────────────────────────────────────────────
 
 class _StatsPill extends StatelessWidget {
   final double s;
@@ -1339,7 +1338,7 @@ class _StatItem extends StatelessWidget {
   }
 }
 
-// â”€â”€ _PastEventsGrid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── _PastEventsGrid ──────────────────────────────────────────────────────────
 
 class _PastEventsGrid extends StatelessWidget {
   final double s;
@@ -1379,11 +1378,11 @@ class _PastEventsGrid extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// settings // popup sub-widgets
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
+// settings
+// ─────────────────────────────────────────────────────────────
 
-// â”€â”€ _SettingsSection â€” glass pill wrapping a labelled group of settings â”€â”€â”€â”€â”€â”€â”€
+// ── _SettingsSection ─────────────────────────────────────────────────────────
 
 class _SettingsSection extends StatelessWidget {
   final String label;
@@ -1445,7 +1444,7 @@ class _SettingsSection extends StatelessWidget {
   }
 }
 
-// â”€â”€ _BadgeToggleRow â€” category badge on/off switch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── _BadgeToggleRow: category badge on/off switch ────────────────────────────
 
 class _BadgeToggleRow extends StatelessWidget {
   final double s;
@@ -1502,7 +1501,7 @@ class _BadgeToggleRow extends StatelessWidget {
   }
 }
 
-// â”€â”€ _AccountActions â€” logout (and future account actions) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── _AccountActions: logout (and future account actions) ─────────────────────
 
 class _AccountActionButton extends StatelessWidget {
   final double s;
@@ -1603,11 +1602,11 @@ class _AccountActions extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 // edit-profile popup sub-widgets
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────
 
-// â”€â”€ _AvatarPicker â€” tappable circle that previews the new profile photo â”€â”€â”€â”€â”€â”€
+// ── _AvatarPicker: tappable circle that previews the new profile photo ───────
 
 class _PopupTitle extends StatelessWidget {
   final String text;
@@ -1719,7 +1718,7 @@ class _AvatarPicker extends StatelessWidget {
   }
 }
 
-// â”€â”€ _PopupInput â€” glass pill text field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── _PopupInput: glass pill text field ───────────────────────────────────────
 
 class _PopupInput extends StatelessWidget {
   final String hint;
@@ -1775,7 +1774,7 @@ class _PopupInput extends StatelessWidget {
   }
 }
 
-// â”€â”€ _SaveDiscardRow â€” green save + red discard circle buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── _SaveDiscardRow: green save + red discard circle buttons ─────────────────
 
 class _SaveDiscardRow extends StatelessWidget {
   final double s;
