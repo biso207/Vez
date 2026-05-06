@@ -38,10 +38,10 @@ class VezPopup {
                   decoration: BoxDecoration(
                     color:
                         backgroundColor ??
-                        const Color(0xFF0E0E0E).withOpacity(0.8),
+                        const Color.fromARGB(128, 0, 0, 0),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: borderColor ?? Colors.white54,
+                      color: borderColor ?? const Color.fromARGB(128, 255, 255, 255),
                       width: 2,
                     ),
                   ),

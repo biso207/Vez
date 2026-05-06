@@ -550,12 +550,19 @@ class _CreateEventState extends State<CreateEvent> {
     final String? fmtTime = _time?.format(context);
 
     return VezPageLayout(
+      // search area
       searchController: _searchController,
       searchHint: StringRes.at('search'),
+
+      // left button
       profileIconPath: _profilePhoto,
       isProfileAvatar: true,
       onProfileTap: _goToProfile,
+
+      // right button
       filterIconPath: 'assets/icons/profile_page/following_requests.png',
+      isFilterSelected: true,
+      onFilterTap: null,
       onFilterSelected: (_) {},
 
       bottomNavBar: _BottomNavPill(

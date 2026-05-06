@@ -175,11 +175,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
     final double topInset = MediaQuery.of(context).padding.top + 108 * s;
 
     return VezPageLayout(
+      // search area
       searchController: _searchController,
       searchHint: StringRes.at('search'),
+
+      // left button
       profileIconPath: _profilePhoto,
       isProfileAvatar: true,
       onProfileTap: _goToProfile,
+
+      // right button
+      isFilterSelected: true,
+      onFilterTap: null,
       filterIconPath: 'assets/icons/nav_bar/notifications.png',
       onFilterSelected: (_) {},
       bottomNavBar: _BottomNavPill(
@@ -189,6 +196,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         onCreateEventTap: _goToCreateEvent,
         onNotificationsTap: () {},
       ),
+
+
       body: Padding(
         padding: EdgeInsets.only(top: topInset),
         child: _isLoading

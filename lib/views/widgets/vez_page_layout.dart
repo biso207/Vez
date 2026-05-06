@@ -62,8 +62,14 @@ class VezPageLayout extends StatelessWidget {
   /// when true the left button renders as a photo avatar; otherwise as an icon
   final bool isProfileAvatar;
 
+  /// when true the right button renders the icon of the event group selected; otherwise as an icon
+  final bool isFilterSelected;
+
   /// callback fired when the user taps the left (profile) button
   final VoidCallback? onProfileTap;
+
+  /// callback fired when the user taps the right (filter) button
+  final VoidCallback? onFilterTap;
 
   /// placeholder text inside the search field
   final String searchHint;
@@ -89,7 +95,9 @@ class VezPageLayout extends StatelessWidget {
     required this.searchController,
     this.profileIconPath = '',
     this.isProfileAvatar = false,
+    this.isFilterSelected = false,
     this.onProfileTap,
+    this.onFilterTap,
     this.searchHint = 'Search',
     this.filterIconPath = '',
     this.onFilterSelected,
@@ -174,7 +182,9 @@ class VezPageLayout extends StatelessWidget {
               s: s,
               profileIconPath: profileIconPath,
               isProfileAvatar: isProfileAvatar,
+              isFilterSelected: isFilterSelected,
               onProfileTap: onProfileTap,
+              onFilterTap: onFilterTap,
               searchController: searchController,
               searchHint: searchHint,
               filterIconPath: filterIconPath,
@@ -249,7 +259,9 @@ class _TopNavBar extends StatelessWidget {
   final double s;
   final String profileIconPath;
   final bool isProfileAvatar;
+  final bool isFilterSelected;
   final VoidCallback? onProfileTap;
+  final VoidCallback? onFilterTap;
   final TextEditingController searchController;
   final String searchHint;
   final String filterIconPath;
@@ -261,7 +273,9 @@ class _TopNavBar extends StatelessWidget {
     required this.s,
     required this.profileIconPath,
     required this.isProfileAvatar,
+    required this.isFilterSelected,
     required this.onProfileTap,
+    required this.onFilterTap,
     required this.searchController,
     required this.searchHint,
     required this.filterIconPath,
@@ -286,28 +300,28 @@ class _TopNavBar extends StatelessWidget {
           child: _CircleButton(
             size: 45,
             border: Border.all(
-              color: isProfileAvatar ? Colors.white : Colors.white54,
+              color: Colors.white54,
               width: 2,
             ),
             child: isProfileAvatar
                 ? (profileIconPath.isEmpty
-                      ? const Icon(Icons.person, color: Colors.white)
-                      : Image(
-                          image: isNetworkImage
-                              ? NetworkImage(profileIconPath)
-                              : AssetImage(profileIconPath) as ImageProvider,
-                          fit: BoxFit.cover,
-                          width: 45,
-                          height: 45,
-                        ))
+                ? const Icon(Icons.person, color: Colors.white)
+                : Image(
+              image: isNetworkImage
+                  ? NetworkImage(profileIconPath)
+                  : AssetImage(profileIconPath) as ImageProvider,
+              fit: BoxFit.cover,
+              width: 45,
+              height: 45,
+            ))
                 : Center(
-                    child: Image.asset(
-                      profileIconPath,
-                      width: 28,
-                      height: 28,
-                      color: Colors.white,
-                    ),
-                  ),
+              child: Image.asset(
+                profileIconPath,
+                width: 28,
+                height: 28,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
 
@@ -326,15 +340,35 @@ class _TopNavBar extends StatelessWidget {
         SizedBox(width: 12 * s),
 
         // ── right: filter button ─────────────────────────────────────────
-        VezGlass.circleButton(
-          assetIcon: filterIconPath,
-          size: 45,
-          iconSize: 28,
+        GestureDetector(
           onTap: () {
             if (!isFilterEnabled) return;
             HapticService.tap();
-            _showFilterPopup(context, popupWidth);
+
+            if (!isFilterSelected) {
+              // Se isFilterSelected è false, apre il comando passato
+              onFilterTap?.call();
+            } else {
+              // Comando base: apertura del popup del filtro
+              _showFilterPopup(context, popupWidth);
+            }
           },
+          child: _CircleButton(
+            size: 45,
+            border: Border.all(
+              // Bordo speculare al left button: cambia colore in base allo stato
+              color: Colors.white54,
+              width: 2,
+            ),
+            child: Center(
+              child: Image.asset(
+                filterIconPath,
+                width: 28,
+                height: 28,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
       ],
     );

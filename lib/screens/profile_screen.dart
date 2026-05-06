@@ -284,15 +284,26 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return VezPageLayout(
       // ── top navbar ──────────────────────────────────────────────────────
+      // search area
       searchController: _searchController,
       searchHint: StringRes.at('search'),
+
       // left button: settings icon — opens the full settings popup
       profileIconPath: 'assets/icons/profile_page/settings.png',
       isProfileAvatar: false,
-      onProfileTap: () => _showSettingsPopup(s),
+      onProfileTap: () {
+        HapticService.emphasis();
+        _showSettingsPopup(s);
+      },
+
       // right button: follow-requests
-      filterIconPath: 'assets/icons/profile_page/following_requests.png',
-      onFilterSelected: (_) {}, // todo: navigate to follow-requests screen
+      filterIconPath: 'assets/icons/event/edit.png',
+      isFilterSelected: false,
+      onFilterTap: () {
+        HapticService.emphasis();
+        _showEditProfilePopup(s);
+      },
+      onFilterSelected: null,
       // ── bottom navbar ────────────────────────────────────────────────────
       bottomNavBar: _BottomNavPill(
         s: s,
@@ -312,11 +323,8 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(height: 130 * s),
 
             // ── user info card (tap to edit) ───────────────────────────────
-            GestureDetector(
-              onTap: () {
-                HapticService.emphasis();
-                _showEditProfilePopup(s);
-              },
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 5 * s),
               child: _UserCard(
                 s: s,
                 profilePhoto: _profilePhoto,
@@ -332,7 +340,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             // ── stats pill ─────────────────────────────────────────────────
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 30 * s),
+              padding: EdgeInsets.symmetric(horizontal: 50 * s),
               child: _StatsPill(
                 s: s,
                 numFollowers: _numFollowers,
@@ -401,9 +409,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
               SizedBox(height: 20 * s),
 
-              /// when there will be more languages, this will be a button
-              /// to open a list of languages like the category popup
-              /// in the event creation screen
               // ── section: language ────────────────────────────────────────
               _SettingsSection(
                 label: StringRes.at('select_language'),
@@ -423,7 +428,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           setPopupState(() {});
                           if (mounted) setState(() {});
                         },
-                      ), // Apre il popup che abbiamo creato prima
+                      ),
+
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
@@ -431,9 +437,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           horizontal: 16,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(
-                            0.05,
-                          ), // Un leggero sfondo per far capire che è interattivo
+                          color: Colors.white.withOpacity(0.05), // Un leggero sfondo per far capire che è interattivo
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: Colors.white10),
                         ),
@@ -877,17 +881,14 @@ class _UserCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0E0E0E),
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: Colors.white38, width: 2),
-        boxShadow: const [
-          BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6),
-        ],
+        color: Color.fromARGB(50, 0, 0, 0),
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: Color.fromARGB(128, 255, 255, 255), width: 2*s),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AvatarWithBadge(photo: profilePhoto, showBadge: showBadge, size: 75),
+          _AvatarWithBadge(photo: profilePhoto, showBadge: showBadge, size: 75*s),
           SizedBox(width: 16 * s),
           Expanded(
             child: Column(
@@ -906,10 +907,10 @@ class _UserCard extends StatelessWidget {
                 SizedBox(height: 4 * s),
                 RichText(
                   text: TextSpan(
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'InstagramSans',
                       color: Colors.white,
-                      fontSize: 14,
+                      fontSize: 14*s,
                     ),
                     children: [
                       TextSpan(
@@ -926,9 +927,9 @@ class _UserCard extends StatelessWidget {
                 SizedBox(height: 4 * s),
                 Text(
                   bio,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'InstagramSans',
-                    fontSize: 14,
+                    fontSize: 14*s,
                     color: Colors.white,
                   ),
                   maxLines: 3,
@@ -984,8 +985,8 @@ class _AvatarWithBadge extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
                 child: Container(
-                  width: 28,
-                  height: 28,
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(51, 0, 10, 218),
                     shape: BoxShape.circle,
@@ -999,6 +1000,7 @@ class _AvatarWithBadge extends StatelessWidget {
                   child: Image.asset(
                     'assets/icons/categories/pub.png',
                     color: Colors.white,
+                    height: 22, width: 22,
                   ),
                 ),
               ),
@@ -1025,14 +1027,11 @@ class _StatsPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal:0),
       decoration: BoxDecoration(
-        color: const Color(0xFF0E0E0E),
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: Colors.white38, width: 2),
-        boxShadow: const [
-          BoxShadow(color: Color.fromARGB(100, 255, 255, 255), blurRadius: 6),
-        ],
+        color: Color.fromARGB(50, 0, 0, 0),
+        borderRadius: BorderRadius.circular(40),
+        border: Border.all(color: Color.fromARGB(128, 255, 255, 255), width: 2*s),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1064,15 +1063,16 @@ class _StatItem extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset(icon, width: 28, height: 28, color: Colors.white),
+        Image.asset(icon, width: 30, height: 30, color: Colors.white),
         const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
             fontFamily: 'InstagramSans',
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: 20,
             color: Colors.white,
+            height: 1,
           ),
         ),
       ],
@@ -1143,9 +1143,9 @@ class _SettingsSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.06),
+          color: Color.fromARGB(50, 0, 0, 0),
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.white24, width: 1.5),
+          border: Border.all(color: Colors.white54, width: 2),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1159,7 +1159,7 @@ class _SettingsSection extends StatelessWidget {
                     AssetImage(iconPath),
                     color: Colors.white54,
                     size: 18,
-                  ), // <-- Usato ImageIcon
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     label.toUpperCase(),

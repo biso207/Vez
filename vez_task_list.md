@@ -23,6 +23,11 @@
 - [ ] Evento "expired" quando passata la data:
   - mostrato in bacheca (?)
   - sparisce dai carousels (Invites, Yours, Nearby)
+- [x] Migliorare la UI dei popup aumentando il blur e abbassando l'opacità dello sfondo
+- [x] Migliorare la UI della pagina profilo
+- [x] Il tasto in alto a dx della pagina profilo apre la modifica del profilo, le info del profilo mostrano solo 
+      username, città, bio e foto profilo. Al click non fa più nulla.
+- [x] Creazione di uno standard in vez_page_layout per rendere i pulsante della top navbar "globali" e più facilmente modificabili
 
 ## NUOVE FEATURE CORE
 

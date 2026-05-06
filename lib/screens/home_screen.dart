@@ -677,11 +677,18 @@ class _HomePageState extends State<HomePage> {
     final double s = (sw / 390).clamp(0.8, 1.2);
 
     return VezPageLayout(
+      // search area
       searchController: _searchController,
       searchHint: StringRes.at('search'),
+
+      // left button
       profileIconPath: _controller.profilePhoto,
       isProfileAvatar: true,
       onProfileTap: _goToProfile,
+
+      // right button
+      isFilterSelected: true,
+      onFilterTap: null,
       filterIconPath: _isVenueAccount
           ? _filterIcons[_byYouFilterIndex]['icon'] as String
           : _filterIcons[_filterIndex]['icon'] as String,
@@ -694,6 +701,7 @@ class _HomePageState extends State<HomePage> {
         onCreateEventTap: _goToCreateEvent,
         onNotificationsTap: _goToNotifications,
       ),
+
       body: Stack(
         children: [
           Positioned.fill(
