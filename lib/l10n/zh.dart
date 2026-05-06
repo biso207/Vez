@@ -83,7 +83,7 @@ const Map<String, String> zh = {
   "no_events_nearby": "暂无附近活动",
 
   // edit profile //
-  "new_username": "新用户名",
+  "edit_username": "用户名",
   "new_password": "新密码",
   "city_aka_name": "城市别名",
   "bio": "个人简介",
@@ -97,6 +97,18 @@ const Map<String, String> zh = {
   "click_to_change": "点击更改",
   "logout": "退出登录",
   "close": "关闭",
+  "change_password": "Change Password",
+  "current_password": "Current Password",
+  "confirm_password": "Confirm Password",
+  "complete_all_fields": "Complete All Fields",
+  "passwords_do_not_match": "Passwords Do Not Match",
+  "wrong_current_password": "Wrong Current Password",
+  "password_change_failed": "Password Change Failed",
+  "delete_account": "Delete Account",
+  "delete_account_confirm_message":
+      "Type {username} To Delete Your Account Forever.",
+  "username_confirm_failed": "Username Does Not Match",
+  "account_delete_failed": "Account Delete Failed",
 
   // event creation page //
   "event_title": "标题",

@@ -274,7 +274,7 @@ class _NotificationCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => onTap(eventId.isNotEmpty ? eventId : null),
       child: VezGlass.container(
-        padding: EdgeInsets.all(14 * s),
+        padding: EdgeInsets.all(10 * s),
         radius: BorderRadius.circular(26),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +404,6 @@ class _InviteResponseActions extends StatelessWidget {
         Expanded(
           child: _InviteResponseButton(
             iconPath: 'assets/icons/event/participation_state/going.png',
-            label: StringRes.at('going'),
             isActive: currentState == 'going',
             s: s,
             onTap: () => onRespond('going'),
@@ -414,7 +413,6 @@ class _InviteResponseActions extends StatelessWidget {
         Expanded(
           child: _InviteResponseButton(
             iconPath: 'assets/icons/event/participation_state/maybe.png',
-            label: StringRes.at('maybe'),
             isActive: currentState == 'maybe',
             s: s,
             onTap: () => onRespond('maybe'),
@@ -424,7 +422,6 @@ class _InviteResponseActions extends StatelessWidget {
         Expanded(
           child: _InviteResponseButton(
             iconPath: 'assets/icons/event/participation_state/not_going.png',
-            label: StringRes.at('not_going'),
             isActive: currentState == 'not_going',
             s: s,
             onTap: () => onRespond('not_going'),
@@ -438,14 +435,12 @@ class _InviteResponseActions extends StatelessWidget {
 class _InviteResponseButton extends StatelessWidget {
   const _InviteResponseButton({
     required this.iconPath,
-    required this.label,
     required this.isActive,
     required this.s,
     required this.onTap,
   });
 
   final String iconPath;
-  final String label;
   final bool isActive;
   final double s;
   final VoidCallback onTap;
@@ -455,43 +450,16 @@ class _InviteResponseButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 42 * s,
-        padding: EdgeInsets.symmetric(horizontal: 6 * s),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18 * s),
-          color: isActive
-              ? const Color.fromARGB(100, 255, 255, 255)
-              : const Color.fromARGB(38, 255, 255, 255),
+          shape: BoxShape.circle,
+          color: const Color.fromARGB(179, 0, 0, 0),
           border: Border.all(
-            color: isActive ? Colors.white70 : Colors.white24,
-            width: 1.3,
+            color: isActive ? Colors.white70 : Colors.white30,
+            width: 2,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              iconPath,
-              width: 15 * s,
-              height: 15 * s,
-              fit: BoxFit.contain,
-            ),
-            SizedBox(width: 4 * s),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11 * s,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
+        child: Image.asset(iconPath, width: 20, height: 20)
       ),
     );
   }

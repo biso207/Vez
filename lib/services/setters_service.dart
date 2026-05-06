@@ -29,12 +29,6 @@ class SetDBService {
     try {
       final url = Uri.parse('$_baseUrl/rest/v1/users?user_id=eq.$userID');
 
-      if (column == "psw") {
-        final bytes = utf8.encode(value + salt);
-        final digest = sha256.convert(bytes);
-        value = digest.toString();
-      }
-
       final Map<String, dynamic> updateData = {column: value};
 
       final response = await http.patch(
@@ -45,6 +39,78 @@ class SetDBService {
 
       return response.statusCode;
     } catch (e) {
+      return 0;
+    }
+  }
+
+  String _hashPassword(String password) {
+    final bytes = utf8.encode(password + salt);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  Future<int> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final String currentHash = _hashPassword(currentPassword);
+      final verifyUrl = Uri.parse(
+        '$_baseUrl/rest/v1/users'
+        '?user_id=eq.$userID'
+        '&hash_psw=eq.$currentHash'
+        '&select=user_id'
+        '&limit=1',
+      );
+
+      final verifyResponse = await http.get(verifyUrl, headers: _jsonHeaders);
+      if (verifyResponse.statusCode != 200) return verifyResponse.statusCode;
+
+      final List<dynamic> rows = jsonDecode(verifyResponse.body);
+      if (rows.isEmpty) return 401;
+
+      final updateUrl = Uri.parse('$_baseUrl/rest/v1/users?user_id=eq.$userID');
+      final updateResponse = await http.patch(
+        updateUrl,
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+        body: jsonEncode({'hash_psw': _hashPassword(newPassword)}),
+      );
+
+      return updateResponse.statusCode == 204 ? 200 : updateResponse.statusCode;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<int> deleteCurrentUserAccount({String? profilePhotoUrl}) async {
+    try {
+      final List<Map<String, dynamic>> createdEvents =
+          await _getCreatedEvents();
+
+      await _deleteRows(table: 'event_invites', filter: 'user_id=eq.$userID');
+      await _deleteRows(table: 'participation', filter: 'user_id=eq.$userID');
+      await _deleteRows(table: 'follows', filter: 'follower_id=eq.$userID');
+      await _deleteRows(table: 'follows', filter: 'following_id=eq.$userID');
+
+      for (final event in createdEvents) {
+        final eventId = event['event_id']?.toString() ?? '';
+        final placeId = event['place_id']?.toString();
+        if (eventId.isEmpty) continue;
+        await deleteEvent(eventId, placeId: placeId);
+      }
+
+      final userResponse = await _deleteRows(
+        table: 'users',
+        filter: 'user_id=eq.$userID',
+      );
+
+      if (userResponse == 200 || userResponse == 204) {
+        await _deleteProfilePhoto(profilePhotoUrl);
+        return 200;
+      }
+
+      return userResponse;
+    } catch (_) {
       return 0;
     }
   }
@@ -551,6 +617,44 @@ class SetDBService {
       },
     );
     return response.statusCode;
+  }
+
+  Future<List<Map<String, dynamic>>> _getCreatedEvents() async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/events'
+        '?creator_user_id=eq.$userID'
+        '&select=event_id,place_id',
+      );
+      final response = await http.get(url, headers: _jsonHeaders);
+      if (response.statusCode != 200) return [];
+
+      final List<dynamic> data = jsonDecode(response.body);
+      return data
+          .whereType<Map>()
+          .map((row) => Map<String, dynamic>.from(row))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _deleteProfilePhoto(String? profilePhotoUrl) async {
+    final String url = profilePhotoUrl?.trim() ?? '';
+    if (url.isEmpty || !url.contains('/avatars/')) return;
+
+    final String objectName = Uri.decodeComponent(url.split('/avatars/').last);
+    if (objectName.isEmpty) return;
+
+    try {
+      final deleteUrl = Uri.parse(
+        '$_baseUrl/storage/v1/object/avatars/$objectName',
+      );
+      await http.delete(
+        deleteUrl,
+        headers: {'Authorization': 'Bearer $_apiKey', 'apikey': _apiKey},
+      );
+    } catch (_) {}
   }
 
   Future<int?> _getExistingInviteId({

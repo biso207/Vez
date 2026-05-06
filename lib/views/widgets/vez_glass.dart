@@ -14,7 +14,7 @@ class VezGlass {
   static const double blur = 5;
 
   /// Shared border style: 3 px white at 50% opacity
-  static Border border = Border.all(color: Colors.white54, width: 2);
+  static Border border = Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2);
 
   /// ---------------------------------------------------
   /// Glass container (background blur)

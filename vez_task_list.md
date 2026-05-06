@@ -28,6 +28,8 @@
 - [x] Il tasto in alto a dx della pagina profilo apre la modifica del profilo, le info del profilo mostrano solo 
       username, città, bio e foto profilo. Al click non fa più nulla.
 - [x] Creazione di uno standard in vez_page_layout per rendere i pulsante della top navbar "globali" e più facilmente modificabili
+- [ ] Migliorare le impostazioni e aggiungere il cambio password nella zona "Utente" delle impostazioni
+- [x] Rimuovere il cambio password dalla modifica del profilo e schiarire il bordo dell'immagine profilo
 
 ## NUOVE FEATURE CORE
 
