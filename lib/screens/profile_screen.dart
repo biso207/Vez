@@ -1,4 +1,4 @@
-// Developed and Designed by Outly â€¢ Â© 2026
+// Developed and Designed by Outly • © 2026
 // profile screen : zone-2 content: user info card + stats pill + event grid.
 //
 // layout zones used:
@@ -441,9 +441,9 @@ class _ProfilePageState extends State<ProfilePage> {
   //
   // this is the full settings panel opened by the gear icon in the top-bar.
   // it groups all user preferences together:
-  //   â€¢ language selection
-  //   â€¢ category badge toggle
-  //   â€¢ (future: notifications, privacy, etc.)
+  //   • language selection
+  //   • category badge toggle
+  //   • (future: notifications, privacy, etc.)
   //
   // the language section replaces the old standalone language popup.
 
