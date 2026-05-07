@@ -1,13 +1,13 @@
 // Developed and Designed by Outly • © 2026
-// profile screen — zone-2 content: user info card + stats pill + event grid.
+// profile screen : zone-2 content: user info card + stats pill + event grid.
 //
 // layout zones used:
-//   zone 1 — background  : kBgColor from VezPageLayout
-//   zone 2 — body        : SingleChildScrollView anchored from top
-//   zone 3 — blur veil   : handled by VezPageLayout
-//   zone 4 — navbars     : settings / search / follow-requests + bottom pill
+//   zone 1 : background  : kBgColor from VezPageLayout
+//   zone 2 : body        : SingleChildScrollView anchored from top
+//   zone 3 : blur veil   : handled by VezPageLayout
+//   zone 4 : navbars     : settings / search / follow-requests + bottom pill
 //
-// top-bar left button = settings icon → opens _SettingsPopup (full glass panel)
+// top-bar left button = settings icon â†’ opens _SettingsPopup (full glass panel)
 //   the settings popup replaces the old standalone language popup and groups
 //   all user preferences (language, badge toggle, etc.) in one place.
 //
@@ -35,9 +35,9 @@ import 'notifications_screen.dart';
 
 const double kBlurValue = 5.0;
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // stateful widget wrapper
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -46,16 +46,19 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // state
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 class _ProfilePageState extends State<ProfilePage> {
-  // ── controllers & services ─────────────────────────────────────────────────
+  // ── controllers & services ────────────────────────────────────────────────
 
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _usernameCtrl = TextEditingController();
   final TextEditingController _passwordCtrl = TextEditingController();
+  final TextEditingController _currentPasswordCtrl = TextEditingController();
+  final TextEditingController _confirmPasswordCtrl = TextEditingController();
+  final TextEditingController _deleteAccountCtrl = TextEditingController();
   final TextEditingController _cityAkaNameCtrl = TextEditingController();
   final TextEditingController _bioCtrl = TextEditingController();
 
@@ -76,10 +79,12 @@ class _ProfilePageState extends State<ProfilePage> {
   int _numFollowing = 0;
   int _numParticipatedEvents = 0;
 
-  // ── ui flags ───────────────────────────────────────────────────────────────
+  // ── ui flags ──────────────────────────────────────────────────────────────
 
   bool _showBadge = true;
   bool _showPassword = false;
+  bool _showCurrentPassword = false;
+  bool _showConfirmPassword = false;
   File? _newProfileImage;
   String? _popupError;
 
@@ -136,12 +141,19 @@ class _ProfilePageState extends State<ProfilePage> {
     _searchController.dispose();
     _usernameCtrl.dispose();
     _passwordCtrl.dispose();
+    _currentPasswordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
+    _deleteAccountCtrl.dispose();
     _cityAkaNameCtrl.dispose();
     _bioCtrl.dispose();
     super.dispose();
   }
 
-  // ── data loading ───────────────────────────────────────────────────────────
+  bool get _isValid =>
+      _usernameCtrl.text.trim().isNotEmpty &&
+      _usernameCtrl.text.trim().length >= 4;
+
+  // ── data loading ──────────────────────────────────────────────────────────
 
   Future<void> _loadUserData() async {
     final photo = await _dbGet.getUserData('profile_photo');
@@ -159,7 +171,7 @@ class _ProfilePageState extends State<ProfilePage> {
       _profilePhoto = photo?.trim() ?? '';
       _username = username ?? 'Username';
       _city = city ?? StringRes.at('city');
-      _cityAkaName = akaName ?? StringRes.at('city_aka_name');
+      _cityAkaName = akaName?.trim().isNotEmpty == true ? '$akaName • ' : '';
       _bio = bio ?? StringRes.at('bio');
       _numParticipatedEvents = int.tryParse(eventsStr ?? '0') ?? 0;
       _showBadge = bool.tryParse(badge ?? 'true') ?? true;
@@ -168,43 +180,24 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  // ── save profile edits ─────────────────────────────────────────────────────
+  // ── save profile edits ────────────────────────────────────────────────────
 
   Future<void> _saveProfileData(StateSetter setPopupState) async {
     final String uName = _usernameCtrl.text.trim();
-    final String psw = _passwordCtrl.text;
     final String akaName = _cityAkaNameCtrl.text.trim();
     final String bio = _bioCtrl.text.trim();
 
-    if (uName.isNotEmpty && uName.length < 3) {
-      setPopupState(() => _popupError = StringRes.at('username_too_short'));
-      return;
-    }
-
-    if (psw.isNotEmpty) {
-      final bool valid =
-          psw.length >= 8 &&
-          RegExp(r'[A-Z]').hasMatch(psw) &&
-          RegExp(r'[a-z]').hasMatch(psw) &&
-          RegExp(r'[0-9]').hasMatch(psw) &&
-          RegExp(r'[!@#$&*~£€?§+]').hasMatch(psw);
-      if (!valid) {
-        setPopupState(() => _popupError = StringRes.at('invalid_password'));
-        return;
-      }
-    }
-
-    if (uName.isNotEmpty) {
+    if (uName != _username && uName.length >= 4) {
       final int res = await _dbSet.updateUserData('username', uName);
       if (res == 409) {
         setPopupState(() => _popupError = StringRes.at('user_already_exists'));
         return;
       }
+      // update on db
       setState(() => _username = uName);
     }
-    if (psw.isNotEmpty) _dbSet.updateUserData('hash_psw', psw);
-    if (akaName.isNotEmpty) _dbSet.updateUserData('city_aka_name', akaName);
-    if (bio.isNotEmpty) _dbSet.updateUserData('bio', bio);
+    _dbSet.updateUserData('city_aka_name', akaName);
+    _dbSet.updateUserData('bio', bio);
     _dbSet.updateUserData('category_badge', _showBadge);
 
     if (_newProfileImage != null) {
@@ -219,12 +212,12 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     setState(() {
-      if (akaName.isNotEmpty) _cityAkaName = akaName;
-      if (bio.isNotEmpty) _bio = bio;
+      _cityAkaName = akaName;
+      _bio = bio;
     });
   }
 
-  // ── navigation helpers ─────────────────────────────────────────────────────
+  // ── navigation helpers ────────────────────────────────────────────────────
 
   void _goToHome() {
     HapticService.tap();
@@ -255,8 +248,91 @@ class _ProfilePageState extends State<ProfilePage> {
   void _clearPopupControllers() {
     _usernameCtrl.clear();
     _passwordCtrl.clear();
+    _currentPasswordCtrl.clear();
+    _confirmPasswordCtrl.clear();
+    _deleteAccountCtrl.clear();
     _cityAkaNameCtrl.clear();
     _bioCtrl.clear();
+    _showPassword = false;
+    _showCurrentPassword = false;
+    _showConfirmPassword = false;
+    _popupError = null;
+  }
+
+  bool _isStrongPassword(String password) {
+    return password.length >= 12 &&
+        RegExp(r'[A-Z]').hasMatch(password) &&
+        RegExp(r'[a-z]').hasMatch(password) &&
+        RegExp(r'[0-9]').hasMatch(password) &&
+        RegExp(r'[!@#$&*~Â£â‚¬?Â§+._-]').hasMatch(password);
+  }
+
+  Future<void> _handlePasswordChange(StateSetter setPopupState) async {
+    final String currentPassword = _currentPasswordCtrl.text;
+    final String newPassword = _passwordCtrl.text;
+    final String confirmPassword = _confirmPasswordCtrl.text;
+
+    if (currentPassword.isEmpty ||
+        newPassword.isEmpty ||
+        confirmPassword.isEmpty) {
+      setPopupState(() => _popupError = StringRes.at('complete_all_fields'));
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      setPopupState(() => _popupError = StringRes.at('passwords_do_not_match'));
+      return;
+    }
+
+    if (!_isStrongPassword(newPassword)) {
+      setPopupState(() => _popupError = StringRes.at('invalid_password'));
+      return;
+    }
+
+    final int res = await _dbSet.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+
+    if (res == 200 || res == 204) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      _clearPopupControllers();
+      return;
+    }
+
+    setPopupState(
+      () => _popupError = res == 401
+          ? StringRes.at('wrong_current_password')
+          : StringRes.at('password_change_failed'),
+    );
+  }
+
+  Future<void> _handleAccountDeletion(StateSetter setPopupState) async {
+    final String typedUsername = _deleteAccountCtrl.text.trim();
+    if (typedUsername != _username) {
+      setPopupState(
+        () => _popupError = StringRes.at('username_confirm_failed'),
+      );
+      return;
+    }
+
+    final int res = await _dbSet.deleteCurrentUserAccount(
+      profilePhotoUrl: _profilePhoto,
+    );
+
+    if (res == 200 || res == 204) {
+      await _remote.logout();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (route) => false,
+      );
+      _clearPopupControllers();
+      return;
+    }
+
+    setPopupState(() => _popupError = StringRes.at('account_delete_failed'));
   }
 
   void _handleLogout() {
@@ -288,7 +364,7 @@ class _ProfilePageState extends State<ProfilePage> {
       searchController: _searchController,
       searchHint: StringRes.at('search'),
 
-      // left button: settings icon — opens the full settings popup
+      // left button: settings icon which opens the full settings popup
       profileIconPath: 'assets/icons/profile_page/settings.png',
       isProfileAvatar: false,
       onProfileTap: () {
@@ -322,7 +398,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // top spacer to clear the navbar + blur veil
             SizedBox(height: 130 * s),
 
-            // ── user info card (tap to edit) ───────────────────────────────
+            // ── user info card (tap to edit) ──────────────────────────────
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 5 * s),
               child: _UserCard(
@@ -338,7 +414,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             SizedBox(height: 16 * s),
 
-            // ── stats pill ─────────────────────────────────────────────────
+            // ── stats pill ────────────────────────────────────────────────
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 50 * s),
               child: _StatsPill(
@@ -351,7 +427,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             SizedBox(height: 16 * s),
 
-            // ── past-events grid ───────────────────────────────────────────
+            // ── past-events grid ──────────────────────────────────────────
             _PastEventsGrid(s: s),
 
             SizedBox(height: 120 * s),
@@ -384,7 +460,7 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               SizedBox(height: 20 * s),
 
-              // ── settings title ───────────────────────────────────────────
+              // ── settings title ──────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
@@ -437,7 +513,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           horizontal: 16,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05), // Un leggero sfondo per far capire che è interattivo
+                          color: Colors.white.withOpacity(
+                            0.05,
+                          ),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: Colors.white10),
                         ),
@@ -450,7 +528,6 @@ class _ProfilePageState extends State<ProfilePage> {
                               height: 24,
                             ),
                             const SizedBox(width: 15),
-                            // Testo: Lingua + Sottotitolo
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -464,21 +541,24 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  StringRes.at(
-                                    'click_to_change',
-                                  ), // Assicurati di avere questa chiave in StringRes
+                                  StringRes.at('click_to_change'),
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
+                                    color: const Color.fromARGB(
+                                      128,
+                                      255,
+                                      255,
+                                      255,
+                                    ),
                                     fontSize: 12,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
                             ),
                             const Spacer(),
-                            // Una piccola freccetta o icona edit per suggerire l'azione
                             Icon(
                               Icons.arrow_forward_ios,
-                              color: Colors.white.withOpacity(0.3),
+                              color: const Color.fromARGB(128, 255, 255, 255),
                               size: 14,
                             ),
                           ],
@@ -491,7 +571,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               SizedBox(height: 14 * s),
 
-              // ── section: display preferences ─────────────────────────────
+              // ── section: display preferences ────────────────────────────
               _SettingsSection(
                 label: StringRes.at('display'),
                 iconPath: 'assets/icons/profile_page/general_settings.png',
@@ -512,11 +592,37 @@ class _ProfilePageState extends State<ProfilePage> {
 
               SizedBox(height: 14 * s),
 
-              // ── section: account ─────────────────────────────────────────
+              // ── section: account ────────────────────────────────────────
               _SettingsSection(
                 label: StringRes.at('account'),
                 iconPath: 'assets/icons/profile_page/account.png',
-                child: _AccountActions(s: s, onLogout: _handleLogout),
+                child: Column(
+                  mainAxisSize: MainAxisSize
+                      .min, // Opzionale: restringe la colonna al contenuto
+                  children: [
+                    _AccountActionButton(
+                      s: s,
+                      label: StringRes.at('change_password'),
+                      iconPath: 'assets/icons/profile_page/settings.png',
+                      color: Colors.white,
+                      backgroundColor: const Color.fromARGB(50, 255, 255, 255),
+                      borderColor: const Color.fromARGB(128, 255, 255, 255),
+                      onTap: () => _showChangePasswordPopup(s),
+                    ),
+                    SizedBox(height: 10 * s),
+                    _AccountActions(s: s, onLogout: _handleLogout), // logout
+                    SizedBox(height: 10 * s),
+                    _AccountActionButton(
+                      s: s,
+                      label: StringRes.at('delete_account'),
+                      iconPath: 'assets/icons/profile_page/delete.png',
+                      color: const Color(0xFFFF3131),
+                      backgroundColor: const Color.fromARGB(40, 255, 49, 49),
+                      borderColor: const Color.fromARGB(100, 255, 49, 49),
+                      onTap: () => _showDeleteAccountPopup(s),
+                    ),
+                  ],
+                ),
               ),
 
               SizedBox(height: 20 * s),
@@ -531,16 +637,20 @@ class _ProfilePageState extends State<ProfilePage> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
+                      color: const Color.fromARGB(50, 255, 255, 255),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: Colors.white24, width: 2),
+                      border: Border.all(
+                        color: const Color.fromARGB(128, 255, 255, 255),
+                        width: 2,
+                      ),
                     ),
                     child: Text(
                       StringRes.at('close'),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 18,
+                        height: 1,
                       ),
                     ),
                   ),
@@ -561,6 +671,10 @@ class _ProfilePageState extends State<ProfilePage> {
   // fields: username, password, city aka-name, bio, profile photo.
 
   void _showEditProfilePopup(double s) {
+    _usernameCtrl.text = _username;
+    _cityAkaNameCtrl.text = _cityAkaName.replaceAll(' • ', '');
+    _bioCtrl.text = _bio;
+
     VezPopup.show(
       context: context,
       width: MediaQuery.of(context).size.width * 0.85,
@@ -594,37 +708,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // username field
               _PopupInput(
-                hint: _username,
+                hint: StringRes.at("edit_username"),
                 controller: _usernameCtrl,
                 maxLength: 15,
                 onChanged: (v) => setPopupState(() {}),
               ),
 
-              // password field with visibility toggle
-              _PopupInput(
-                hint: StringRes.at('new_password'),
-                controller: _passwordCtrl,
-                obscure: !_showPassword,
-                onChanged: (v) => setPopupState(() {}),
-                suffixIcon: GestureDetector(
-                  onTap: () =>
-                      setPopupState(() => _showPassword = !_showPassword),
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: Icon(
-                      _showPassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: Colors.white54,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ),
-
               // city aka-name field
               _PopupInput(
-                hint: _cityAkaName,
+                hint: StringRes.at("city_aka_name"),
                 controller: _cityAkaNameCtrl,
                 maxLength: 10,
                 onChanged: (v) => setPopupState(() {}),
@@ -632,7 +724,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // bio field
               _PopupInput(
-                hint: _bio,
+                hint: StringRes.at("bio"),
                 controller: _bioCtrl,
                 maxLength: 30,
                 onChanged: (v) => setPopupState(() {}),
@@ -656,6 +748,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // save / discard buttons
               _SaveDiscardRow(
+                isValid: _isValid,
                 s: s,
                 onSave: () async {
                   HapticService.success();
@@ -683,6 +776,157 @@ class _ProfilePageState extends State<ProfilePage> {
   // ── popup: language selector ───────────────────────────────────────────────
   //
   // opened by tapping the language in the settings.
+
+  void _showChangePasswordPopup(double s) {
+    _clearPopupControllers();
+
+    VezPopup.show(
+      context: context,
+      width: MediaQuery.of(context).size.width * 0.85,
+      backgroundColor: const Color.fromARGB(51, 0, 0, 0),
+      borderColor: const Color.fromARGB(128, 255, 255, 255),
+      child: StatefulBuilder(
+        builder: (ctx, setPopupState) => SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 24 * s),
+              _PopupTitle(text: StringRes.at('change_password')),
+              SizedBox(height: 16 * s),
+              _PopupInput(
+                hint: StringRes.at('current_password'),
+                controller: _currentPasswordCtrl,
+                obscure: !_showCurrentPassword,
+                onChanged: (v) => setPopupState(() => _popupError = null),
+                suffixIcon: _PasswordVisibilityToggle(
+                  visible: _showCurrentPassword,
+                  onTap: () => setPopupState(
+                    () => _showCurrentPassword = !_showCurrentPassword,
+                  ),
+                ),
+              ),
+              _PopupInput(
+                hint: StringRes.at('new_password'),
+                controller: _passwordCtrl,
+                obscure: !_showPassword,
+                onChanged: (v) => setPopupState(() => _popupError = null),
+                suffixIcon: _PasswordVisibilityToggle(
+                  visible: _showPassword,
+                  onTap: () =>
+                      setPopupState(() => _showPassword = !_showPassword),
+                ),
+              ),
+              _PopupInput(
+                hint: StringRes.at('confirm_password'),
+                controller: _confirmPasswordCtrl,
+                obscure: !_showConfirmPassword,
+                onChanged: (v) => setPopupState(() => _popupError = null),
+                suffixIcon: _PasswordVisibilityToggle(
+                  visible: _showConfirmPassword,
+                  onTap: () => setPopupState(
+                    () => _showConfirmPassword = !_showConfirmPassword,
+                  ),
+                ),
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                child: _popupError != null
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: VezErrorBanner(message: _popupError!),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              if (_popupError != null) SizedBox(height: 16 * s),
+              _ConfirmCancelRow(
+                s: s,
+                onConfirm: () async {
+                  HapticService.success();
+                  await _handlePasswordChange(setPopupState);
+                },
+                onCancel: () {
+                  HapticService.emphasis();
+                  Navigator.pop(context);
+                  _clearPopupControllers();
+                },
+              ),
+              SizedBox(height: 24 * s),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountPopup(double s) {
+    _clearPopupControllers();
+
+    VezPopup.show(
+      context: context,
+      width: MediaQuery.of(context).size.width * 0.85,
+      backgroundColor: const Color.fromARGB(51, 0, 0, 0),
+      borderColor: const Color.fromARGB(128, 255, 255, 255),
+      child: StatefulBuilder(
+        builder: (ctx, setPopupState) => SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 24 * s),
+              _PopupTitle(text: StringRes.at('delete_account')),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  StringRes.at(
+                    'delete_account_confirm_message',
+                  ).replaceAll('{username}', _username),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16 * s),
+              _PopupInput(
+                hint: _username,
+                controller: _deleteAccountCtrl,
+                onChanged: (v) => setPopupState(() => _popupError = null),
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                child: _popupError != null
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: VezErrorBanner(message: _popupError!),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              if (_popupError != null) SizedBox(height: 16 * s),
+              _ConfirmCancelRow(
+                s: s,
+                confirmEnabled: _deleteAccountCtrl.text.trim() == _username,
+                confirmColor: const Color.fromARGB(128, 255, 49, 49),
+                confirmBorder: const Color.fromARGB(204, 255, 49, 49),
+                onConfirm: () async {
+                  HapticService.emphasis();
+                  await _handleAccountDeletion(setPopupState);
+                },
+                onCancel: () {
+                  HapticService.selection();
+                  Navigator.pop(context);
+                  _clearPopupControllers();
+                },
+              ),
+              SizedBox(height: 24 * s),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   /// scrollable list of languages
   void _showLanguageSelector({VoidCallback? onLanguageChanged}) {
@@ -773,9 +1017,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // _PopupDivider
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 class _PopupDivider extends StatelessWidget {
   final double width;
@@ -797,9 +1041,9 @@ class _PopupDivider extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // _BottomNavPill
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 class _BottomNavPill extends StatelessWidget {
   final double s;
@@ -854,9 +1098,9 @@ class _BottomNavPill extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // zone-2 sub-widgets
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 // ── _UserCard ────────────────────────────────────────────────────────────────
 
@@ -883,12 +1127,19 @@ class _UserCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Color.fromARGB(50, 0, 0, 0),
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: Color.fromARGB(128, 255, 255, 255), width: 2*s),
+        border: Border.all(
+          color: Color.fromARGB(128, 255, 255, 255),
+          width: 2 * s,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AvatarWithBadge(photo: profilePhoto, showBadge: showBadge, size: 75*s),
+          _AvatarWithBadge(
+            photo: profilePhoto,
+            showBadge: showBadge,
+            size: 75 * s,
+          ),
           SizedBox(width: 16 * s),
           Expanded(
             child: Column(
@@ -910,7 +1161,7 @@ class _UserCard extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'InstagramSans',
                       color: Colors.white,
-                      fontSize: 14*s,
+                      fontSize: 14 * s,
                     ),
                     children: [
                       TextSpan(
@@ -918,7 +1169,7 @@ class _UserCard extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
-                        text: ' • $city',
+                        text: city,
                         style: const TextStyle(fontWeight: FontWeight.w300),
                       ),
                     ],
@@ -929,7 +1180,7 @@ class _UserCard extends StatelessWidget {
                   bio,
                   style: TextStyle(
                     fontFamily: 'InstagramSans',
-                    fontSize: 14*s,
+                    fontSize: 14 * s,
                     color: Colors.white,
                   ),
                   maxLines: 3,
@@ -944,7 +1195,7 @@ class _UserCard extends StatelessWidget {
   }
 }
 
-// ── _AvatarWithBadge ──────────────────────────────────────────────────────────
+// ── _AvatarWithBadge ─────────────────────────────────────────────────────────
 
 class _AvatarWithBadge extends StatelessWidget {
   final String photo;
@@ -983,7 +1234,10 @@ class _AvatarWithBadge extends StatelessWidget {
             right: -4,
             child: ClipOval(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
+                filter: ImageFilter.blur(
+                  sigmaX: kBlurValue,
+                  sigmaY: kBlurValue,
+                ),
                 child: Container(
                   width: 30,
                   height: 30,
@@ -1000,7 +1254,8 @@ class _AvatarWithBadge extends StatelessWidget {
                   child: Image.asset(
                     'assets/icons/categories/pub.png',
                     color: Colors.white,
-                    height: 22, width: 22,
+                    height: 22,
+                    width: 22,
                   ),
                 ),
               ),
@@ -1011,7 +1266,7 @@ class _AvatarWithBadge extends StatelessWidget {
   }
 }
 
-// ── _StatsPill ────────────────────────────────────────────────────────────────
+// ── _StatsPill ───────────────────────────────────────────────────────────────
 
 class _StatsPill extends StatelessWidget {
   final double s;
@@ -1027,11 +1282,14 @@ class _StatsPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal:0),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       decoration: BoxDecoration(
         color: Color.fromARGB(50, 0, 0, 0),
         borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: Color.fromARGB(128, 255, 255, 255), width: 2*s),
+        border: Border.all(
+          color: Color.fromARGB(128, 255, 255, 255),
+          width: 2 * s,
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1080,7 +1338,7 @@ class _StatItem extends StatelessWidget {
   }
 }
 
-// ── _PastEventsGrid ───────────────────────────────────────────────────────────
+// ── _PastEventsGrid ──────────────────────────────────────────────────────────
 
 class _PastEventsGrid extends StatelessWidget {
   final double s;
@@ -1120,11 +1378,11 @@ class _PastEventsGrid extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// settings // popup sub-widgets
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// settings
+// ─────────────────────────────────────────────────────────────
 
-// ── _SettingsSection — glass pill wrapping a labelled group of settings ───────
+// ── _SettingsSection ─────────────────────────────────────────────────────────
 
 class _SettingsSection extends StatelessWidget {
   final String label;
@@ -1186,7 +1444,7 @@ class _SettingsSection extends StatelessWidget {
   }
 }
 
-// ── _BadgeToggleRow — category badge on/off switch ────────────────────────────
+// ── _BadgeToggleRow: category badge on/off switch ────────────────────────────
 
 class _BadgeToggleRow extends StatelessWidget {
   final double s;
@@ -1233,9 +1491,9 @@ class _BadgeToggleRow extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeThumbColor: Colors.black,
+          activeThumbColor: Colors.green,
           activeTrackColor: Colors.white,
-          inactiveThumbColor: Colors.white54,
+          inactiveThumbColor: Colors.red,
           inactiveTrackColor: Colors.white24,
         ),
       ],
@@ -1243,7 +1501,63 @@ class _BadgeToggleRow extends StatelessWidget {
   }
 }
 
-// ── _AccountActions — logout (and future account actions) ─────────────────────
+// ── _AccountActions: logout (and future account actions) ─────────────────────
+
+class _AccountActionButton extends StatelessWidget {
+  final double s;
+  final String label;
+  final String iconPath;
+  final Color color;
+  final Color backgroundColor;
+  final Color borderColor;
+  final VoidCallback onTap;
+
+  const _AccountActionButton({
+    required this.s,
+    required this.label,
+    required this.iconPath,
+    required this.color,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            ImageIcon(AssetImage(iconPath), color: color, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: color.withValues(alpha: .7),
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _AccountActions extends StatelessWidget {
   final double s;
@@ -1288,11 +1602,94 @@ class _AccountActions extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // edit-profile popup sub-widgets
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
-// ── _AvatarPicker — tappable circle that previews the new profile photo ──────
+// ── _AvatarPicker: tappable circle that previews the new profile photo ───────
+
+class _PopupTitle extends StatelessWidget {
+  final String text;
+
+  const _PopupTitle({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+}
+
+class _PasswordVisibilityToggle extends StatelessWidget {
+  final bool visible;
+  final VoidCallback onTap;
+
+  const _PasswordVisibilityToggle({required this.visible, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: Icon(
+          visible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          color: Colors.white54,
+          size: 20,
+        ),
+      ),
+    );
+  }
+}
+
+class _ConfirmCancelRow extends StatelessWidget {
+  final double s;
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+  final bool confirmEnabled;
+  final Color confirmColor;
+  final Color confirmBorder;
+
+  const _ConfirmCancelRow({
+    required this.s,
+    required this.onConfirm,
+    required this.onCancel,
+    this.confirmEnabled = true,
+    this.confirmColor = const Color.fromARGB(128, 8, 157, 13),
+    this.confirmBorder = const Color.fromARGB(204, 8, 157, 13),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _ActionCircle(
+          active: confirmEnabled,
+          icon: 'assets/icons/profile_page/confirm.png',
+          activeColor: confirmColor,
+          activeBorder: confirmBorder,
+          onTap: confirmEnabled ? onConfirm : () {},
+        ),
+        SizedBox(width: 28 * s),
+        _ActionCircle(
+          active: true,
+          icon: 'assets/icons/profile_page/delete.png',
+          activeColor: const Color.fromARGB(128, 255, 49, 49),
+          activeBorder: const Color.fromARGB(204, 255, 49, 49),
+          onTap: onCancel,
+        ),
+      ],
+    );
+  }
+}
 
 class _AvatarPicker extends StatelessWidget {
   final File? newImage;
@@ -1314,14 +1711,14 @@ class _AvatarPicker extends StatelessWidget {
       height: 80,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
+        border: Border.all(color: Colors.white54, width: 2),
         image: DecorationImage(image: img, fit: BoxFit.cover),
       ),
     );
   }
 }
 
-// ── _PopupInput — glass pill text field ──────────────────────────────────────
+// ── _PopupInput: glass pill text field ───────────────────────────────────────
 
 class _PopupInput extends StatelessWidget {
   final String hint;
@@ -1377,16 +1774,18 @@ class _PopupInput extends StatelessWidget {
   }
 }
 
-// ── _SaveDiscardRow — green save + red discard circle buttons ────────────────
+// ── _SaveDiscardRow: green save + red discard circle buttons ─────────────────
 
 class _SaveDiscardRow extends StatelessWidget {
   final double s;
   final VoidCallback onSave, onDiscard;
+  final bool isValid;
 
   const _SaveDiscardRow({
     required this.s,
     required this.onSave,
     required this.onDiscard,
+    required this.isValid,
   });
 
   @override
@@ -1395,17 +1794,19 @@ class _SaveDiscardRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _ActionCircle(
+          active: isValid,
           icon: 'assets/icons/profile_page/save.png',
-          color: const Color.fromARGB(128, 8, 157, 13),
-          borderColor: const Color.fromARGB(200, 8, 157, 13),
-          onTap: onSave,
+          activeColor: const Color.fromARGB(128, 8, 157, 13),
+          activeBorder: const Color.fromARGB(204, 8, 157, 13),
+          onTap: isValid ? onSave : () {},
         ),
         SizedBox(width: 28 * s),
         _ActionCircle(
+          active: isValid,
           icon: 'assets/icons/profile_page/delete.png',
-          color: const Color.fromARGB(128, 255, 49, 49),
-          borderColor: const Color.fromARGB(200, 255, 49, 49),
-          onTap: onDiscard,
+          activeColor: const Color.fromARGB(128, 255, 49, 49),
+          activeBorder: const Color.fromARGB(204, 255, 49, 49),
+          onTap: isValid ? onDiscard : () {},
         ),
       ],
     );
@@ -1414,13 +1815,15 @@ class _SaveDiscardRow extends StatelessWidget {
 
 class _ActionCircle extends StatelessWidget {
   final String icon;
-  final Color color, borderColor;
+  final bool active;
+  final Color activeColor, activeBorder;
   final VoidCallback onTap;
 
   const _ActionCircle({
     required this.icon,
-    required this.color,
-    required this.borderColor,
+    required this.active,
+    required this.activeColor,
+    required this.activeBorder,
     required this.onTap,
   });
 
@@ -1431,9 +1834,12 @@ class _ActionCircle extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: color,
+          color: active ? activeColor : const Color.fromARGB(128, 0, 0, 0),
           shape: BoxShape.circle,
-          border: Border.all(color: borderColor, width: 2),
+          border: Border.all(
+            color: active ? activeBorder : Colors.grey,
+            width: 2,
+          ),
         ),
         child: ImageIcon(AssetImage(icon), color: Colors.white, size: 30),
       ),

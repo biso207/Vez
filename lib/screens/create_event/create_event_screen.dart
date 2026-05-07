@@ -47,10 +47,10 @@ class _CreateEventState extends State<CreateEvent> {
 
   // editable event fields.
   String _bgImage = EventCatalog.defaultBackgroundImage;
-  String _categoryName = 'cinema';
-  String _categoryIcon = 'assets/icons/categories/cinema.png';
-  String _typeName = 'Public';
-  String _typeIcon = 'assets/icons/event/public.png';
+  String _categoryName = 'cinema'; // default cat. name
+  String _categoryIcon = 'assets/icons/categories/cinema.png'; // default cat. icon
+  String _typeName = 'Exclusive'; // default type name
+  String _typeIcon = 'assets/icons/event/exclusive.png'; // default type icon
 
   DateTime? _date;
   TimeOfDay? _time;
@@ -113,10 +113,10 @@ class _CreateEventState extends State<CreateEvent> {
   // boolean to validate an event and be saved
   bool get _isValid =>
       _titleController.text.isNotEmpty &&
-          _date != null &&
-          _time != null &&
-          _locationName.isNotEmpty &&
-          _bgImage.isNotEmpty && !_bgImage.startsWith('assets/');
+      _date != null &&
+      _time != null &&
+      _locationName.isNotEmpty &&
+      _bgImage.isNotEmpty && !_bgImage.startsWith('assets/');
 
   // populate all fields when the screen edits an existing event.
   void _applyEventData(HomeEventCardData event) {

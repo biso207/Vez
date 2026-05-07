@@ -96,7 +96,7 @@ const Map<String, String> en = {
   "no_events_nearby": "No Nearby Events",
 
   // edit profile //
-  "new_username": "New Username",
+  "edit_username": "Username",
   "new_password": "New Password",
   "city_aka_name": "City Nickname",
   "bio": "Bio",
@@ -105,11 +105,23 @@ const Map<String, String> en = {
 
   // settings //
   "settings": "Settings",
-  "display": "Display",
+  "display": "Aspect",
   "account": "Account",
   "click_to_change": "Tap To Change",
   "logout": "Logout",
   "close": "Close",
+  "change_password": "Change Password",
+  "current_password": "Current Password",
+  "confirm_password": "Confirm Password",
+  "complete_all_fields": "Complete All Fields",
+  "passwords_do_not_match": "Passwords Do Not Match",
+  "wrong_current_password": "Wrong Current Password",
+  "password_change_failed": "Password Change Failed",
+  "delete_account": "Delete Account",
+  "delete_account_confirm_message":
+      "Type {username} To Delete Your Account Forever.",
+  "username_confirm_failed": "Username Does Not Match",
+  "account_delete_failed": "Account Delete Failed",
 
   // event creation page //
   "event_title": "Title",

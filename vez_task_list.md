@@ -1,6 +1,6 @@
 # Task List - Vez Improvements - Deadline: May 8th
 
-- [ ] Creare account per locali (pub, bar, ristoranti, etc.)
+- [ ] Migliorare e completare la creazione account per locali (pub, bar, ristoranti, etc.)
 - [ ] Migliorare il filtro "Nearby"
 - [x] Migliorare la scelta del luogo nella creazione eventi e specificare di usare la mappa per mostrare l'evento in "Nearby"
 - [x] Completare la UI preview per eventi "Invited" e "Nearby"
@@ -16,6 +16,14 @@
 - [x] Correggere il bug del contatore di lunghezza del titolo alla creazione evento
 - [x] Permettere agli invitati di vedere gli altri invitati a un determinato evento
 - [x] Aggiungere numero limite ospiti e prezzo nelle card del carousel anche nel gruppo "Yours"
+- [x] Migliorare la UI dei popup aumentando il blur e abbassando l'opacità dello sfondo
+- [x] Migliorare la UI della pagina profilo
+- [x] Il tasto in alto a dx della pagina profilo apre la modifica del profilo, le info del profilo mostrano solo 
+      username, città, bio e foto profilo. Al click non fa più nulla.
+- [x] Creazione di uno standard in vez_page_layout per rendere i pulsante della top navbar "globali" e più facilmente modificabili
+- [x] Migliorare le impostazioni e aggiungere il cambio password nella zona "Utente" delle impostazioni
+- [x] Rimuovere il cambio password dalla modifica del profilo e schiarire il bordo dell'immagine profilo
+- [x] Aggiungere l'eliminazione del Profilo
 - [ ] Aggiungere i dati e interazioni tra utenti:
   - follow di un utente
   - sblocco dello stato di "amicizia" al following reciproco
@@ -23,11 +31,6 @@
 - [ ] Evento "expired" quando passata la data:
   - mostrato in bacheca (?)
   - sparisce dai carousels (Invites, Yours, Nearby)
-- [x] Migliorare la UI dei popup aumentando il blur e abbassando l'opacità dello sfondo
-- [x] Migliorare la UI della pagina profilo
-- [x] Il tasto in alto a dx della pagina profilo apre la modifica del profilo, le info del profilo mostrano solo 
-      username, città, bio e foto profilo. Al click non fa più nulla.
-- [x] Creazione di uno standard in vez_page_layout per rendere i pulsante della top navbar "globali" e più facilmente modificabili
 
 ## NUOVE FEATURE CORE
 
