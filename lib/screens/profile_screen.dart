@@ -26,6 +26,7 @@ import '../services/haptic_service.dart';
 import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
+import '../views/widgets/vez_coach_marks.dart';
 import '../views/widgets/vez_glass.dart';
 import '../views/widgets/vez_page_layout.dart';
 import '../views/widgets/vez_popup.dart';
@@ -38,7 +39,9 @@ const double kBlurValue = 5.0;
 /// ── profile page ─────────────────────────────────────────────────────────────
 // used for: standardizing the user profile layout.
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({super.key, this.showTutorial = false});
+
+  final bool showTutorial;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -132,6 +135,10 @@ class _ProfilePageState extends State<ProfilePage> {
       _dbSet = SetDBService(userID: uid);
       _loadUserData();
     }
+
+    if (widget.showTutorial) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _runTutorial());
+    }
   }
 
   /// ── dispose ───────────────────────────────────────────────────────────────
@@ -201,6 +208,13 @@ class _ProfilePageState extends State<ProfilePage> {
       _pastCreatedEvents = pastCreated;
       _pastParticipatedEvents = pastParticipated;
     });
+  }
+
+  Future<void> _runTutorial() async {
+    if (!mounted) return;
+    final bool completed = await VezCoachMarks.showProfileTutorial(context);
+    if (!mounted) return;
+    Navigator.pop(context, completed);
   }
 
   /// ── save profile data ─────────────────────────────────────────────────────
@@ -419,6 +433,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _showEditProfilePopup(s);
       },
       onFilterSelected: null,
+
       /// ── bottom navbar ────────────────────────────────────────────────────
       bottomNavBar: _BottomNavPill(
         s: s,

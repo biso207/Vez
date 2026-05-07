@@ -156,7 +156,28 @@ class _HomePageState extends State<HomePage> {
 
     // The tutorial is modal: once the user finishes or skips it, we mark it as
     // seen in Supabase so it does not reappear on the next login/device.
-    await VezCoachMarks.showHomeTutorial(context);
+    final bool completedHome = await VezCoachMarks.showHomeTutorial(context);
+    if (!mounted) return;
+
+    if (completedHome) {
+      final bool completedCreate =
+          await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CreateEvent(showTutorial: true),
+            ),
+          ) ??
+          false;
+      if (mounted && completedCreate) {
+        await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ProfilePage(showTutorial: true),
+          ),
+        );
+      }
+    }
+
     if (!mounted) return;
     await _dbSet.updateUserData('has_seen_tutorial', true);
   }

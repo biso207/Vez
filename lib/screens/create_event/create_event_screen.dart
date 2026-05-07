@@ -15,6 +15,7 @@ import '../../services/haptic_service.dart';
 import '../../services/setters_service.dart';
 import '../../services/translation_service.dart';
 import '../../services/user_session.dart';
+import '../../views/widgets/vez_coach_marks.dart';
 import '../../views/widgets/vez_event_popups.dart';
 import '../../views/widgets/vez_glass.dart';
 import '../../views/widgets/vez_page_layout.dart';
@@ -27,9 +28,10 @@ part 'widgets/event_editor_card.dart';
 part 'widgets/create_event_bottom_nav.dart';
 
 class CreateEvent extends StatefulWidget {
-  const CreateEvent({super.key, this.editingEvent});
+  const CreateEvent({super.key, this.editingEvent, this.showTutorial = false});
 
   final HomeEventCardData? editingEvent;
+  final bool showTutorial;
 
   @override
   State<CreateEvent> createState() => _CreateEventState();
@@ -48,7 +50,8 @@ class _CreateEventState extends State<CreateEvent> {
   // editable event fields.
   String _bgImage = EventCatalog.defaultBackgroundImage;
   String _categoryName = 'cinema'; // default cat. name
-  String _categoryIcon = 'assets/icons/categories/cinema.png'; // default cat. icon
+  String _categoryIcon =
+      'assets/icons/categories/cinema.png'; // default cat. icon
   String _typeName = 'Exclusive'; // default type name
   String _typeIcon = 'assets/icons/event/exclusive.png'; // default type icon
 
@@ -94,6 +97,10 @@ class _CreateEventState extends State<CreateEvent> {
     // added listener on controller to force rebuild during real-time typing
     // this keeps the character counter perfectly updated on screen.
     _titleController.addListener(() => setState(() {}));
+
+    if (widget.showTutorial) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _runTutorial());
+    }
   }
 
   @override
@@ -110,13 +117,21 @@ class _CreateEventState extends State<CreateEvent> {
     setState(() => _profilePhoto = photo?.trim() ?? '');
   }
 
+  Future<void> _runTutorial() async {
+    if (!mounted) return;
+    final bool completed = await VezCoachMarks.showCreateEventTutorial(context);
+    if (!mounted) return;
+    Navigator.pop(context, completed);
+  }
+
   // boolean to validate an event and be saved
   bool get _isValid =>
       _titleController.text.isNotEmpty &&
       _date != null &&
       _time != null &&
       _locationName.isNotEmpty &&
-      _bgImage.isNotEmpty && !_bgImage.startsWith('assets/');
+      _bgImage.isNotEmpty &&
+      !_bgImage.startsWith('assets/');
 
   // populate all fields when the screen edits an existing event.
   void _applyEventData(HomeEventCardData event) {
@@ -404,7 +419,7 @@ class _CreateEventState extends State<CreateEvent> {
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
           _eventTypes.length,
-              (i) => Column(
+          (i) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _PopupListItem(
@@ -494,8 +509,7 @@ class _CreateEventState extends State<CreateEvent> {
         );
         if (result != null) {
           setState(() {
-            _locationName = (result['name'] ?? 'Selected Location')
-                .toString();
+            _locationName = (result['name'] ?? 'Selected Location').toString();
             _locationAddress = (result['address'] ?? '').toString();
             _locationLat = (result['latitude'] as num?)?.toDouble();
             _locationLng = (result['longitude'] as num?)?.toDouble();

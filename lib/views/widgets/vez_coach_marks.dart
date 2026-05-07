@@ -31,18 +31,34 @@ class VezCoachStep {
 class VezCoachMarks {
   const VezCoachMarks._();
 
-  static Future<void> showHomeTutorial(BuildContext context) {
-    return showGeneralDialog<void>(
+  static Future<bool> showHomeTutorial(BuildContext context) {
+    return _showTutorial(context, _homeSteps);
+  }
+
+  static Future<bool> showCreateEventTutorial(BuildContext context) {
+    return _showTutorial(context, _createEventSteps);
+  }
+
+  static Future<bool> showProfileTutorial(BuildContext context) {
+    return _showTutorial(context, _profileSteps);
+  }
+
+  static Future<bool> _showTutorial(
+    BuildContext context,
+    List<VezCoachStep> steps,
+  ) async {
+    final completed = await showGeneralDialog<bool>(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 180),
       pageBuilder: (context, animation, secondaryAnimation) =>
-          const _VezCoachMarksDialog(steps: _homeSteps),
+          _VezCoachMarksDialog(steps: steps),
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return FadeTransition(opacity: animation, child: child);
       },
     );
+    return completed ?? false;
   }
 
   static const List<VezCoachStep> _homeSteps = [
@@ -78,33 +94,139 @@ class VezCoachMarks {
     ),
   ];
 
+  static const List<VezCoachStep> _createEventSteps = [
+    VezCoachStep(
+      title: 'Crea evento',
+      body: 'Qui costruisci la card: immagine, categoria e privacy.',
+      icon: Icons.add_circle_rounded,
+      targetBuilder: _createCardTarget,
+    ),
+    VezCoachStep(
+      title: 'Info principali',
+      body: 'Aggiungi titolo, data, ora, luogo e dettagli in pochi tap.',
+      icon: Icons.edit_calendar_rounded,
+      targetBuilder: _createInfoTarget,
+    ),
+    VezCoachStep(
+      title: 'Salva',
+      body: 'Quando i campi necessari sono pronti, confermi da qui.',
+      icon: Icons.check_circle_rounded,
+      targetBuilder: _createActionsTarget,
+    ),
+  ];
+
+  static const List<VezCoachStep> _profileSteps = [
+    VezCoachStep(
+      title: 'Impostazioni',
+      body: 'Lingua, account e preferenze vivono in questo pannello.',
+      icon: Icons.settings_rounded,
+      targetBuilder: _profileTarget,
+    ),
+    VezCoachStep(
+      title: 'Modifica profilo',
+      body: 'Da qui aggiorni foto, username, bio e badge.',
+      icon: Icons.edit_rounded,
+      targetBuilder: _filterTarget,
+    ),
+    VezCoachStep(
+      title: 'Il tuo spazio',
+      body: 'Profilo, statistiche e storico eventi restano raccolti qui.',
+      icon: Icons.person_rounded,
+      targetBuilder: _profileCardTarget,
+    ),
+  ];
+
   static Rect _profileTarget(Size size, EdgeInsets padding) {
-    return Rect.fromLTWH(16, padding.top + 18, 56, 56);
+    final s = _scale(size);
+    return Rect.fromLTWH(20, padding.top + 24 * s, 45, 45);
   }
 
   static Rect _searchTarget(Size size, EdgeInsets padding) {
-    return Rect.fromLTWH(72, padding.top + 22, size.width - 144, 48);
+    final s = _scale(size);
+    final top = padding.top + 24 * s;
+    final left = 20 + 45 + 12 * s;
+    return Rect.fromLTWH(left, top, size.width - (left * 2), 45);
   }
 
   static Rect _filterTarget(Size size, EdgeInsets padding) {
-    return Rect.fromLTWH(size.width - 72, padding.top + 18, 56, 56);
+    final s = _scale(size);
+    return Rect.fromLTWH(size.width - 65, padding.top + 24 * s, 45, 45);
   }
 
   static Rect _eventCardTarget(Size size, EdgeInsets padding) {
-    final width = size.width * 0.76;
+    final width = size.width * 0.85;
+    final height = size.height * 0.52;
     return Rect.fromLTWH(
       (size.width - width) / 2,
-      padding.top + 130,
+      (size.height - size.height * 0.65) / 2,
       width,
-      size.height * 0.46,
+      height,
     );
   }
 
   static Rect _createTarget(Size size, EdgeInsets padding) {
+    final s = _scale(size);
+    final navCenterY = size.height - padding.bottom - 48 * s;
     return Rect.fromCenter(
-      center: Offset(size.width / 2, size.height - padding.bottom - 56),
-      width: 58,
-      height: 58,
+      center: Offset(size.width / 2, navCenterY),
+      width: 52 * s,
+      height: 52 * s,
+    );
+  }
+
+  static Rect _createCardTarget(Size size, EdgeInsets padding) {
+    final s = _scale(size);
+    final card = _centerCard(size);
+    return Rect.fromLTWH(
+      card.left + 14 * s,
+      card.top + 17 * s,
+      102 * s,
+      40 * s,
+    );
+  }
+
+  static Rect _createInfoTarget(Size size, EdgeInsets padding) {
+    final s = _scale(size);
+    final card = _centerCard(size);
+    return Rect.fromCenter(
+      center: Offset(card.center.dx, card.bottom - 154 * s),
+      width: card.width - 28 * s,
+      height: 160 * s,
+    );
+  }
+
+  static Rect _createActionsTarget(Size size, EdgeInsets padding) {
+    final s = _scale(size);
+    final card = _centerCard(size);
+    return Rect.fromCenter(
+      center: Offset(size.width / 2, card.bottom - 38 * s),
+      width: 154 * s,
+      height: 66 * s,
+    );
+  }
+
+  static Rect _profileCardTarget(Size size, EdgeInsets padding) {
+    final s = _scale(size);
+    return Rect.fromLTWH(
+      20 + 5 * s,
+      130 * s,
+      size.width - 40 - 10 * s,
+      112 * s,
+    );
+  }
+
+  static double _scale(Size size) {
+    return (size.width / 390).clamp(0.8, 1.2).toDouble();
+  }
+
+  static Rect _centerCard(Size size) {
+    final width = size.width * 0.85;
+    final height = size.height * 0.65;
+    return Rect.fromLTWH(
+      (size.width - width) / 2,
+      (size.height - height) / 2,
+      width,
+      height,
     );
   }
 }
@@ -127,7 +249,7 @@ class _VezCoachMarksDialogState extends State<_VezCoachMarksDialog> {
   void _next() {
     HapticService.tap();
     if (_isLast) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
       return;
     }
     setState(() => _index++);
@@ -141,7 +263,7 @@ class _VezCoachMarksDialogState extends State<_VezCoachMarksDialog> {
 
   void _skip() {
     HapticService.tap();
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(false);
   }
 
   @override
@@ -150,7 +272,18 @@ class _VezCoachMarksDialogState extends State<_VezCoachMarksDialog> {
     final size = media.size;
     final padding = media.padding;
     final target = _step.targetBuilder(size, padding);
-    final tooltipAbove = target.center.dy > size.height * 0.55;
+    const tooltipHeight = 178.0;
+    const tooltipGap = 18.0;
+    final placeBelow =
+        target.bottom + tooltipGap + tooltipHeight <=
+        size.height - padding.bottom - 12;
+    final desiredTop = placeBelow
+        ? target.bottom + tooltipGap
+        : target.top - tooltipGap - tooltipHeight;
+    final tooltipTop = desiredTop.clamp(
+      padding.top + 12,
+      size.height - padding.bottom - tooltipHeight - 12,
+    );
 
     return Material(
       color: Colors.transparent,
@@ -176,8 +309,7 @@ class _VezCoachMarksDialogState extends State<_VezCoachMarksDialog> {
           Positioned(
             left: 22,
             right: 22,
-            top: tooltipAbove ? null : target.bottom + 22,
-            bottom: tooltipAbove ? size.height - target.top + 22 : null,
+            top: tooltipTop.toDouble(),
             child: _CoachTooltip(
               step: _step,
               index: _index,
