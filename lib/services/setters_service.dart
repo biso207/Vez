@@ -560,7 +560,7 @@ class SetDBService {
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/event_invites'
-        '?event_id=eq.$eventId&user_id=eq.$invitedUserId&select=id_invite'
+        '?event_id=eq.$eventId&user_id=eq.$invitedUserId&select=invite_id'
         '&limit=1',
       );
       final response = await http.get(url, headers: _jsonHeaders);
@@ -568,7 +568,7 @@ class SetDBService {
 
       final List<dynamic> data = jsonDecode(response.body);
       if (data.isEmpty) return null;
-      return data.first['id_invite'] as int?;
+      return data.first['invite_id'] as int?;
     } catch (e) {
       print('getExistingInviteId error: $e');
       return null;

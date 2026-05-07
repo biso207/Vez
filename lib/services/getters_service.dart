@@ -12,8 +12,6 @@ class GetDBService {
       'place:place_id(name,address,is_precise,latitude,longitude),'
       'event_category(name),'
       'creator:creator_user_id(username,profile_photo),'
-      'event_invites(id_invite,user_id,role,response,invited_at,responded_at,'
-      'users(username,profile_photo)),'
       'participation(participation_id,user_id,participation_state,'
       'participation_date,users(username,profile_photo))';
 
@@ -151,10 +149,12 @@ class GetDBService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        return data
+        return _attachEventInvites(
+          data
             .whereType<Map>()
             .map((item) => Map<String, dynamic>.from(item))
-            .toList();
+            .toList(),
+        );
       }
       return [];
     } catch (e) {
@@ -177,7 +177,10 @@ class GetDBService {
       final List<dynamic> data = jsonDecode(response.body);
       if (data.isEmpty) return null;
 
-      return Map<String, dynamic>.from(data.first as Map);
+      final List<Map<String, dynamic>> enriched = await _attachEventInvites([
+        Map<String, dynamic>.from(data.first as Map),
+      ]);
+      return enriched.first;
     } catch (e) {
       return null;
     }
@@ -213,10 +216,12 @@ class GetDBService {
 
       if (eventsResponse.statusCode == 200) {
         final List<dynamic> data = jsonDecode(eventsResponse.body);
-        return data
+        return _attachEventInvites(
+          data
             .whereType<Map>()
             .map((item) => Map<String, dynamic>.from(item))
-            .toList();
+            .toList(),
+        );
       }
       return [];
     } catch (e) {
@@ -237,10 +242,12 @@ class GetDBService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        return data
+        return _attachEventInvites(
+          data
             .whereType<Map>()
             .map((item) => Map<String, dynamic>.from(item))
-            .toList();
+            .toList(),
+        );
       }
       return [];
     } catch (e) {
@@ -253,7 +260,7 @@ class GetDBService {
       final Uri url = Uri.parse(
         '$_baseUrl/rest/v1/event_invites'
         '?user_id=eq.$userID'
-        '&select=id_invite,response,invited_at,responded_at,role,event_id,'
+        '&select=invite_id,response,invited_at,responded_at,role,event_id,'
         'event:event_id('
         'event_id,title,date_event,type,bg_photo,creator_user_id,'
         'place:place_id(name,address,is_precise,latitude,longitude),'
@@ -273,5 +280,88 @@ class GetDBService {
     } catch (e) {
       return [];
     }
+  }
+
+  Future<List<Map<String, dynamic>>> _attachEventInvites(
+    List<Map<String, dynamic>> events,
+  ) async {
+    final Set<String> eventIds = events
+        .map((event) => (event['event_id'] ?? '').toString())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+
+    if (eventIds.isEmpty) return events;
+
+    try {
+      final String encodedIds = eventIds.map(Uri.encodeComponent).join(',');
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/event_invites'
+        '?event_id=in.($encodedIds)'
+        '&select=invite_id,event_id,user_id,role,response,invited_at,responded_at',
+      );
+      final response = await http.get(url, headers: _headers);
+      if (response.statusCode != 200) return events;
+
+      final List<dynamic> data = jsonDecode(response.body);
+      final Map<String, List<Map<String, dynamic>>> invitesByEventId = {};
+      for (final row in data.whereType<Map>()) {
+        final Map<String, dynamic> invite = Map<String, dynamic>.from(row);
+        final String eventId = (invite['event_id'] ?? '').toString();
+        if (eventId.isEmpty) continue;
+        invitesByEventId.putIfAbsent(eventId, () => []).add(invite);
+      }
+
+      for (final event in events) {
+        final String eventId = (event['event_id'] ?? '').toString();
+        event['event_invites'] = invitesByEventId[eventId] ?? [];
+      }
+    } catch (_) {}
+
+    return _attachInviteUsers(events);
+  }
+
+  Future<List<Map<String, dynamic>>> _attachInviteUsers(
+    List<Map<String, dynamic>> events,
+  ) async {
+    final Set<String> userIds = {};
+    for (final event in events) {
+      final List<dynamic> inviteRows =
+          event['event_invites'] as List<dynamic>? ?? const [];
+      for (final row in inviteRows.whereType<Map>()) {
+        final String userId = (row['user_id'] ?? '').toString();
+        if (userId.isNotEmpty) userIds.add(userId);
+      }
+    }
+
+    if (userIds.isEmpty) return events;
+
+    try {
+      final String encodedIds = userIds.map(Uri.encodeComponent).join(',');
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/users'
+        '?user_id=in.($encodedIds)'
+        '&select=user_id,username,profile_photo',
+      );
+      final response = await http.get(url, headers: _headers);
+      if (response.statusCode != 200) return events;
+
+      final List<dynamic> data = jsonDecode(response.body);
+      final Map<String, Map<String, dynamic>> usersById = {
+        for (final row in data.whereType<Map>())
+          (row['user_id'] ?? '').toString(): Map<String, dynamic>.from(row),
+      };
+
+      for (final event in events) {
+        final List<dynamic> inviteRows =
+            event['event_invites'] as List<dynamic>? ?? const [];
+        event['event_invites'] = inviteRows.whereType<Map>().map((row) {
+          final Map<String, dynamic> invite = Map<String, dynamic>.from(row);
+          invite['users'] = usersById[(invite['user_id'] ?? '').toString()];
+          return invite;
+        }).toList();
+      }
+    } catch (_) {}
+
+    return events;
   }
 }
