@@ -938,7 +938,7 @@ class _HomePageState extends State<HomePage> {
           ),
           if (_selectedType == EventType.byYou)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 56 * s,
+              top: MediaQuery.of(context).padding.top + 78 * s,
               left: 0,
               right: 0,
               child: _YoursModeSwitch(
@@ -1221,7 +1221,7 @@ class _EventCarouselState extends State<_EventCarousel> {
   @override
   void initState() {
     super.initState();
-    _controller = PageController(viewportFraction: 0.75);
+    _controller = PageController(viewportFraction: 0.79);
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeJumpToEvent());
   }
 

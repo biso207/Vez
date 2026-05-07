@@ -593,17 +593,19 @@ class _ByYouEventCard extends StatelessWidget {
                       onGuestListTap: onGuestListTap,
                       onEditTap: onEditTap,
                     ),
-                    if (event.canManageCohosts) ...[
-                      SizedBox(height: 10 * s),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: _CardPillButton(
-                          label: StringRes.at('cohosts'),
-                          icon: Icons.manage_accounts_rounded,
-                          onTap: onManageCohostsTap,
+                    if (event.canManageCohosts)
+                      Padding(
+                        padding: EdgeInsets.only(top: 12 * s),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: _CardIconLabelButton(
+                            label: StringRes.at('cohosts'),
+                            icon: Icons.manage_accounts_rounded,
+                            onTap: onManageCohostsTap,
+                            s: s,
+                          ),
                         ),
                       ),
-                    ],
 
                     const Spacer(),
 
@@ -700,10 +702,9 @@ class _CardIconCircle extends StatelessWidget {
 }
 
 class _CardPillButton extends StatelessWidget {
-  const _CardPillButton({required this.label, this.onTap, this.icon});
+  const _CardPillButton({required this.label, this.onTap});
   final String label;
   final VoidCallback? onTap;
-  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -720,16 +721,7 @@ class _CardPillButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, color: Colors.white, size: 18),
-                  const SizedBox(width: 6),
-                ],
-                Text(label, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
+            child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ),
       ),
@@ -861,6 +853,63 @@ class _CardTopBar extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _CardIconLabelButton extends StatelessWidget {
+  const _CardIconLabelButton({
+    required this.label,
+    required this.icon,
+    required this.s,
+    this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final double s;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.tap();
+        onTap?.call();
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18 * s),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 5 * s),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(45, 0, 0, 0),
+              borderRadius: BorderRadius.circular(18 * s),
+              border: Border.all(
+                color: const Color.fromARGB(105, 255, 255, 255),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: Colors.white, size: 15 * s),
+                SizedBox(width: 5 * s),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13 * s,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
