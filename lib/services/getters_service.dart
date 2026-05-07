@@ -26,6 +26,9 @@ class GetDBService {
     'apikey': _apiKey,
   };
 
+  String get _nowFilter =>
+      Uri.encodeComponent(DateTime.now().toUtc().toIso8601String());
+
   /// generic method to get any user attribute
   Future<String?> getUserData(String column) async {
     try {
@@ -141,6 +144,7 @@ class GetDBService {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/events'
         '?creator_user_id=eq.$userID'
+        '&date_event=gte.$_nowFilter'
         '&select=$_eventSelect'
         '&order=date_event.asc',
       );
@@ -151,9 +155,9 @@ class GetDBService {
         final List<dynamic> data = jsonDecode(response.body);
         return _attachEventInvites(
           data
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList(),
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
         );
       }
       return [];
@@ -210,6 +214,7 @@ class GetDBService {
       final Uri eventsUrl = Uri.parse(
         '$_baseUrl/rest/v1/events'
         '?event_id=in.($encodedIds)'
+        '&date_event=gte.$_nowFilter'
         '&select=$_eventSelect'
         '&order=date_event.asc',
       );
@@ -220,9 +225,9 @@ class GetDBService {
         final List<dynamic> data = jsonDecode(eventsResponse.body);
         return _attachEventInvites(
           data
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList(),
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
         );
       }
       return [];
@@ -255,6 +260,7 @@ class GetDBService {
       final Uri eventsUrl = Uri.parse(
         '$_baseUrl/rest/v1/events'
         '?event_id=in.($encodedIds)'
+        '&date_event=gte.$_nowFilter'
         '&select=$_eventSelect'
         '&order=date_event.asc',
       );
@@ -265,9 +271,9 @@ class GetDBService {
         final List<dynamic> data = jsonDecode(eventsResponse.body);
         return _attachEventInvites(
           data
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList(),
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
         );
       }
       return [];
@@ -281,6 +287,7 @@ class GetDBService {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/events'
         '?type=eq.Public'
+        '&date_event=gte.$_nowFilter'
         '&select=$_eventSelect'
         '&order=date_event.asc',
       );
@@ -291,9 +298,9 @@ class GetDBService {
         final List<dynamic> data = jsonDecode(response.body);
         return _attachEventInvites(
           data
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList(),
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
         );
       }
       return [];
@@ -325,6 +332,84 @@ class GetDBService {
           .map((item) => Map<String, dynamic>.from(item))
           .toList();
     } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getExpiredCreatedEvents() async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/events'
+        '?creator_user_id=eq.$userID'
+        '&date_event=lt.$_nowFilter'
+        '&select=$_eventSelect'
+        '&order=date_event.desc',
+      );
+      final response = await http.get(url, headers: _headers);
+      if (response.statusCode != 200) return [];
+      final List<dynamic> data = jsonDecode(response.body);
+      return _attachEventInvites(
+        data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList(),
+      );
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getExpiredParticipatedEvents() async {
+    try {
+      final ids = <String>{};
+      final participationUrl = Uri.parse(
+        '$_baseUrl/rest/v1/participation'
+        '?user_id=eq.$userID'
+        '&participation_state=eq.going'
+        '&select=event_id',
+      );
+      final participationResponse = await http.get(
+        participationUrl,
+        headers: _headers,
+      );
+      if (participationResponse.statusCode == 200) {
+        for (final row
+            in (jsonDecode(participationResponse.body) as List)
+                .whereType<Map>()) {
+          final id = row['event_id']?.toString() ?? '';
+          if (id.isNotEmpty) ids.add(id);
+        }
+      }
+
+      final inviteUrl = Uri.parse(
+        '$_baseUrl/rest/v1/event_invites'
+        '?user_id=eq.$userID'
+        '&response=in.(going,accepted,yes)'
+        '&select=event_id',
+      );
+      final inviteResponse = await http.get(inviteUrl, headers: _headers);
+      if (inviteResponse.statusCode == 200) {
+        for (final row
+            in (jsonDecode(inviteResponse.body) as List).whereType<Map>()) {
+          final id = row['event_id']?.toString() ?? '';
+          if (id.isNotEmpty) ids.add(id);
+        }
+      }
+
+      if (ids.isEmpty) return [];
+      final encodedIds = ids.map(Uri.encodeComponent).join(',');
+      final eventsUrl = Uri.parse(
+        '$_baseUrl/rest/v1/events'
+        '?event_id=in.($encodedIds)'
+        '&creator_user_id=neq.$userID'
+        '&date_event=lt.$_nowFilter'
+        '&select=$_eventSelect'
+        '&order=date_event.desc',
+      );
+      final eventsResponse = await http.get(eventsUrl, headers: _headers);
+      if (eventsResponse.statusCode != 200) return [];
+      final List<dynamic> data = jsonDecode(eventsResponse.body);
+      return _attachEventInvites(
+        data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList(),
+      );
+    } catch (_) {
       return [];
     }
   }

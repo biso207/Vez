@@ -78,6 +78,8 @@ class _ProfilePageState extends State<ProfilePage> {
   int _numFollowers = 0;
   int _numFollowing = 0;
   int _numParticipatedEvents = 0;
+  List<Map<String, dynamic>> _pastCreatedEvents = const [];
+  List<Map<String, dynamic>> _pastParticipatedEvents = const [];
 
   // ── ui flags ──────────────────────────────────────────────────────────────
 
@@ -165,6 +167,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final badge = await _dbGet.getUserData('category_badge');
     final followers = await _dbGet.getFollowersCount();
     final following = await _dbGet.getFollowing();
+    final pastCreated = await _dbGet.getExpiredCreatedEvents();
+    final pastParticipated = await _dbGet.getExpiredParticipatedEvents();
 
     if (!mounted) return;
     setState(() {
@@ -177,6 +181,8 @@ class _ProfilePageState extends State<ProfilePage> {
       _showBadge = bool.tryParse(badge ?? 'true') ?? true;
       _numFollowers = followers;
       _numFollowing = (following).length;
+      _pastCreatedEvents = pastCreated;
+      _pastParticipatedEvents = pastParticipated;
     });
   }
 
@@ -428,7 +434,38 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(height: 16 * s),
 
             // ── past-events grid ──────────────────────────────────────────
-            _PastEventsGrid(s: s),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24 * s),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _PastEventsButton(
+                      s: s,
+                      label: 'I Tuoi Eventi Passati',
+                      count: _pastCreatedEvents.length,
+                      icon: Icons.event_available_rounded,
+                      onTap: () => _showPastEventsPopup(
+                        'I Tuoi Eventi Passati',
+                        _pastCreatedEvents,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10 * s),
+                  Expanded(
+                    child: _PastEventsButton(
+                      s: s,
+                      label: 'Eventi A Cui Hai Partecipato',
+                      count: _pastParticipatedEvents.length,
+                      icon: Icons.verified_rounded,
+                      onTap: () => _showPastEventsPopup(
+                        'Eventi A Cui Hai Partecipato',
+                        _pastParticipatedEvents,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
             SizedBox(height: 120 * s),
           ],
@@ -446,6 +483,70 @@ class _ProfilePageState extends State<ProfilePage> {
   //   • (future: notifications, privacy, etc.)
   //
   // the language section replaces the old standalone language popup.
+
+  void _showPastEventsPopup(String title, List<Map<String, dynamic>> events) {
+    VezPopup.show(
+      context: context,
+      width: MediaQuery.of(context).size.width * 0.86,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.65,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _PastEventsPopupHeader(title: title, count: events.length),
+              const SizedBox(height: 16),
+              if (events.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 28),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.hourglass_empty_rounded,
+                        color: Colors.white54,
+                        size: 34,
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        'Nessun Evento',
+                        style: TextStyle(color: Colors.white70, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 4),
+                    itemCount: events.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (context, index) => _PastEventRow(
+                      event: events[index],
+                      date: _formatPastEventDate(
+                        events[index]['date_event']?.toString() ?? '',
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatPastEventDate(String raw) {
+    final date = DateTime.tryParse(raw)?.toLocal();
+    if (date == null) return '';
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '${two(date.day)}/${two(date.month)}/${date.year} - ${two(date.hour)}:${two(date.minute)}';
+  }
 
   void _showSettingsPopup(double s) {
     VezPopup.show(
@@ -513,9 +614,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           horizontal: 16,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(
-                            0.05,
-                          ),
+                          color: Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: Colors.white10),
                         ),
@@ -1340,38 +1439,249 @@ class _StatItem extends StatelessWidget {
 
 // ── _PastEventsGrid ──────────────────────────────────────────────────────────
 
-class _PastEventsGrid extends StatelessWidget {
+class _PastEventsButton extends StatelessWidget {
   final double s;
-  const _PastEventsGrid({required this.s});
+  final String label;
+  final int count;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _PastEventsButton({
+    required this.s,
+    required this.label,
+    required this.count,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 400,
-      child: ShaderMask(
-        shaderCallback: (Rect rect) => const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black,
-            Colors.transparent,
-            Colors.transparent,
-            Colors.black,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 82 * s,
+        padding: EdgeInsets.symmetric(horizontal: 12 * s, vertical: 10 * s),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(50, 0, 0, 0),
+          borderRadius: BorderRadius.circular(26),
+          border: Border.all(color: Colors.white60, width: 2 * s),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Icon(icon, color: Colors.white, size: 24 * s),
+                  SizedBox(width: 8 * s),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12 * s,
+                        fontWeight: FontWeight.bold,
+                        height: 1.05,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8 * s, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  count.toString(),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14 * s,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           ],
-          stops: [0.0, 0.05, 0.90, 1.0],
-        ).createShader(rect),
-        blendMode: BlendMode.dstOut,
-        child: GridView.builder(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.only(top: 10, bottom: 80),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 0.7,
+        ),
+      ),
+    );
+  }
+}
+
+class _PastEventsPopupHeader extends StatelessWidget {
+  final String title;
+  final int count;
+
+  const _PastEventsPopupHeader({required this.title, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.10),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white24, width: 1.5),
           ),
-          itemCount: 0, // todo: replace with real event count
-          itemBuilder: (_, __) => const SizedBox.shrink(),
+          child: const Icon(
+            Icons.history_rounded,
+            color: Colors.white,
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  height: 1.05,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '$count eventi archiviati',
+                style: const TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PastEventRow extends StatelessWidget {
+  final Map<String, dynamic> event;
+  final String date;
+
+  const _PastEventRow({required this.event, required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    final title = (event['title'] ?? '').toString().trim();
+    final type = (event['type'] ?? '').toString().trim();
+    final photo = (event['bg_photo'] ?? '').toString().trim();
+    final place = event['place'] is Map
+        ? Map<String, dynamic>.from(event['place'] as Map)
+        : <String, dynamic>{};
+    final placeName = (place['name'] ?? '').toString().trim();
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white38, width: 1.4),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: SizedBox(
+              width: 76,
+              height: 76,
+              child: photo.isNotEmpty
+                  ? Image.network(
+                      photo,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _PastEventFallbackImage(type: type),
+                    )
+                  : Image.asset(
+                      'assets/images/bg/default_create_event_bg.jpg',
+                      fit: BoxFit.cover,
+                    ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.isEmpty ? 'Evento' : title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  [date, placeName].where((v) => v.isNotEmpty).join(' - '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      type.isEmpty ? 'Expired' : type,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PastEventFallbackImage extends StatelessWidget {
+  final String type;
+
+  const _PastEventFallbackImage({required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white.withValues(alpha: 0.10),
+      child: Center(
+        child: Icon(
+          type.toLowerCase() == 'public'
+              ? Icons.public_rounded
+              : Icons.lock_rounded,
+          color: Colors.white,
+          size: 28,
         ),
       ),
     );

@@ -32,7 +32,7 @@ class HomeEventRole {
   );
 
   static const HomeEventRole fullCohost = HomeEventRole(
-    raw: 'cohost:invite,remove,view',
+    raw: 'cohost:i,r,v',
     isCohost: true,
     canInvite: true,
     canRemove: true,
@@ -50,6 +50,7 @@ class HomeEventRole {
               .join(':')
               .split(',')
               .map((item) => item.trim())
+              .map(_normalizePermission)
               .where((item) => item.isNotEmpty)
               .toSet()
         : {'invite', 'remove', 'view'};
@@ -66,11 +67,27 @@ class HomeEventRole {
   String encode() {
     if (!isCohost) return 'guest';
     final permissions = <String>[
-      if (canInvite) 'invite',
-      if (canRemove) 'remove',
-      if (canViewGuests) 'view',
+      if (canInvite) 'i',
+      if (canRemove) 'r',
+      if (canViewGuests) 'v',
     ];
     return permissions.isEmpty ? 'cohost:' : 'cohost:${permissions.join(',')}';
+  }
+
+  static String _normalizePermission(String permission) {
+    switch (permission) {
+      case 'i':
+      case 'invite':
+        return 'invite';
+      case 'r':
+      case 'remove':
+        return 'remove';
+      case 'v':
+      case 'view':
+        return 'view';
+      default:
+        return permission;
+    }
   }
 
   HomeEventRole copyWith({
