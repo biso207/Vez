@@ -23,6 +23,7 @@ class VezEventCard extends StatelessWidget {
     required this.event,
     this.onAddGuestsTap,
     this.onGuestListTap,
+    this.onManageCohostsTap,
     this.onEditTap,
     this.onResponseSelected,
   });
@@ -30,6 +31,7 @@ class VezEventCard extends StatelessWidget {
   final HomeEventCardData event;
   final VoidCallback? onAddGuestsTap;
   final VoidCallback? onGuestListTap;
+  final VoidCallback? onManageCohostsTap;
   final VoidCallback? onEditTap;
   final ValueChanged<String>? onResponseSelected;
 
@@ -37,11 +39,12 @@ class VezEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // if the event is created by the user, use the management style card.
-    if (event.isByYou) {
+    if (event.isByYou || event.isCohostView) {
       return _ByYouEventCard(
         event: event,
         onAddGuestsTap: onAddGuestsTap,
         onGuestListTap: onGuestListTap,
+        onManageCohostsTap: onManageCohostsTap,
         onEditTap: onEditTap,
       );
     }
@@ -521,12 +524,14 @@ class _ByYouEventCard extends StatelessWidget {
     required this.event,
     required this.onAddGuestsTap,
     required this.onGuestListTap,
+    required this.onManageCohostsTap,
     required this.onEditTap,
   });
 
   final HomeEventCardData event;
   final VoidCallback? onAddGuestsTap;
   final VoidCallback? onGuestListTap;
+  final VoidCallback? onManageCohostsTap;
   final VoidCallback? onEditTap;
 
   @override
@@ -588,6 +593,17 @@ class _ByYouEventCard extends StatelessWidget {
                       onGuestListTap: onGuestListTap,
                       onEditTap: onEditTap,
                     ),
+                    if (event.canManageCohosts) ...[
+                      SizedBox(height: 10 * s),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: _CardPillButton(
+                          label: StringRes.at('cohosts'),
+                          icon: Icons.manage_accounts_rounded,
+                          onTap: onManageCohostsTap,
+                        ),
+                      ),
+                    ],
 
                     const Spacer(),
 
@@ -684,9 +700,10 @@ class _CardIconCircle extends StatelessWidget {
 }
 
 class _CardPillButton extends StatelessWidget {
-  const _CardPillButton({required this.label, this.onTap});
+  const _CardPillButton({required this.label, this.onTap, this.icon});
   final String label;
   final VoidCallback? onTap;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -703,7 +720,16 @@ class _CardPillButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
             ),
-            child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, color: Colors.white, size: 18),
+                  const SizedBox(width: 6),
+                ],
+                Text(label, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
           ),
         ),
       ),

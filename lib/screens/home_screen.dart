@@ -27,6 +27,8 @@ enum _GuestAudienceFilter { friends, following, anyone }
 //   design: enum covering all, going, not going, and maybe statuses.
 enum _GuestStateFilter { all, going, notGoing, maybe }
 
+enum _YoursMode { host, cohost }
+
 // ── home page ──────────────────────────────────────────────────────────────
 //
 //   used for: the primary landing screen of the application.
@@ -72,6 +74,7 @@ class _HomePageState extends State<HomePage> {
   bool _isAutoRefreshing = false;
 
   late int _filterIndex;
+  _YoursMode _yoursMode = _YoursMode.host;
 
   bool get _isVenueAccount => UserSession().accountType == 'venue';
 
@@ -142,7 +145,14 @@ class _HomePageState extends State<HomePage> {
   //
   //   used for: retrieving the list of events to display based on selected filter.
   List<HomeEventCardData> get _visibleEvents =>
-      _controller.eventsByType[_selectedType] ?? const [];
+      _controller.eventsByType[_visibleEventType] ?? const [];
+
+  EventType get _visibleEventType {
+    if (_selectedType == EventType.byYou && _yoursMode == _YoursMode.cohost) {
+      return EventType.cohost;
+    }
+    return _selectedType;
+  }
 
   // ── is nearby selected ─────────────────────────────────────────────────────
   //
@@ -252,6 +262,11 @@ class _HomePageState extends State<HomePage> {
   //   used for: displaying and managing the list of people invited to an event.
   //   design: popup with search, status filters, and guest removal options.
   void _showGuestListPopup(HomeEventCardData event) {
+    if (!event.canViewGuests) {
+      _showSnackBar(StringRes.at('cohost_no_view_permission'), isError: true);
+      return;
+    }
+
     final TextEditingController searchController = TextEditingController();
     HomeEventCardData currentEvent = event;
     _GuestStateFilter statusFilter = _GuestStateFilter.all;
@@ -276,10 +291,10 @@ class _HomePageState extends State<HomePage> {
 
           Future<void> refreshCurrentEvent() async {
             final HomeEventCardData? refreshed = await _controller
-                .refreshByYouEvent(currentEvent.eventId);
+                .refreshEventForType(currentEvent.eventId, currentEvent.type);
             if (refreshed == null) return;
             currentEvent = refreshed;
-            _controller.upsertByYouEvent(refreshed);
+            _controller.upsertEvent(refreshed);
             setPopupState(() {});
           }
 
@@ -410,7 +425,11 @@ class _HomePageState extends State<HomePage> {
                             username: guest.username,
                             profilePhoto: guest.profilePhoto,
                             state: guest.state,
-                            trailing: currentEvent.canInviteGuests
+                            roleLabel: guest.isCohost
+                                ? StringRes.at('cohost')
+                                : null,
+                            trailing: currentEvent.canRemoveGuests &&
+                                    (!guest.isCohost || currentEvent.isByYou)
                                 ? GestureDetector(
                                     onTap: isBusy
                                         ? null
@@ -512,10 +531,10 @@ class _HomePageState extends State<HomePage> {
             );
             if (res == 200 || res == 201 || res == 204) {
               final HomeEventCardData? refreshed = await _controller
-                  .refreshByYouEvent(currentEvent.eventId);
+                  .refreshEventForType(currentEvent.eventId, currentEvent.type);
               if (refreshed != null) {
                 currentEvent = refreshed;
-                _controller.upsertByYouEvent(refreshed);
+                _controller.upsertEvent(refreshed);
                 setPopupState(() {});
               }
             } else {
@@ -622,6 +641,199 @@ class _HomePageState extends State<HomePage> {
     ).whenComplete(searchController.dispose);
   }
 
+  Future<void> _showCohostManagerPopup(HomeEventCardData event) async {
+    if (!event.canManageCohosts) return;
+
+    await _controller.ensureUserDirectoryLoaded();
+    if (!mounted) return;
+
+    final TextEditingController searchController = TextEditingController();
+    HomeEventCardData currentEvent = event;
+    bool isBusy = false;
+    final double popupWidth = MediaQuery.of(context).size.width * 0.86;
+    final double popupHeight = MediaQuery.of(context).size.height * 0.68;
+
+    VezPopup.show(
+      context: context,
+      width: popupWidth,
+      height: popupHeight,
+      child: StatefulBuilder(
+        builder: (context, setPopupState) {
+          final List<HomeEventGuestData> cohosts = currentEvent.cohosts;
+          final Set<String> invitedIds = currentEvent.guests
+              .map((guest) => guest.userId)
+              .toSet();
+          final Set<String> cohostIds = cohosts
+              .map((guest) => guest.userId)
+              .toSet();
+          final String query = searchController.text.trim().toLowerCase();
+
+          final List<HomeEventGuestData> promotableGuests = currentEvent.guests
+              .where((guest) => !guest.isCohost)
+              .where(
+                (guest) =>
+                    query.isEmpty ||
+                    guest.username.toLowerCase().contains(query),
+              )
+              .toList();
+
+          final List<Map<String, dynamic>> newCandidates = _controller.allUsers
+              .where((user) {
+                final String userId = (user['user_id'] ?? '').toString();
+                final String username = (user['username'] ?? '').toString();
+                if (userId.isEmpty ||
+                    userId == currentEvent.creatorUserId ||
+                    invitedIds.contains(userId) ||
+                    cohostIds.contains(userId)) {
+                  return false;
+                }
+                return query.isEmpty || username.toLowerCase().contains(query);
+              })
+              .toList();
+
+          Future<void> refreshCurrentEvent() async {
+            final HomeEventCardData? refreshed = await _controller
+                .refreshEventForType(currentEvent.eventId, EventType.byYou);
+            if (refreshed == null) return;
+            currentEvent = refreshed;
+            _controller.upsertEvent(refreshed);
+            setPopupState(() {});
+          }
+
+          Future<void> saveRole(String userId, HomeEventRole role) async {
+            setPopupState(() => isBusy = true);
+            final int res = await _controller.updateEventInviteRole(
+              eventId: currentEvent.eventId,
+              invitedUserId: userId,
+              role: role.encode(),
+            );
+            if (res == 200 || res == 204) {
+              await refreshCurrentEvent();
+            } else {
+              _showSnackBar(StringRes.at('cohost_update_failed'), isError: true);
+            }
+            setPopupState(() => isBusy = false);
+          }
+
+          Future<void> addCohost(
+            String userId, {
+            required bool alreadyGuest,
+          }) async {
+            if (cohosts.length >= 5) {
+              _showSnackBar(StringRes.at('cohost_limit_reached'), isError: true);
+              return;
+            }
+
+            setPopupState(() => isBusy = true);
+            final int res = alreadyGuest
+                ? await _controller.updateEventInviteRole(
+                    eventId: currentEvent.eventId,
+                    invitedUserId: userId,
+                    role: HomeEventRole.fullCohost.encode(),
+                  )
+                : await _controller.addOrUpdateEventInvite(
+                    eventId: currentEvent.eventId,
+                    invitedUserId: userId,
+                    role: HomeEventRole.fullCohost.encode(),
+                  );
+            if (res == 200 || res == 201 || res == 204) {
+              await refreshCurrentEvent();
+            } else {
+              _showSnackBar(StringRes.at('cohost_update_failed'), isError: true);
+            }
+            setPopupState(() => isBusy = false);
+          }
+
+          return Column(
+            children: [
+              _PopupHeaderBar(
+                title: '${StringRes.at('cohosts')} (${cohosts.length}/5)',
+                onClose: () => Navigator.pop(context),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _PopupSearchField(
+                  controller: searchController,
+                  hint: StringRes.at('search_guest'),
+                  onChanged: (_) => setPopupState(() {}),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    if (cohosts.isNotEmpty) ...[
+                      _PopupSectionLabel(label: StringRes.at('cohosts')),
+                      const SizedBox(height: 8),
+                      ...cohosts.map(
+                        (guest) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _CohostPermissionRow(
+                            guest: guest,
+                            isBusy: isBusy,
+                            onChanged: (role) => saveRole(guest.userId, role),
+                            onDemote: () => saveRole(
+                              guest.userId,
+                              HomeEventRole.guest,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    _PopupSectionLabel(label: StringRes.at('add_cohost')),
+                    const SizedBox(height: 8),
+                    if (promotableGuests.isEmpty && newCandidates.isEmpty)
+                      _PopupEmptyState(title: StringRes.at('no_guests_found'))
+                    else ...[
+                      ...promotableGuests.map(
+                        (guest) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _PopupGuestRow(
+                            username: guest.username,
+                            profilePhoto: guest.profilePhoto,
+                            state: guest.state,
+                            trailing: _PopupMiniActionButton(
+                              icon: Icons.admin_panel_settings_rounded,
+                              color: const Color(0xFF55D6FF),
+                              onTap: isBusy
+                                  ? null
+                                  : () => addCohost(
+                                      guest.userId,
+                                      alreadyGuest: true,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      ...newCandidates.map(
+                        (user) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _PopupUserSelectionRow(
+                            username: (user['username'] ?? '').toString(),
+                            profilePhoto: (user['profile_photo'] ?? '')
+                                .toString(),
+                            relationIconPath: 'assets/icons/event/public.png',
+                            onAdd: isBusy
+                                ? null
+                                : () => addCohost(
+                                    (user['user_id'] ?? '').toString(),
+                                    alreadyGuest: false,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    ).whenComplete(searchController.dispose);
+  }
+
   // ── matches guest state filter ─────────────────────────────────────────────
   //
   //   used for: logic to filter guests by their current RSVP state.
@@ -662,7 +874,11 @@ class _HomePageState extends State<HomePage> {
   String _emptyStateTitle() {
     switch (_selectedType) {
       case EventType.byYou:
-        return StringRes.at('no_events_by_you');
+        return _yoursMode == _YoursMode.cohost
+            ? StringRes.at('no_cohost_events')
+            : StringRes.at('no_events_by_you');
+      case EventType.cohost:
+        return StringRes.at('no_cohost_events');
       case EventType.invited:
         return StringRes.at('no_events_invited');
       case EventType.nearby:
@@ -715,10 +931,22 @@ class _HomePageState extends State<HomePage> {
               highlightedEventId: widget.initialEventId,
               onAddGuestsTap: _showAddGuestPopup,
               onGuestListTap: _showGuestListPopup,
+              onManageCohostsTap: _showCohostManagerPopup,
               onEditTap: _editEvent,
               onResponseSelected: _updateEventCardResponse,
             ),
           ),
+          if (_selectedType == EventType.byYou)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 56 * s,
+              left: 0,
+              right: 0,
+              child: _YoursModeSwitch(
+                s: s,
+                mode: _yoursMode,
+                onChanged: (mode) => setState(() => _yoursMode = mode),
+              ),
+            ),
           if (_isNearbySelected)
             Positioned(
               top: MediaQuery.of(context).padding.top + 82 * s,
@@ -859,6 +1087,95 @@ class _NearbyRangeControl extends StatelessWidget {
 //
 //   used for: displaying a vertical list of event cards.
 //   design: vertical PageView that supports highlighting specific events.
+class _YoursModeSwitch extends StatelessWidget {
+  const _YoursModeSwitch({
+    required this.s,
+    required this.mode,
+    required this.onChanged,
+  });
+
+  final double s;
+  final _YoursMode mode;
+  final ValueChanged<_YoursMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: VezGlass.container(
+        padding: EdgeInsets.all(2 * s),
+        radius: BorderRadius.circular(17 * s),
+        child: SizedBox(
+          width: 176 * s,
+          height: 26 * s,
+          child: Row(
+            children: [
+              _YoursModeChip(
+                s: s,
+                label: StringRes.at('host'),
+                selected: mode == _YoursMode.host,
+                onTap: () => onChanged(_YoursMode.host),
+              ),
+              _YoursModeChip(
+                s: s,
+                label: StringRes.at('cohost'),
+                selected: mode == _YoursMode.cohost,
+                onTap: () => onChanged(_YoursMode.cohost),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _YoursModeChip extends StatelessWidget {
+  const _YoursModeChip({
+    required this.s,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final double s;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected
+                ? const Color.fromARGB(70, 255, 255, 255)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(13 * s),
+            border: selected
+                ? Border.all(color: Colors.white54, width: 1.5)
+                : null,
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 11 * s,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _EventCarousel extends StatefulWidget {
   const _EventCarousel({
     required this.events,
@@ -869,6 +1186,7 @@ class _EventCarousel extends StatefulWidget {
     required this.highlightedEventId,
     required this.onAddGuestsTap,
     required this.onGuestListTap,
+    required this.onManageCohostsTap,
     required this.onEditTap,
     required this.onResponseSelected,
   });
@@ -881,6 +1199,7 @@ class _EventCarousel extends StatefulWidget {
   final String? highlightedEventId;
   final ValueChanged<HomeEventCardData> onAddGuestsTap;
   final ValueChanged<HomeEventCardData> onGuestListTap;
+  final ValueChanged<HomeEventCardData> onManageCohostsTap;
   final ValueChanged<HomeEventCardData> onEditTap;
   final void Function(HomeEventCardData event, String responseState)
   onResponseSelected;
@@ -977,8 +1296,13 @@ class _EventCarouselState extends State<_EventCarousel> {
             onAddGuestsTap: event.canInviteGuests
                 ? () => widget.onAddGuestsTap(event)
                 : null,
-            onGuestListTap: () => widget.onGuestListTap(event),
-            onEditTap: event.isByYou ? () => widget.onEditTap(event) : null,
+            onGuestListTap: event.canViewGuests
+                ? () => widget.onGuestListTap(event)
+                : null,
+            onManageCohostsTap: event.canManageCohosts
+                ? () => widget.onManageCohostsTap(event)
+                : null,
+            onEditTap: event.canEditEvent ? () => widget.onEditTap(event) : null,
             onResponseSelected: !event.isByYou
                 ? (responseState) =>
                       widget.onResponseSelected(event, responseState)
@@ -1291,6 +1615,198 @@ class _PopupGuestRow extends StatelessWidget {
 //
 //   used for: displaying users that can be interacted with (e.g., invited).
 //   design: row with avatar, name, relationship label, and action icon.
+class _PopupSectionLabel extends StatelessWidget {
+  const _PopupSectionLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 2),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _PopupMiniActionButton extends StatelessWidget {
+  const _PopupMiniActionButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color.withAlpha(90),
+          border: Border.all(color: color.withAlpha(210), width: 1.5),
+        ),
+        child: Icon(icon, color: Colors.white, size: 17),
+      ),
+    );
+  }
+}
+
+class _CohostPermissionRow extends StatelessWidget {
+  const _CohostPermissionRow({
+    required this.guest,
+    required this.isBusy,
+    required this.onChanged,
+    required this.onDemote,
+  });
+
+  final HomeEventGuestData guest;
+  final bool isBusy;
+  final ValueChanged<HomeEventRole> onChanged;
+  final VoidCallback onDemote;
+
+  @override
+  Widget build(BuildContext context) {
+    final HomeEventRole role = guest.eventRole;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        color: const Color.fromARGB(51, 0, 0, 0),
+        border: Border.all(
+          color: const Color.fromARGB(128, 255, 255, 255),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _PopupUserAvatar(photo: guest.profilePhoto),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  guest.username.isNotEmpty ? guest.username : 'User',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              _PopupMiniActionButton(
+                icon: Icons.person_remove_alt_1_rounded,
+                color: const Color(0xFFFF3131),
+                onTap: isBusy ? null : onDemote,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _PermissionToggle(
+                  label: StringRes.at('cohost_perm_invite'),
+                  value: role.canInvite,
+                  onChanged: isBusy
+                      ? null
+                      : (value) => onChanged(role.copyWith(canInvite: value)),
+                ),
+              ),
+              Expanded(
+                child: _PermissionToggle(
+                  label: StringRes.at('cohost_perm_remove'),
+                  value: role.canRemove,
+                  onChanged: isBusy
+                      ? null
+                      : (value) => onChanged(role.copyWith(canRemove: value)),
+                ),
+              ),
+              Expanded(
+                child: _PermissionToggle(
+                  label: StringRes.at('cohost_perm_view'),
+                  value: role.canViewGuests,
+                  onChanged: isBusy
+                      ? null
+                      : (value) =>
+                            onChanged(role.copyWith(canViewGuests: value)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PermissionToggle extends StatelessWidget {
+  const _PermissionToggle({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onChanged == null ? null : () => onChanged!(!value),
+      child: Column(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            width: 34,
+            height: 24,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: value
+                  ? const Color.fromARGB(130, 8, 157, 13)
+                  : const Color.fromARGB(90, 255, 49, 49),
+              border: Border.all(color: Colors.white30, width: 1.5),
+            ),
+            child: Icon(
+              value ? Icons.check_rounded : Icons.close_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PopupUserSelectionRow extends StatelessWidget {
   const _PopupUserSelectionRow({
     required this.username,

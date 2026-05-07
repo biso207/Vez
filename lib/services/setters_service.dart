@@ -303,6 +303,28 @@ class SetDBService {
     }
   }
 
+  Future<int> updateEventInviteRole({
+    required String eventId,
+    required String invitedUserId,
+    required String role,
+  }) async {
+    try {
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/event_invites'
+        '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
+      );
+      final response = await http.patch(
+        url,
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+        body: jsonEncode({'role': role}),
+      );
+      return response.statusCode == 204 ? 200 : response.statusCode;
+    } catch (e) {
+      print('updateEventInviteRole error: $e');
+      return 0;
+    }
+  }
+
   Future<void> _sendEventInviteNotification({
     required String eventId,
     required String invitedUserId,

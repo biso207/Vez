@@ -37,12 +37,12 @@
 
 ## Gestione ruoli evento
 
-- [ ] Implementare ruolo "Co-Host" (max. 5 per evento)
-- [ ] Permessi Co-Host:
+- [x] Implementare ruolo "Co-Host" (max. 5 per evento)
+- [x] Permessi Co-Host:
   - invitare utenti
   - rimuovere invitati
   - vedere lista partecipanti
-- [ ] Limitare Co-Host (NO modifica evento, NO eliminazione)
+- [x] Limitare Co-Host (NO modifica evento, NO eliminazione)
 
 ## Sistema RSVP e Deadline
 

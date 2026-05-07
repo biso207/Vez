@@ -189,7 +189,7 @@ class GetDBService {
   Future<List<Map<String, dynamic>>> getInvitedEvents() async {
     try {
       final Uri inviteUrl = Uri.parse(
-        '$_baseUrl/rest/v1/event_invites?user_id=eq.$userID&select=event_id',
+        '$_baseUrl/rest/v1/event_invites?user_id=eq.$userID&select=event_id,role',
       );
 
       final inviteResponse = await http.get(inviteUrl, headers: _headers);
@@ -198,6 +198,53 @@ class GetDBService {
 
       final List<dynamic> inviteRows = jsonDecode(inviteResponse.body);
       final List<String> eventIds = inviteRows
+          .whereType<Map>()
+          .where((row) => !_isCohostRole(row['role']?.toString()))
+          .map((row) => row['event_id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toList();
+
+      if (eventIds.isEmpty) return [];
+
+      final String encodedIds = eventIds.join(',');
+      final Uri eventsUrl = Uri.parse(
+        '$_baseUrl/rest/v1/events'
+        '?event_id=in.($encodedIds)'
+        '&select=$_eventSelect'
+        '&order=date_event.asc',
+      );
+
+      final eventsResponse = await http.get(eventsUrl, headers: _headers);
+
+      if (eventsResponse.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(eventsResponse.body);
+        return _attachEventInvites(
+          data
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(),
+        );
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getCohostEvents() async {
+    try {
+      final Uri inviteUrl = Uri.parse(
+        '$_baseUrl/rest/v1/event_invites?user_id=eq.$userID&select=event_id,role',
+      );
+
+      final inviteResponse = await http.get(inviteUrl, headers: _headers);
+
+      if (inviteResponse.statusCode != 200) return [];
+
+      final List<dynamic> inviteRows = jsonDecode(inviteResponse.body);
+      final List<String> eventIds = inviteRows
+          .whereType<Map>()
+          .where((row) => _isCohostRole(row['role']?.toString()))
           .map((row) => row['event_id']?.toString() ?? '')
           .where((id) => id.isNotEmpty)
           .toList();
@@ -363,5 +410,9 @@ class GetDBService {
     } catch (_) {}
 
     return events;
+  }
+
+  bool _isCohostRole(String? role) {
+    return (role ?? '').trim().toLowerCase().startsWith('cohost');
   }
 }

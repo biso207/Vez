@@ -6,7 +6,87 @@ import 'event_catalog.dart';
 // ── event type ───────────────────────────────────────────────────────────────
 //
 //   used for: categorizing events into feed tabs.
-enum EventType { byYou, invited, nearby }
+enum EventType { byYou, cohost, invited, nearby }
+
+class HomeEventRole {
+  const HomeEventRole({
+    required this.raw,
+    required this.isCohost,
+    required this.canInvite,
+    required this.canRemove,
+    required this.canViewGuests,
+  });
+
+  final String raw;
+  final bool isCohost;
+  final bool canInvite;
+  final bool canRemove;
+  final bool canViewGuests;
+
+  static const HomeEventRole guest = HomeEventRole(
+    raw: 'guest',
+    isCohost: false,
+    canInvite: false,
+    canRemove: false,
+    canViewGuests: true,
+  );
+
+  static const HomeEventRole fullCohost = HomeEventRole(
+    raw: 'cohost:invite,remove,view',
+    isCohost: true,
+    canInvite: true,
+    canRemove: true,
+    canViewGuests: true,
+  );
+
+  factory HomeEventRole.fromRaw(String? rawRole) {
+    final String raw = (rawRole ?? '').trim().toLowerCase();
+    if (!raw.startsWith('cohost')) return guest;
+
+    final Set<String> permissions = raw.contains(':')
+        ? raw
+              .split(':')
+              .skip(1)
+              .join(':')
+              .split(',')
+              .map((item) => item.trim())
+              .where((item) => item.isNotEmpty)
+              .toSet()
+        : {'invite', 'remove', 'view'};
+
+    return HomeEventRole(
+      raw: raw,
+      isCohost: true,
+      canInvite: permissions.contains('invite'),
+      canRemove: permissions.contains('remove'),
+      canViewGuests: permissions.contains('view'),
+    );
+  }
+
+  String encode() {
+    if (!isCohost) return 'guest';
+    final permissions = <String>[
+      if (canInvite) 'invite',
+      if (canRemove) 'remove',
+      if (canViewGuests) 'view',
+    ];
+    return permissions.isEmpty ? 'cohost:' : 'cohost:${permissions.join(',')}';
+  }
+
+  HomeEventRole copyWith({
+    bool? canInvite,
+    bool? canRemove,
+    bool? canViewGuests,
+  }) {
+    return HomeEventRole(
+      raw: raw,
+      isCohost: isCohost,
+      canInvite: canInvite ?? this.canInvite,
+      canRemove: canRemove ?? this.canRemove,
+      canViewGuests: canViewGuests ?? this.canViewGuests,
+    );
+  }
+}
 
 // ── home event guest counts ──────────────────────────────────────────────────
 //
@@ -40,6 +120,9 @@ class HomeEventGuestData {
   final String profilePhoto;
   final String state;
   final String role;
+
+  HomeEventRole get eventRole => HomeEventRole.fromRaw(role);
+  bool get isCohost => eventRole.isCohost;
 }
 
 // ── home event card data ─────────────────────────────────────────────────────
@@ -73,6 +156,7 @@ class HomeEventCardData {
     this.guestCounts = const HomeEventGuestCounts(),
     this.guests = const [],
     this.distanceKm,
+    this.currentUserRole = HomeEventRole.guest,
   });
 
   final String eventId;
@@ -101,18 +185,45 @@ class HomeEventCardData {
   final HomeEventGuestCounts guestCounts;
   final List<HomeEventGuestData> guests;
   final double? distanceKm;
+  final HomeEventRole currentUserRole;
 
   // ── is by you ──────────────────────────────────────────────────────────────
   //
   //   used for: checking if the event was created by the current user.
   bool get isByYou => type == EventType.byYou;
+  bool get isCohostView => type == EventType.cohost;
 
   // ── can invite guests ──────────────────────────────────────────────────────
   //
   //   used for: checking if the event type allows manual guest invitations.
   bool get canInviteGuests {
-    return isByYou && EventCatalog.canInviteGuests(typeLabel);
+    if (isByYou) return EventCatalog.canInviteGuests(typeLabel);
+    return isCohostView &&
+        currentUserRole.isCohost &&
+        currentUserRole.canInvite;
   }
+
+  bool get canRemoveGuests {
+    if (isByYou) return EventCatalog.canInviteGuests(typeLabel);
+    return isCohostView &&
+        currentUserRole.isCohost &&
+        currentUserRole.canRemove;
+  }
+
+  bool get canViewGuests {
+    if (isByYou) return true;
+    if (isCohostView) return currentUserRole.canViewGuests;
+    return true;
+  }
+
+  bool get canManageCohosts {
+    return isByYou && EventCatalog.normalizeTypeName(typeLabel) == 'Exclusive';
+  }
+
+  bool get canEditEvent => isByYou;
+
+  List<HomeEventGuestData> get cohosts =>
+      guests.where((guest) => guest.isCohost).toList();
 
   // ── resolved image path ────────────────────────────────────────────────────
   //

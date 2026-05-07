@@ -40,6 +40,7 @@ class HomeController extends ChangeNotifier {
   Set<String> followerIds = const {};
   Map<EventType, List<HomeEventCardData>> eventsByType = {
     EventType.byYou: const [],
+    EventType.cohost: const [],
     EventType.invited: const [],
     EventType.nearby: const [],
   };
@@ -80,12 +81,15 @@ class HomeController extends ChangeNotifier {
 
     final List<Map<String, dynamic>> createdEvents = await _db
         .getCreatedEvents();
+    final List<Map<String, dynamic>> cohostEvents = await _db
+        .getCohostEvents();
     final List<Map<String, dynamic>> invitedEvents = await _db
         .getInvitedEvents();
     _discoverableEvents = await _db.getDiscoverableEvents();
 
     eventsByType = {
       EventType.byYou: _mapEvents(createdEvents, EventType.byYou),
+      EventType.cohost: _mapEvents(cohostEvents, EventType.cohost),
       EventType.invited: _mapEvents(invitedEvents, EventType.invited),
       EventType.nearby: _buildNearbyEvents(),
     };
@@ -160,12 +164,25 @@ class HomeController extends ChangeNotifier {
     return _mapEvent(rawEvent, EventType.byYou);
   }
 
+  Future<HomeEventCardData?> refreshEventForType(
+    String eventId,
+    EventType type,
+  ) async {
+    final Map<String, dynamic>? rawEvent = await _db.getEventById(eventId);
+    if (rawEvent == null) return null;
+    return _mapEvent(rawEvent, type);
+  }
+
   // ── upsert by you event ────────────────────────────────────────────────────
   //
   //   used for: updating or inserting an event in the local list.
   void upsertByYouEvent(HomeEventCardData event) {
+    upsertEvent(event);
+  }
+
+  void upsertEvent(HomeEventCardData event) {
     final List<HomeEventCardData> updatedEvents = [
-      ...(eventsByType[EventType.byYou] ?? const []),
+      ...(eventsByType[event.type] ?? const []),
     ];
     final int index = updatedEvents.indexWhere(
       (item) => item.eventId == event.eventId,
@@ -178,7 +195,7 @@ class HomeController extends ChangeNotifier {
     }
 
     updatedEvents.sort((a, b) => a.rawDateEvent.compareTo(b.rawDateEvent));
-    eventsByType = {...eventsByType, EventType.byYou: updatedEvents};
+    eventsByType = {...eventsByType, event.type: updatedEvents};
     _notify();
   }
 
@@ -188,10 +205,24 @@ class HomeController extends ChangeNotifier {
   Future<int> addOrUpdateEventInvite({
     required String eventId,
     required String invitedUserId,
+    String role = 'guest',
   }) {
     return _dbSet.addOrUpdateEventInvite(
       eventId: eventId,
       invitedUserId: invitedUserId,
+      role: role,
+    );
+  }
+
+  Future<int> updateEventInviteRole({
+    required String eventId,
+    required String invitedUserId,
+    required String role,
+  }) {
+    return _dbSet.updateEventInviteRole(
+      eventId: eventId,
+      invitedUserId: invitedUserId,
+      role: role,
     );
   }
 
@@ -367,7 +398,15 @@ class HomeController extends ChangeNotifier {
       guestCounts: guestCounts,
       guests: guests,
       distanceKm: distanceKm,
+      currentUserRole: _currentUserRole(guests),
     );
+  }
+
+  HomeEventRole _currentUserRole(List<HomeEventGuestData> guests) {
+    for (final guest in guests) {
+      if (guest.userId == _db.userID) return guest.eventRole;
+    }
+    return HomeEventRole.guest;
   }
 
   // ── build nearby events ────────────────────────────────────────────────────
