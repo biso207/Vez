@@ -1,7 +1,5 @@
-// ── card pill button ────────────────────────────────────────────────────────
-//
-// used for: call-to-action buttons (like "Add Guests") on event cards.
-// design: frosted-glass pill-shaped capsule with bold text.
+// Developed and Designed by Outly • © 2026
+// Reusable in-app preview event card
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -39,7 +37,7 @@ class VezEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // if the event is created by the user, use the management style card.
-    if (event.isByYou || event.isCohostView) {
+    if (event.isByYou) {
       return _ByYouEventCard(
         event: event,
         onAddGuestsTap: onAddGuestsTap,
@@ -53,6 +51,7 @@ class VezEventCard extends StatelessWidget {
     // nearby events are only shown here if they have a precise location (logic handled in controller).
     return _PreviewEventCard(
       event: event,
+      onAddGuestsTap: onAddGuestsTap,
       onGuestListTap: onGuestListTap,
       onResponseSelected: onResponseSelected,
     );
@@ -68,9 +67,11 @@ class _PreviewEventCard extends StatefulWidget {
     required this.event,
     required this.onGuestListTap,
     required this.onResponseSelected,
+    this.onAddGuestsTap,
   });
 
   final HomeEventCardData event;
+  final VoidCallback? onAddGuestsTap;
   final VoidCallback? onGuestListTap;
   final ValueChanged<String>? onResponseSelected;
 
@@ -135,7 +136,7 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
                     image: isNetworkImage
                         ? NetworkImage(widget.event.resolvedImagePath)
                         : AssetImage(widget.event.resolvedImagePath)
-                              as ImageProvider,
+                    as ImageProvider,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -170,6 +171,17 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
                     ),
 
                     const Spacer(),
+
+                    // add guests button (owner o cohost)
+                    if (widget.event.canInviteGuests) ...[
+                      _CardPillButton(
+                        label: StringRes.at('add_guest'),
+                        onTap: widget.onAddGuestsTap,
+                        maxGuests: widget.event.maxGuests?.toInt() ?? 0,
+                        goingGuests: widget.event.guestCounts.going,
+                      ),
+                      SizedBox(height: 20 * s),
+                    ],
 
                     // title
                     Text(
@@ -646,6 +658,8 @@ class _ByYouEventCard extends StatelessWidget {
                       _CardPillButton(
                         label: StringRes.at('add_guest'),
                         onTap: onAddGuestsTap,
+                        maxGuests: event.maxGuests!.toInt(),
+                        goingGuests: event.guestCounts.going,
                       ),
                       SizedBox(height: 20 * s),
                     ],
@@ -774,8 +788,8 @@ class _CardIconCircle extends StatelessWidget {
         // Category/type/edit icons reuse this widget without the badge.
         if (showCohostBadge)
           Positioned(
-            bottom: -4,
-            right: -4,
+            bottom: -12,
+            right: -12,
             child: ClipOval(
               child: BackdropFilter(
                 filter: ImageFilter.blur(
@@ -793,7 +807,7 @@ class _CardIconCircle extends StatelessWidget {
                       width: 2,
                     ),
                   ),
-                  padding: const EdgeInsets.all(5),
+                  padding: const EdgeInsets.all(3),
                   child: Image.asset(
                     'assets/icons/event/co_host.png',
                     color: Colors.white,
@@ -809,26 +823,35 @@ class _CardIconCircle extends StatelessWidget {
     return onTap == null
         ? child
         : GestureDetector(
-            onTap: () {
-              HapticService.tap();
-              onTap!();
-            },
-            child: child,
-          );
+      onTap: () {
+        HapticService.tap();
+        onTap!();
+      },
+      child: child,
+    );
   }
 }
 
 class _CardPillButton extends StatelessWidget {
-  const _CardPillButton({required this.label, this.onTap});
+  const _CardPillButton({
+    required this.label,
+    this.onTap,
+    this.maxGuests, this.goingGuests,
+  });
   final String label;
   final VoidCallback? onTap;
+  final int? maxGuests;
+  final int? goingGuests;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        HapticService.tap();
-        onTap?.call();
+        if(goingGuests!<maxGuests! || maxGuests==0) {
+          HapticService.tap();
+          onTap?.call();
+        }
+        else {null;}
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -837,17 +860,23 @@ class _CardPillButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color.fromARGB(51, 255, 255, 255),
+              color: goingGuests!<maxGuests! || maxGuests==0
+                  ? Color.fromARGB(51, 255, 255, 255)
+                  : Color.fromARGB(13, 255, 255, 255),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: const Color.fromARGB(128, 255, 255, 255),
+                color: goingGuests!<maxGuests! || maxGuests==0
+                    ? Color.fromARGB(128, 255, 255, 255)
+                    : Color.fromARGB(26, 255, 255, 255),
                 width: 2,
               ),
             ),
             child: Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: goingGuests!<maxGuests! || maxGuests==0
+                    ? Color.fromARGB(255, 255, 255, 255)
+                    : Color.fromARGB(51, 255, 255, 255),
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -936,11 +965,11 @@ class _ProfilePhotoCircle extends StatelessWidget {
         child: photo.isEmpty
             ? Icon(Icons.person, color: Colors.white70, size: size * 0.52)
             : Image(
-                image: photo.startsWith('http')
-                    ? NetworkImage(photo)
-                    : AssetImage(photo) as ImageProvider,
-                fit: BoxFit.cover,
-              ),
+          image: photo.startsWith('http')
+              ? NetworkImage(photo)
+              : AssetImage(photo) as ImageProvider,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
@@ -978,7 +1007,6 @@ class _CardTopBar extends StatelessWidget {
     this.onGuestListTap,
     this.onEditTap,
   });
-
   final HomeEventCardData event;
   final double s;
   final VoidCallback? onGuestListTap;
@@ -989,7 +1017,7 @@ class _CardTopBar extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Lato sinistro: Categoria e Tipo
+        // left: category e type
         Row(
           children: [
             _CardIconCircle(
@@ -1006,18 +1034,18 @@ class _CardTopBar extends StatelessWidget {
             ),
           ],
         ),
-        // Lato destro: Ospiti + (Tasto Edit o Foto Profilo)
+        // right: guests + (edit btn or host profile photo)
         Row(
           children: [
             _CardIconCircle(
               iconPath: 'assets/icons/event/guests.png',
-              showCohostBadge: event.canInviteGuests,
+              showCohostBadge: event.isCurrentUserCohost,
               onTap: onGuestListTap,
               size: 44 * s,
               iconSize: 28 * s,
             ),
             SizedBox(width: 12 * s),
-            // Se l'evento è creato da te mostri Edit, altrimenti la foto del creatore
+            // showing the edit button 'cause the event is 'By You'
             if (event.isByYou)
               _CardIconCircle(
                 iconPath: 'assets/icons/event/edit.png',
@@ -1025,7 +1053,7 @@ class _CardTopBar extends StatelessWidget {
                 size: 44 * s,
                 iconSize: 28 * s,
               )
-            else
+            else // showing the profile photo of the host
               _ProfilePhotoCircle(
                 photo: event.creatorProfilePhoto,
                 size: 44 * s,

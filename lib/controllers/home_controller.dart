@@ -79,20 +79,29 @@ class HomeController extends ChangeNotifier {
     isLoadingEvents = true;
     _notify();
 
-    final List<Map<String, dynamic>> createdEvents = await _db
-        .getCreatedEvents();
-    final List<Map<String, dynamic>> cohostEvents = await _db
-        .getCohostEvents();
-    final List<Map<String, dynamic>> invitedEvents = await _db
-        .getInvitedEvents();
+    final List<Map<String, dynamic>> createdEvents = await _db.getCreatedEvents();
+    final List<Map<String, dynamic>> cohostEvents = await _db.getCohostEvents();
+    final List<Map<String, dynamic>> invitedEvents = await _db.getInvitedEvents();
     _discoverableEvents = await _db.getDiscoverableEvents();
 
+    // mapping the events
+    final List<HomeEventCardData> byYou = _mapEvents(createdEvents, EventType.byYou);
+    final List<HomeEventCardData> invited = _mapEvents(invitedEvents, EventType.invited);
+
+    final List<HomeEventCardData> cohostsAsInvites = _mapEvents(cohostEvents, EventType.invited);
+
+    // CoHost and standard Guest invites all together
+    final List<HomeEventCardData> combinedInvited = [...invited, ...cohostsAsInvites]
+      ..sort((a, b) => a.rawDateEvent.compareTo(b.rawDateEvent));
+
     eventsByType = {
-      EventType.byYou: _mapEvents(createdEvents, EventType.byYou),
-      EventType.cohost: _mapEvents(cohostEvents, EventType.cohost),
-      EventType.invited: _mapEvents(invitedEvents, EventType.invited),
+      // in "By You" only events in which the user is the host
+      EventType.byYou: byYou.where((e) => e.creatorUserId == _db.userID).toList(),
+      EventType.cohost: const [], // empty to save the enum
+      EventType.invited: combinedInvited,
       EventType.nearby: _buildNearbyEvents(),
     };
+
     isLoadingEvents = false;
     _notify();
   }

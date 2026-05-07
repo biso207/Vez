@@ -33,8 +33,6 @@ enum _GuestAudienceFilter { friends, following, anyone }
 //   design: enum covering all, going, not going, and maybe statuses.
 enum _GuestStateFilter { all, going, notGoing, maybe }
 
-enum _YoursMode { host, cohost }
-
 // ── home page ──────────────────────────────────────────────────────────────
 //
 //   used for: the primary landing screen of the application.
@@ -83,7 +81,6 @@ class _HomePageState extends State<HomePage> {
   bool _hasCheckedTutorial = false;
 
   late int _filterIndex;
-  final _YoursMode _yoursMode = _YoursMode.host;
 
   bool get _isVenueAccount => UserSession().accountType == 'venue';
 
@@ -303,11 +300,6 @@ class _HomePageState extends State<HomePage> {
   //   used for: displaying and managing the list of people invited to an event.
   //   design: popup with search, status filters, and guest removal options.
   void _showGuestListPopup(HomeEventCardData event) {
-    if (!event.canViewGuests) {
-      _showSnackBar(StringRes.at('cohost_no_view_permission'), isError: true);
-      return;
-    }
-
     final TextEditingController searchController = TextEditingController();
     HomeEventCardData currentEvent = event;
     _GuestStateFilter statusFilter = _GuestStateFilter.all;
@@ -471,8 +463,7 @@ class _HomePageState extends State<HomePage> {
                                 ? StringRes.at('cohost')
                                 : null,
                             trailing:
-                                currentEvent.canRemoveGuests &&
-                                    (!guest.isCohost || currentEvent.isByYou)
+                                currentEvent.isCurrentUserCohost || currentEvent.isByYou
                                 ? GestureDetector(
                                     onTap: isBusy
                                         ? null
@@ -935,14 +926,12 @@ class _HomePageState extends State<HomePage> {
   // ── empty state title ──────────────────────────────────────────────────────
   //
   //   used for: retrieving the appropriate title for the empty state UI.
-  String _emptyStateTitle() {
+  String? _emptyStateTitle() {
     switch (_selectedType) {
       case EventType.byYou:
-        return _yoursMode == _YoursMode.cohost
-            ? StringRes.at('no_cohost_events')
-            : StringRes.at('no_events_by_you');
+        return StringRes.at('no_events_by_you');
       case EventType.cohost:
-        return StringRes.at('no_cohost_events');
+        return null;
       case EventType.invited:
         return StringRes.at('no_events_invited');
       case EventType.nearby:
@@ -1159,7 +1148,7 @@ class _EventCarousel extends StatefulWidget {
   final List<HomeEventCardData> events;
   final double s;
   final bool isLoading;
-  final String emptyStateTitle;
+  final String? emptyStateTitle;
   final String emptyStateIconPath;
   final String? highlightedEventId;
   final ValueChanged<HomeEventCardData> onAddGuestsTap;
@@ -1261,9 +1250,7 @@ class _EventCarouselState extends State<_EventCarousel> {
             onAddGuestsTap: event.canInviteGuests
                 ? () => widget.onAddGuestsTap(event)
                 : null,
-            onGuestListTap: event.canViewGuests
-                ? () => widget.onGuestListTap(event)
-                : null,
+            onGuestListTap: () => widget.onGuestListTap(event),
             onManageCohostsTap: event.canManageCohosts
                 ? () => widget.onManageCohostsTap(event)
                 : null,
@@ -1293,7 +1280,7 @@ class _EmptyEventsState extends StatelessWidget {
   });
 
   final double s;
-  final String title;
+  final String? title;
   final String iconPath;
 
   // ── build ──────────────────────────────────────────────────────────────────
@@ -1313,7 +1300,7 @@ class _EmptyEventsState extends StatelessWidget {
             ),
             SizedBox(height: 18 * s),
             Text(
-              title,
+              title!,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
@@ -1684,39 +1671,6 @@ class _CohostPermissionRow extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _PermissionToggle(
-                  label: StringRes.at('cohost_perm_invite'),
-                  value: role.canInvite,
-                  onChanged: isBusy
-                      ? null
-                      : (value) => onChanged(role.copyWith(canInvite: value)),
-                ),
-              ),
-              Expanded(
-                child: _PermissionToggle(
-                  label: StringRes.at('cohost_perm_remove'),
-                  value: role.canRemove,
-                  onChanged: isBusy
-                      ? null
-                      : (value) => onChanged(role.copyWith(canRemove: value)),
-                ),
-              ),
-              Expanded(
-                child: _PermissionToggle(
-                  label: StringRes.at('cohost_perm_view'),
-                  value: role.canViewGuests,
-                  onChanged: isBusy
-                      ? null
-                      : (value) =>
-                            onChanged(role.copyWith(canViewGuests: value)),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -2051,9 +2005,7 @@ class _RoleBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: isCohost
-              ? const Color.fromARGB(255, 255, 195, 0)
-              : Colors.white,
+          color: const Color.fromARGB(255, 255, 195, 0),
           fontSize: 17,
           fontWeight: FontWeight.bold,
         ),

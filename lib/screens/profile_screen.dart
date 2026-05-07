@@ -452,7 +452,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // top spacer to clear the navbar + blur veil
             SizedBox(height: 130 * s),
 
-            /// ── user info card (tap to edit) ──────────────────────────────
+            /// ── user info card  ────────────────────────────────────────────
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 5 * s),
               child: _UserCard(
@@ -468,7 +468,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             SizedBox(height: 16 * s),
 
-            /// ── stats pill ────────────────────────────────────────────────
+            /// ── stats pill ─────────────────────────────────────────────────
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 50 * s),
               child: _StatsPill(
@@ -476,42 +476,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 numFollowers: _numFollowers,
                 numEvents: _numParticipatedEvents,
                 numFollowing: _numFollowing,
-              ),
-            ),
-
-            SizedBox(height: 16 * s),
-
-            /// ── past-events grid ──────────────────────────────────────────
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24 * s),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _PastEventsButton(
-                      s: s,
-                      label: 'I Tuoi Eventi Passati',
-                      count: _pastCreatedEvents.length,
-                      icon: Icons.event_available_rounded,
-                      onTap: () => _showPastEventsPopup(
-                        'I Tuoi Eventi Passati',
-                        _pastCreatedEvents,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10 * s),
-                  Expanded(
-                    child: _PastEventsButton(
-                      s: s,
-                      label: 'Eventi A Cui Hai Partecipato',
-                      count: _pastParticipatedEvents.length,
-                      icon: Icons.verified_rounded,
-                      onTap: () => _showPastEventsPopup(
-                        'Eventi A Cui Hai Partecipato',
-                        _pastParticipatedEvents,
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
 

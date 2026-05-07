@@ -21,7 +21,7 @@ class RemoteDbService {
 
   /// Registers a new user in the remote database
   Future<int> signup({
-    required String email,
+    required String phone,
     required String password,
     required String username,
     required DateTime dateOfBirth,
@@ -51,7 +51,7 @@ class RemoteDbService {
       // 2. body of the request => the name on the right are the fields in the table
       final Map<String, dynamic> userData = {
         'username': username,
-        'email': email,
+        'phone': phone,
         'hash_psw': hashedPassword, // hashed psw
         'date_of_birth':
             '${dateOfBirth.year.toString().padLeft(4, '0')}-${dateOfBirth.month.toString().padLeft(2, '0')}-${dateOfBirth.day.toString().padLeft(2, '0')}', // Date only (YYYY-MM-DD)
@@ -171,7 +171,8 @@ class RemoteDbService {
     required String instagramUrl,
   }) async {
     try {
-      final url = Uri.parse('$_baseUrl/functions/v1/submit-venue-signup');
+      // 1. define the endpoint (table 'venues' in 'Vez' DB)
+      final url = Uri.parse('$_baseUrl/functions/v1/venues');
       final response = await http.post(
         url,
         headers: {
@@ -179,9 +180,10 @@ class RemoteDbService {
           'Authorization': 'Bearer $_apiKey',
           'apikey': _apiKey,
         },
+        // todo: change all the fields
         body: jsonEncode({
           'username': username,
-          'email': email,
+          'phone': email,
           'password': password,
           'language': StringRes.locale,
           'venue_name': venueName,

@@ -32,7 +32,7 @@ const Map<String, String> zh = {
   "under_title_login": "欢迎回到 Vez",
   "username": "用户名",
   "password": "密码",
-  "email": "电子邮件",
+  "phone": "电话",
   "date_of_birth": "出生日期",
   "set_city": "设置城市",
   "locating_the_city": "正在定位您的城市...",

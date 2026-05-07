@@ -37,7 +37,7 @@ class SignupPage extends StatefulWidget {
 //
 //   used for: managing the registration flow and data validation.
 class _SignupPageState extends State<SignupPage> {
-  final TextEditingController _emailCtrl    = TextEditingController();
+  final TextEditingController _phoneCtrl    = TextEditingController();
   final TextEditingController _passwordCtrl = TextEditingController();
   final TextEditingController _usernameCtrl = TextEditingController();
   final TextEditingController _cityCtrl     = TextEditingController();
@@ -59,7 +59,7 @@ class _SignupPageState extends State<SignupPage> {
   @override
   void dispose() {
     _pageCtrl.dispose();
-    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     _passwordCtrl.dispose();
     _usernameCtrl.dispose();
     _cityCtrl.dispose();
@@ -126,7 +126,7 @@ class _SignupPageState extends State<SignupPage> {
                         ),
                         _StepTwo(
                           sw:           sw,
-                          emailCtrl:    _emailCtrl,
+                          phoneCtrl:    _phoneCtrl,
                           passwordCtrl: _passwordCtrl,
                           showPassword: _showPassword,
                           onTogglePass: () => setState(() => _showPassword = !_showPassword),
@@ -183,7 +183,7 @@ class _SignupPageState extends State<SignupPage> {
     setState(() => _error = null);
 
     final String username = _usernameCtrl.text.trim();
-    final String email    = _emailCtrl.text.trim();
+    final String phone    = _phoneCtrl.text.trim();
     final String password = _passwordCtrl.text;
     final String city     = _cityCtrl.text.trim();
 
@@ -204,12 +204,12 @@ class _SignupPageState extends State<SignupPage> {
         _next();
 
       case 1:
-        if (email.isEmpty || password.isEmpty) {
+        if (phone.isEmpty || password.isEmpty) {
           setState(() => _error = StringRes.at('fill_all_fields'));
           return;
         }
-        if (!_isValidEmail(email)) {
-          setState(() => _error = StringRes.at('invalid_email'));
+        if (!_isValidPhone(phone)) {
+          setState(() => _error = StringRes.at('invalid_phone'));
           return;
         }
         final String? pswError = _validatePassword(password);
@@ -248,7 +248,7 @@ class _SignupPageState extends State<SignupPage> {
 
     try {
       final int res = await _db.signup(
-        email:       _emailCtrl.text.trim(),
+        phone:       _phoneCtrl.text.trim(),
         password:    _passwordCtrl.text,
         username:    _usernameCtrl.text.trim(),
         dateOfBirth: _dob!,
@@ -286,9 +286,15 @@ class _SignupPageState extends State<SignupPage> {
       RegExp(r'[0-9]').hasMatch(p) &&
       RegExp(r'[!@#$&*~£€?§+]').hasMatch(p);
 
-  // ── is valid email ─────────────────────────────────────────────────────────
-  bool _isValidEmail(String e) =>
-      RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(e);
+  // ── is valid phone ─────────────────────────────────────────────────────────
+  bool _isValidPhone(String e) {
+    final cleanPhone = e.replaceAll(RegExp(r'[\s\-()]+'), '');
+
+    // regex for a clean number:
+    // - ^(\+?[0-9]{1,4})? : internation prefix (es. +39, 39, 0039) up to 4 chars
+    // - [0-9]{9,11}$       : real number (between 9 and 11 chars)
+    return RegExp(r'^(\+?[0-9]{1,4})?[0-9]{9,11}$').hasMatch(cleanPhone);
+  }
 
   // ── pick date ──────────────────────────────────────────────────────────────
   Future<void> _pickDate() async {
@@ -427,17 +433,17 @@ class _StepOne extends StatelessWidget {
   }
 }
 
-// ── step 2: email + password ─────────────────────────────────────────────────
+// ── step 2: phone + password ─────────────────────────────────────────────────
 class _StepTwo extends StatelessWidget {
   final double sw;
-  final TextEditingController emailCtrl;
+  final TextEditingController phoneCtrl;
   final TextEditingController passwordCtrl;
   final bool showPassword;
   final VoidCallback onTogglePass;
 
   const _StepTwo({
     required this.sw,
-    required this.emailCtrl,
+    required this.phoneCtrl,
     required this.passwordCtrl,
     required this.showPassword,
     required this.onTogglePass,
@@ -450,8 +456,8 @@ class _StepTwo extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           VezGlass.textField(
-            controller: emailCtrl,
-            hint:  StringRes.at('email'),
+            controller: phoneCtrl,
+            hint:  StringRes.at('phone'),
             width: sw * 0.75,
             color: Colors.white54,
           ),

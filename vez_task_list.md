@@ -125,3 +125,6 @@
 - [ ] Upload foto
 - [ ] Timeline eventi
 - [ ] Eventi partecipati
+
+## Miglioramento UI
+- [ ] Switch Dark/Light Mode

@@ -1,11 +1,11 @@
 // Developed and Designed by Outly • © 2026
 // Data models for events shown on the home screen.
 
+import '../services/user_session.dart';
 import 'event_catalog.dart';
 
-// ── event type ───────────────────────────────────────────────────────────────
-//
-//   used for: categorizing events into feed tabs.
+/// ── event type ──────────────────────────────────────────────────────────────
+// categorizes events into feed tabs
 enum EventType { byYou, cohost, invited, nearby }
 
 class HomeEventRole {
@@ -14,80 +14,42 @@ class HomeEventRole {
     required this.isCohost,
     required this.canInvite,
     required this.canRemove,
-    required this.canViewGuests,
   });
 
   final String raw;
   final bool isCohost;
   final bool canInvite;
   final bool canRemove;
-  final bool canViewGuests;
 
   static const HomeEventRole guest = HomeEventRole(
     raw: 'guest',
     isCohost: false,
     canInvite: false,
     canRemove: false,
-    canViewGuests: true,
   );
 
   static const HomeEventRole fullCohost = HomeEventRole(
-    raw: 'cohost:i,r,v',
+    raw: 'cohost',
     isCohost: true,
     canInvite: true,
     canRemove: true,
-    canViewGuests: true,
   );
 
   factory HomeEventRole.fromRaw(String? rawRole) {
     final String raw = (rawRole ?? '').trim().toLowerCase();
-    if (!raw.startsWith('cohost')) return guest;
-
-    final Set<String> permissions = raw.contains(':')
-        ? raw
-              .split(':')
-              .skip(1)
-              .join(':')
-              .split(',')
-              .map((item) => item.trim())
-              .map(_normalizePermission)
-              .where((item) => item.isNotEmpty)
-              .toSet()
-        : {'invite', 'remove', 'view'};
+    if (raw!='cohost') return guest;
 
     return HomeEventRole(
       raw: raw,
       isCohost: true,
-      canInvite: permissions.contains('invite'),
-      canRemove: permissions.contains('remove'),
-      canViewGuests: permissions.contains('view'),
+      canInvite: true,
+      canRemove: true,
     );
   }
 
   String encode() {
     if (!isCohost) return 'guest';
-    final permissions = <String>[
-      if (canInvite) 'i',
-      if (canRemove) 'r',
-      if (canViewGuests) 'v',
-    ];
-    return permissions.isEmpty ? 'cohost:' : 'cohost:${permissions.join(',')}';
-  }
-
-  static String _normalizePermission(String permission) {
-    switch (permission) {
-      case 'i':
-      case 'invite':
-        return 'invite';
-      case 'r':
-      case 'remove':
-        return 'remove';
-      case 'v':
-      case 'view':
-        return 'view';
-      default:
-        return permission;
-    }
+    return 'cohost';
   }
 
   HomeEventRole copyWith({
@@ -100,14 +62,12 @@ class HomeEventRole {
       isCohost: isCohost,
       canInvite: canInvite ?? this.canInvite,
       canRemove: canRemove ?? this.canRemove,
-      canViewGuests: canViewGuests ?? this.canViewGuests,
     );
   }
 }
 
-// ── home event guest counts ──────────────────────────────────────────────────
-//
-//   used for: storing aggregated RSVP totals for an event.
+/// ── home event guest counts ─────────────────────────────────────────────────
+// stores aggregated RSVP totals for an event
 class HomeEventGuestCounts {
   const HomeEventGuestCounts({
     this.going = 0,
@@ -120,9 +80,8 @@ class HomeEventGuestCounts {
   final int maybe;
 }
 
-// ── home event guest data ────────────────────────────────────────────────────
-//
-//   used for: representing a single user invited to or participating in an event.
+/// ── home event guest data ───────────────────────────────────────────────────
+// represents a single user invited to or participating in an event
 class HomeEventGuestData {
   const HomeEventGuestData({
     required this.userId,
@@ -142,9 +101,8 @@ class HomeEventGuestData {
   bool get isCohost => eventRole.isCohost;
 }
 
-// ── home event card data ─────────────────────────────────────────────────────
-//
-//   used for: providing all necessary data to render an event card.
+/// ── home event card data ────────────────────────────────────────────────────
+// provides all necessary data to render an event card
 class HomeEventCardData {
   const HomeEventCardData({
     required this.eventId,
@@ -204,33 +162,16 @@ class HomeEventCardData {
   final double? distanceKm;
   final HomeEventRole currentUserRole;
 
-  // ── is by you ──────────────────────────────────────────────────────────────
-  //
-  //   used for: checking if the event was created by the current user.
+  /// ── is by you ─────────────────────────────────────────────────────────────
+  // checks if the event was created by the current user
   bool get isByYou => type == EventType.byYou;
-  bool get isCohostView => type == EventType.cohost;
+  bool get isCohost => type == EventType.cohost;
 
-  // ── can invite guests ──────────────────────────────────────────────────────
-  //
-  //   used for: checking if the event type allows manual guest invitations.
+  /// ── can invite guests as a cohost ─────────────────────────────────────────
+  // checks if the event type allows manual guest invitations
   bool get canInviteGuests {
-    if (isByYou) return EventCatalog.canInviteGuests(typeLabel);
-    return isCohostView &&
-        currentUserRole.isCohost &&
-        currentUserRole.canInvite;
-  }
-
-  bool get canRemoveGuests {
-    if (isByYou) return EventCatalog.canInviteGuests(typeLabel);
-    return isCohostView &&
-        currentUserRole.isCohost &&
-        currentUserRole.canRemove;
-  }
-
-  bool get canViewGuests {
-    if (isByYou) return true;
-    if (isCohostView) return currentUserRole.canViewGuests;
-    return true;
+    if (isByYou || isCurrentUserCohost) return true;
+    return false;
   }
 
   bool get canManageCohosts {
@@ -242,11 +183,18 @@ class HomeEventCardData {
   List<HomeEventGuestData> get cohosts =>
       guests.where((guest) => guest.isCohost).toList();
 
-  // ── resolved image path ────────────────────────────────────────────────────
-  //
-  //   used for: returning the custom image path or a default fallback.
+  /// ── resolved image path ───────────────────────────────────────────────────
+  // returns the custom image path or a default fallback
   String get resolvedImagePath {
     final String trimmed = imagePath.trim();
     return trimmed.isEmpty ? EventCatalog.defaultBackgroundImage : trimmed;
+  }
+
+  bool get isCurrentUserCohost {
+    final String userId = UserSession().userID;
+    for (final HomeEventGuestData guest in cohosts) {
+      if (guest.userId == userId) return guest.isCohost;
+    }
+    return false;
   }
 }

@@ -33,7 +33,7 @@ const Map<String, String> de = {
   "under_title_login": "Willkommen Zurück Bei Vez",
   "username": "Benutzername",
   "password": "Passwort",
-  "email": "E-Mail",
+  "phone": "Telefon",
   "date_of_birth": "Geburtsdatum",
   "set_city": "Stadt Festlegen",
   "locating_the_city": "Stadt Wird Ermittelt...",
