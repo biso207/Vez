@@ -483,14 +483,22 @@ class _CreateEventState extends State<CreateEvent> {
       onMapTap: () async {
         final result = await Navigator.push<Map<String, dynamic>>(
           context,
-          MaterialPageRoute(builder: (_) => const VezMapPicker()),
+          MaterialPageRoute(
+            builder: (_) => VezMapPicker(
+              initialLatitude: _locationLat,
+              initialLongitude: _locationLng,
+              initialName: _locationName,
+              initialAddress: _locationAddress,
+            ),
+          ),
         );
         if (result != null) {
           setState(() {
-            _locationName = result['name'] ?? 'Selected Location';
-            _locationAddress = result['address'] ?? '';
-            _locationLat = result['latitude'] as double?;
-            _locationLng = result['longitude'] as double?;
+            _locationName = (result['name'] ?? 'Selected Location')
+                .toString();
+            _locationAddress = (result['address'] ?? '').toString();
+            _locationLat = (result['latitude'] as num?)?.toDouble();
+            _locationLng = (result['longitude'] as num?)?.toDouble();
             _locationPrecise = result['is_precise'] as bool? ?? false;
           });
         }
