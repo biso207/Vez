@@ -7,9 +7,12 @@ import 'package:flutter/material.dart';
 
 import '../controllers/home_controller.dart';
 import '../models/home_event.dart';
+import '../services/getters_service.dart';
 import '../services/haptic_service.dart';
+import '../services/setters_service.dart';
 import '../services/translation_service.dart';
 import '../services/user_session.dart';
+import '../views/widgets/vez_coach_marks.dart';
 import '../views/widgets/vez_event_card.dart';
 import '../views/widgets/vez_glass.dart';
 import '../views/widgets/vez_page_layout.dart';
@@ -73,8 +76,11 @@ class _HomePageState extends State<HomePage> {
 
   final TextEditingController _searchController = TextEditingController();
   late final HomeController _controller;
+  late final GetDBService _dbGet;
+  late final SetDBService _dbSet;
   Timer? _autoRefreshTimer;
   bool _isAutoRefreshing = false;
+  bool _hasCheckedTutorial = false;
 
   late int _filterIndex;
   final _YoursMode _yoursMode = _YoursMode.host;
@@ -90,10 +96,13 @@ class _HomePageState extends State<HomePage> {
     _filterIndex = _isVenueAccount
         ? _byYouFilterIndex
         : widget.initialFilterIndex.clamp(0, _filterIcons.length - 1);
+    _dbGet = GetDBService(userID: UserSession().userID);
+    _dbSet = SetDBService(userID: UserSession().userID);
     _controller = HomeController(userId: UserSession().userID)
       ..addListener(_onControllerChanged);
     _controller.loadPageData();
     _startAutoRefresh();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowTutorial());
   }
 
   // ── dispose ────────────────────────────────────────────────────────────────
@@ -135,6 +144,21 @@ class _HomePageState extends State<HomePage> {
     } finally {
       _isAutoRefreshing = false;
     }
+  }
+
+  Future<void> _maybeShowTutorial() async {
+    if (_hasCheckedTutorial || !mounted) return;
+    _hasCheckedTutorial = true;
+
+    final seenValue = await _dbGet.getUserData('has_seen_tutorial');
+    final hasSeenTutorial = bool.tryParse(seenValue ?? 'false') ?? false;
+    if (!mounted || hasSeenTutorial) return;
+
+    // The tutorial is modal: once the user finishes or skips it, we mark it as
+    // seen in Supabase so it does not reappear on the next login/device.
+    await VezCoachMarks.showHomeTutorial(context);
+    if (!mounted) return;
+    await _dbSet.updateUserData('has_seen_tutorial', true);
   }
 
   // ── selected type ──────────────────────────────────────────────────────────
