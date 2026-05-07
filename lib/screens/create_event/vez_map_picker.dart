@@ -37,6 +37,7 @@ class _VezMapPickerState extends State<VezMapPicker> {
   bool _isLoading = true;
   String _currentAddress = StringRes.at('move_map_to_select_place');
   String _currentName = '';
+  Map<String, dynamic> _currentAddressParts = const {};
   int _reverseLookupToken = 0;
   Timer? _reverseLookupDebounce;
 
@@ -118,25 +119,17 @@ class _VezMapPickerState extends State<VezMapPicker> {
       final Map<String, dynamic> address = data['address'] is Map
           ? Map<String, dynamic>.from(data['address'] as Map)
           : <String, dynamic>{};
-      final String name =
-          (data['name'] ??
-                  address['amenity'] ??
-                  address['shop'] ??
-                  address['tourism'] ??
-                  address['building'] ??
-                  address['road'] ??
-                  StringRes.at('unknown_place'))
-              .toString()
-              .trim();
       final String displayName =
           (data['display_name'] ?? StringRes.at('address_not_found'))
               .toString()
               .trim();
+      // Nominatim often leaves `name` empty for normal streets/squares, so
+      // derive a readable place label from address parts before falling back.
+      final String name = _bestPlaceName(data, address, displayName);
 
       setState(() {
-        _currentName = name.isNotEmpty
-            ? name
-            : StringRes.at('unknown_place');
+        _currentName = name;
+        _currentAddressParts = address;
         _currentAddress = displayName.isNotEmpty
             ? displayName
             : StringRes.at('address_not_found');
@@ -158,6 +151,8 @@ class _VezMapPickerState extends State<VezMapPicker> {
     _reverseLookupDebounce?.cancel();
     setState(() {
       _selectedPoint = point;
+      _currentName = '';
+      _currentAddressParts = const {};
       _currentAddress = StringRes.at('move_map_to_select_place');
     });
 
@@ -177,12 +172,49 @@ class _VezMapPickerState extends State<VezMapPicker> {
     Navigator.pop(context, {
       'name': _currentName.trim().isNotEmpty
           ? _currentName.trim()
-          : StringRes.at('unknown_place'),
+          : _fallbackPlaceName(),
       'address': _currentAddress,
       'latitude': _selectedPoint.latitude,
       'longitude': _selectedPoint.longitude,
       'is_precise': true,
     });
+  }
+
+  String _bestPlaceName(
+    Map<String, dynamic> data,
+    Map<String, dynamic> address,
+    String displayName,
+  ) {
+    // Ordered from specific POI fields to broader city fields; the display
+    // name's first segment is the last useful fallback before "unknown".
+    final candidates = [
+      data['name'],
+      address['amenity'],
+      address['shop'],
+      address['tourism'],
+      address['building'],
+      address['road'],
+      address['pedestrian'],
+      address['neighbourhood'],
+      address['suburb'],
+      address['city'],
+      address['town'],
+      address['village'],
+      displayName.split(',').first,
+    ];
+
+    for (final candidate in candidates) {
+      final value = candidate?.toString().trim() ?? '';
+      if (value.isNotEmpty &&
+          value.toLowerCase() != StringRes.at('unknown_place').toLowerCase()) {
+        return value;
+      }
+    }
+    return StringRes.at('unknown_place');
+  }
+
+  String _fallbackPlaceName() {
+    return _bestPlaceName(const {}, _currentAddressParts, _currentAddress);
   }
 
   @override

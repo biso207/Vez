@@ -105,7 +105,9 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
     final double cardHeight = screenHeight * 0.65;
     final double cardWidth = screenWidth * 0.85;
     final double s = (screenWidth / 390).clamp(0.8, 1.2);
-    final bool isNetworkImage = widget.event.resolvedImagePath.startsWith('http');
+    final bool isNetworkImage = widget.event.resolvedImagePath.startsWith(
+      'http',
+    );
 
     return Center(
       child: Container(
@@ -132,7 +134,8 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
                   image: DecorationImage(
                     image: isNetworkImage
                         ? NetworkImage(widget.event.resolvedImagePath)
-                        : AssetImage(widget.event.resolvedImagePath) as ImageProvider,
+                        : AssetImage(widget.event.resolvedImagePath)
+                              as ImageProvider,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -170,7 +173,9 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
 
                     // title
                     Text(
-                      widget.event.title.isNotEmpty ? widget.event.title : 'Untitled Event',
+                      widget.event.title.isNotEmpty
+                          ? widget.event.title
+                          : 'Untitled Event',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
@@ -194,7 +199,10 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
                     // distance is particularly relevant for "nearby" events
                     if (widget.event.distanceKm != null) ...[
                       SizedBox(height: 2 * s),
-                      _PreviewInfoText(text: _formatDistance(widget.event.distanceKm!), s: s),
+                      _PreviewInfoText(
+                        text: _formatDistance(widget.event.distanceKm!),
+                        s: s,
+                      ),
                     ],
 
                     SizedBox(height: 8 * s),
@@ -413,8 +421,12 @@ class _GuestLimitPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final int? maxGuests = event.maxGuests;
     final int going = event.guestCounts.going;
-    final String value = (maxGuests == null || maxGuests <= 0) ? StringRes.at('no_limit') : '$going/$maxGuests';
-    final double progress = (maxGuests == null || maxGuests <= 0) ? 0 : (going / maxGuests).clamp(0.0, 1.0);
+    final String value = (maxGuests == null || maxGuests <= 0)
+        ? StringRes.at('no_limit')
+        : '$going/$maxGuests';
+    final double progress = (maxGuests == null || maxGuests <= 0)
+        ? 0
+        : (going / maxGuests).clamp(0.0, 1.0);
 
     return _MetricPill(
       s: s,
@@ -435,7 +447,9 @@ class _PricePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int? price = event.price;
-    final String value = (price == null || price <= 0) ? StringRes.at('no_price') : '€ $price,00';
+    final String value = (price == null || price <= 0)
+        ? StringRes.at('no_price')
+        : '€ $price,00';
     return _MetricPill(
       s: s,
       iconPath: 'assets/icons/event/price.png',
@@ -488,11 +502,20 @@ class _MetricPill extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _SafeAssetIcon(iconPath: iconPath, fallbackIcon: fallbackIcon, size: 20 * s),
+                        _SafeAssetIcon(
+                          iconPath: iconPath,
+                          fallbackIcon: fallbackIcon,
+                          size: 20 * s,
+                        ),
                         SizedBox(height: 4 * s),
                         Text(
                           value,
-                          style: TextStyle(color: Colors.white, fontSize: 15 * s, fontWeight: FontWeight.bold, height: 1),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15 * s,
+                            fontWeight: FontWeight.bold,
+                            height: 1,
+                          ),
                         ),
                       ],
                     ),
@@ -501,7 +524,10 @@ class _MetricPill extends StatelessWidget {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30 * s),
-                        border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+                        border: Border.all(
+                          color: const Color.fromARGB(128, 255, 255, 255),
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
@@ -549,7 +575,13 @@ class _ByYouEventCard extends StatelessWidget {
         height: cardHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(40),
-          boxShadow: const [BoxShadow(color: Colors.white54, blurRadius: 5, offset: Offset(0, -1))],
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.white54,
+              blurRadius: 5,
+              offset: Offset(0, -1),
+            ),
+          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(40),
@@ -611,7 +643,10 @@ class _ByYouEventCard extends StatelessWidget {
 
                     // add guests button
                     if (event.canInviteGuests) ...[
-                      _CardPillButton(label: StringRes.at('add_guest'), onTap: onAddGuestsTap),
+                      _CardPillButton(
+                        label: StringRes.at('add_guest'),
+                        onTap: onAddGuestsTap,
+                      ),
                       SizedBox(height: 20 * s),
                     ],
 
@@ -619,12 +654,18 @@ class _ByYouEventCard extends StatelessWidget {
                     Text(
                       event.title.isNotEmpty ? event.title : 'Untitled Event',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 40 * s, fontWeight: FontWeight.bold, height: 1),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 40 * s,
+                        fontWeight: FontWeight.bold,
+                        height: 1,
+                      ),
                     ),
                     SizedBox(height: 6 * s),
 
                     // date and place
-                    if (event.dateLabel.isNotEmpty) _PreviewInfoText(text: event.dateLabel, s: s),
+                    if (event.dateLabel.isNotEmpty)
+                      _PreviewInfoText(text: event.dateLabel, s: s),
                     if (event.locationLabel.isNotEmpty) ...[
                       SizedBox(height: 2 * s),
                       _PreviewInfoText(text: event.locationLabel, s: s),
@@ -638,9 +679,13 @@ class _ByYouEventCard extends StatelessWidget {
                     // bottom details
                     Row(
                       children: [
-                        Expanded(child: _GuestLimitPill(event: event, s: s)), // guest limit
+                        Expanded(
+                          child: _GuestLimitPill(event: event, s: s),
+                        ), // guest limit
                         SizedBox(width: 36 * s),
-                        Expanded(child: _PricePill(event: event, s: s)), // price
+                        Expanded(
+                          child: _PricePill(event: event, s: s),
+                        ), // price
                       ],
                     ),
                   ],
@@ -667,7 +712,12 @@ class _PreviewInfoText extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       textAlign: TextAlign.center,
-      style: TextStyle(color: Colors.white, fontSize: 15 * s, fontWeight: FontWeight.normal, height: 1),
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 15 * s,
+        fontWeight: FontWeight.normal,
+        height: 1,
+      ),
     );
   }
 }
@@ -675,23 +725,24 @@ class _PreviewInfoText extends StatelessWidget {
 class _CardIconCircle extends StatelessWidget {
   const _CardIconCircle({
     required this.iconPath,
-    required this.canInviteGuests,
     this.onTap,
     this.isBlueAccent = false,
+    this.showCohostBadge = false,
     this.size = 40,
-    this.iconSize = 20
+    this.iconSize = 20,
   });
   final String iconPath;
-  final bool canInviteGuests;
   final VoidCallback? onTap;
   final bool isBlueAccent;
+  final bool showCohostBadge;
   final double size;
   final double iconSize;
 
   @override
   Widget build(BuildContext context) {
     final Widget child = Stack(
-      clipBehavior: Clip.none, // Permette al badge di uscire dai bordi senza essere tagliato
+      clipBehavior: Clip
+          .none, // Permette al badge di uscire dai bordi senza essere tagliato
       children: [
         // 1. Widget Base (Il cerchio principale)
         ClipOval(
@@ -702,19 +753,26 @@ class _CardIconCircle extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isBlueAccent ? const Color.fromARGB(51, 6, 0, 92) : const Color.fromARGB(51, 0, 0, 0),
+                color: isBlueAccent
+                    ? const Color.fromARGB(51, 6, 0, 92)
+                    : const Color.fromARGB(51, 0, 0, 0),
                 border: Border.all(
-                    color: isBlueAccent ? const Color.fromARGB(128, 0, 10, 218) : const Color.fromARGB(128, 255, 255, 255),
-                    width: 2
+                  color: isBlueAccent
+                      ? const Color.fromARGB(128, 0, 10, 218)
+                      : const Color.fromARGB(128, 255, 255, 255),
+                  width: 2,
                 ),
               ),
-              child: Center(child: Image.asset(iconPath, width: iconSize, height: iconSize)),
+              child: Center(
+                child: Image.asset(iconPath, width: iconSize, height: iconSize),
+              ),
             ),
           ),
         ),
 
-        // 2. co-host badge
-        if (canInviteGuests)
+        // Only the guest-list icon should show the co-host capability badge.
+        // Category/type/edit icons reuse this widget without the badge.
+        if (showCohostBadge)
           Positioned(
             bottom: -4,
             right: -4,
@@ -748,7 +806,15 @@ class _CardIconCircle extends StatelessWidget {
           ),
       ],
     );
-    return onTap == null ? child : GestureDetector(onTap: () { HapticService.tap(); onTap!(); }, child: child);
+    return onTap == null
+        ? child
+        : GestureDetector(
+            onTap: () {
+              HapticService.tap();
+              onTap!();
+            },
+            child: child,
+          );
   }
 }
 
@@ -760,7 +826,10 @@ class _CardPillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () { HapticService.tap(); onTap?.call(); },
+      onTap: () {
+        HapticService.tap();
+        onTap?.call();
+      },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
@@ -770,9 +839,19 @@ class _CardPillButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color.fromARGB(51, 255, 255, 255),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+              border: Border.all(
+                color: const Color.fromARGB(128, 255, 255, 255),
+                width: 2,
+              ),
             ),
-            child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ),
@@ -797,7 +876,10 @@ class _GuestStateBanner extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color.fromARGB(51, 0, 0, 0),
             borderRadius: BorderRadius.circular(35 * s),
-            border: Border.all(color: const Color.fromARGB(128, 255, 255, 255), width: 2),
+            border: Border.all(
+              color: const Color.fromARGB(128, 255, 255, 255),
+              width: 2,
+            ),
           ),
           child: Row(
             children: [
@@ -818,7 +900,15 @@ class _GuestStateBanner extends StatelessWidget {
         children: [
           Image.asset(path, width: 22 * s, height: 22 * s),
           SizedBox(height: 6 * s),
-          Text('$val', style: TextStyle(color: Colors.white, fontSize: 20 * s, fontWeight: FontWeight.bold, height: 1)),
+          Text(
+            '$val',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20 * s,
+              fontWeight: FontWeight.bold,
+              height: 1,
+            ),
+          ),
         ],
       ),
     );
@@ -837,19 +927,31 @@ class _ProfilePhotoCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: const Color.fromARGB(204, 255, 195, 0), width: 2),
+        border: Border.all(
+          color: const Color.fromARGB(204, 255, 195, 0),
+          width: 2,
+        ),
       ),
       child: ClipOval(
         child: photo.isEmpty
             ? Icon(Icons.person, color: Colors.white70, size: size * 0.52)
-            : Image(image: photo.startsWith('http') ? NetworkImage(photo) : AssetImage(photo) as ImageProvider, fit: BoxFit.cover),
+            : Image(
+                image: photo.startsWith('http')
+                    ? NetworkImage(photo)
+                    : AssetImage(photo) as ImageProvider,
+                fit: BoxFit.cover,
+              ),
       ),
     );
   }
 }
 
 class _SafeAssetIcon extends StatelessWidget {
-  const _SafeAssetIcon({required this.iconPath, required this.size, this.fallbackIcon});
+  const _SafeAssetIcon({
+    required this.iconPath,
+    required this.size,
+    this.fallbackIcon,
+  });
   final String iconPath;
   final double size;
   final IconData? fallbackIcon;
@@ -860,7 +962,11 @@ class _SafeAssetIcon extends StatelessWidget {
       iconPath,
       width: size,
       height: size,
-      errorBuilder: (_, _, _) => Icon(fallbackIcon ?? Icons.info_outline, color: Colors.white, size: size),
+      errorBuilder: (_, _, _) => Icon(
+        fallbackIcon ?? Icons.info_outline,
+        color: Colors.white,
+        size: size,
+      ),
     );
   }
 }
@@ -886,21 +992,44 @@ class _CardTopBar extends StatelessWidget {
         // Lato sinistro: Categoria e Tipo
         Row(
           children: [
-            _CardIconCircle(iconPath: event.categoryIconPath, canInviteGuests: event.canInviteGuests, isBlueAccent: true, size: 44 * s, iconSize: 28 * s),
+            _CardIconCircle(
+              iconPath: event.categoryIconPath,
+              isBlueAccent: true,
+              size: 44 * s,
+              iconSize: 28 * s,
+            ),
             SizedBox(width: 12 * s),
-            _CardIconCircle(iconPath: event.typeIconPath, canInviteGuests: event.canInviteGuests, size: 44 * s, iconSize: 28 * s),
+            _CardIconCircle(
+              iconPath: event.typeIconPath,
+              size: 44 * s,
+              iconSize: 28 * s,
+            ),
           ],
         ),
         // Lato destro: Ospiti + (Tasto Edit o Foto Profilo)
         Row(
           children: [
-            _CardIconCircle(iconPath: 'assets/icons/event/guests.png', canInviteGuests: event.canInviteGuests, onTap: onGuestListTap, size: 44 * s, iconSize: 28 * s),
+            _CardIconCircle(
+              iconPath: 'assets/icons/event/guests.png',
+              showCohostBadge: event.canInviteGuests,
+              onTap: onGuestListTap,
+              size: 44 * s,
+              iconSize: 28 * s,
+            ),
             SizedBox(width: 12 * s),
             // Se l'evento è creato da te mostri Edit, altrimenti la foto del creatore
             if (event.isByYou)
-              _CardIconCircle(iconPath: 'assets/icons/event/edit.png', canInviteGuests: event.canInviteGuests, onTap: onEditTap, size: 44 * s, iconSize: 28 * s)
+              _CardIconCircle(
+                iconPath: 'assets/icons/event/edit.png',
+                onTap: onEditTap,
+                size: 44 * s,
+                iconSize: 28 * s,
+              )
             else
-              _ProfilePhotoCircle(photo: event.creatorProfilePhoto, size: 44 * s),
+              _ProfilePhotoCircle(
+                photo: event.creatorProfilePhoto,
+                size: 44 * s,
+              ),
           ],
         ),
       ],

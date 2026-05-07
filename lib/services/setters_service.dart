@@ -7,7 +7,8 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart'
-as http; // http packet (standard in Dart/Flutter).
+    as http; // http packet (standard in Dart/Flutter).
+import 'package:image/image.dart' as img;
 
 import 'api_keys.dart'; // private key to connect to the remote db
 
@@ -34,8 +35,7 @@ class SetDBService {
 
   /// generic method to update any user attribute (column) in the database
   /// uses a PATCH request to modify the existing row where userID matches
-  Future<int> updateUserData(String column, dynamic value)
-  async {
+  Future<int> updateUserData(String column, dynamic value) async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse('$_baseUrl/rest/v1/users?user_id=eq.$userID');
@@ -67,17 +67,16 @@ class SetDBService {
   Future<int> changePassword({
     required String currentPassword,
     required String newPassword,
-  })
-  async {
+  }) async {
     // error handling block, ensures app stability.
     try {
       final String currentHash = _hashPassword(currentPassword);
       final verifyUrl = Uri.parse(
         '$_baseUrl/rest/v1/users'
-            '?user_id=eq.$userID'
-            '&hash_psw=eq.$currentHash'
-            '&select=user_id'
-            '&limit=1',
+        '?user_id=eq.$userID'
+        '&hash_psw=eq.$currentHash'
+        '&select=user_id'
+        '&limit=1',
       );
 
       // async call to database, handle errors and loading states carefully.
@@ -104,12 +103,12 @@ class SetDBService {
   }
 
   /// delete permanently an user from the DB
-  Future<int> deleteCurrentUserAccount({String? profilePhotoUrl})
-  async {
+  Future<int> deleteCurrentUserAccount({String? profilePhotoUrl}) async {
     // error handling block, ensures app stability.
     try {
       // async call to database, handle errors and loading states carefully.
-      final List<Map<String, dynamic>> createdEvents = await _getCreatedEvents();
+      final List<Map<String, dynamic>> createdEvents =
+          await _getCreatedEvents();
 
       // async call to database, handle errors and loading states carefully.
       await _deleteRows(table: 'event_invites', filter: 'user_id=eq.$userID');
@@ -148,7 +147,6 @@ class SetDBService {
     }
   }
 
-
   /// creates a place in the DB and returns the generated place_id
   /// returns null if the creation fails
   Future<String?> storePlace({
@@ -157,8 +155,7 @@ class SetDBService {
     required bool isPrecise,
     double? latitude,
     double? longitude,
-  })
-  async {
+  }) async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse('$_baseUrl/rest/v1/place');
@@ -202,8 +199,7 @@ class SetDBService {
     required bool isPrecise,
     double? latitude,
     double? longitude,
-  })
-  async {
+  }) async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse('$_baseUrl/rest/v1/place?place_id=eq.$placeId');
@@ -233,10 +229,9 @@ class SetDBService {
   /// method to store an event in the db
   /// requires a valid [placeId] obtained from [storePlace]
   Future<int> storeEvent(
-      Map<String, dynamic> eventData, {
-        required String placeId,
-      })
-  async {
+    Map<String, dynamic> eventData, {
+    required String placeId,
+  }) async {
     // error handling block, ensures app stability.
     try {
       // async call to database, handle errors and loading states carefully.
@@ -266,10 +261,9 @@ class SetDBService {
 
   /// stores an event in the DB and returns the generated event_id
   Future<String?> storeEventAndGetId(
-      Map<String, dynamic> eventData, {
-        required String placeId,
-      })
-  async {
+    Map<String, dynamic> eventData, {
+    required String placeId,
+  }) async {
     // error handling block, ensures app stability.
     try {
       // async call to database, handle errors and loading states carefully.
@@ -309,12 +303,11 @@ class SetDBService {
 
   /// updates data about an event in the 'events' table
   Future<int> updateEvent(
-      String eventId,
-      Map<String, dynamic> eventData, {
-        required String placeId,
-        String? currentBackgroundUrl,
-      })
-  async {
+    String eventId,
+    Map<String, dynamic> eventData, {
+    required String placeId,
+    String? currentBackgroundUrl,
+  }) async {
     // error handling block, ensures app stability.
     try {
       // async call to database, handle errors and loading states carefully.
@@ -344,8 +337,7 @@ class SetDBService {
   }
 
   /// permanently deletes and event from the DB
-  Future<int> deleteEvent(String eventId, {String? placeId})
-  async {
+  Future<int> deleteEvent(String eventId, {String? placeId}) async {
     // error handling block, ensures app stability.
     try {
       // async call to database, handle errors and loading states carefully.
@@ -379,8 +371,7 @@ class SetDBService {
     required String eventId,
     required String invitedUserId,
     String role = 'guest',
-  })
-  async {
+  }) async {
     // error handling block, ensures app stability.
     try {
       // async call to database, handle errors and loading states carefully.
@@ -393,7 +384,7 @@ class SetDBService {
       if (existingInviteId != null) {
         final url = Uri.parse(
           '$_baseUrl/rest/v1/event_invites'
-              '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
+          '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
         );
         // async call to database, handle errors and loading states carefully.
         final response = await http.patch(
@@ -472,8 +463,7 @@ class SetDBService {
   Future<void> _sendEventInviteNotification({
     required String eventId,
     required String invitedUserId,
-  })
-  async {
+  }) async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -501,17 +491,15 @@ class SetDBService {
     }
   }
 
-
   Future<int> removeEventInvite({
     required String eventId,
     required String invitedUserId,
-  })
-  async {
+  }) async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/event_invites'
-            '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
+        '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
       );
       // async call to database, handle errors and loading states carefully.
       final response = await http.delete(
@@ -530,18 +518,16 @@ class SetDBService {
     }
   }
 
-
   Future<int> updateEventInviteResponse({
     required String eventId,
     required String responseState,
-  })
-  async {
+  }) async {
     // error handling block, ensures app stability.
     try {
       final normalizedState = _normalizeInviteResponse(responseState);
       final url = Uri.parse(
         '$_baseUrl/rest/v1/event_invites'
-            '?event_id=eq.$eventId&user_id=eq.$userID',
+        '?event_id=eq.$eventId&user_id=eq.$userID',
       );
       // async call to database, handle errors and loading states carefully.
       final response = await http.patch(
@@ -560,12 +546,10 @@ class SetDBService {
     }
   }
 
-
   Future<int> upsertEventParticipation({
     required String eventId,
     required String participationState,
-  })
-  async {
+  }) async {
     // error handling block, ensures app stability.
     try {
       final String normalizedState = _normalizeInviteResponse(
@@ -579,7 +563,7 @@ class SetDBService {
       if (existingParticipationId != null) {
         final url = Uri.parse(
           '$_baseUrl/rest/v1/participation'
-              '?participation_id=eq.$existingParticipationId',
+          '?participation_id=eq.$existingParticipationId',
         );
         // async call to database, handle errors and loading states carefully.
         final response = await http.patch(
@@ -613,7 +597,6 @@ class SetDBService {
     }
   }
 
-
   String _normalizeInviteResponse(String rawState) {
     final normalized = rawState.trim().toLowerCase().replaceAll(' ', '_');
     if (normalized == 'going' ||
@@ -630,13 +613,11 @@ class SetDBService {
     return 'maybe';
   }
 
-
   Future<Map<String, dynamic>?> _buildEventPayload(
-      Map<String, dynamic> eventData, {
-        required String placeId,
-        String? currentBackgroundUrl,
-      })
-  async {
+    Map<String, dynamic> eventData, {
+    required String placeId,
+    String? currentBackgroundUrl,
+  }) async {
     print('===== EVENT PAYLOAD DEBUG =====');
     print('Category name to look up: "${eventData['category']}"');
 
@@ -687,7 +668,6 @@ class SetDBService {
     return payload;
   }
 
-
   String? _formatEventDateTime(String? rawDate, String? rawTime) {
     // error handling block, ensures app stability.
     try {
@@ -710,13 +690,11 @@ class SetDBService {
     }
   }
 
-
   Future<String?> _resolveEventBackgroundUrl({
     required dynamic backgroundValue,
     required String title,
     String? currentBackgroundUrl,
-  })
-  async {
+  }) async {
     if (backgroundValue is File) {
       // async call to database, handle errors and loading states carefully.
       final String? uploadedUrl = await getURLEventBackgroundPhoto(
@@ -737,12 +715,10 @@ class SetDBService {
     return currentBackgroundUrl?.trim() ?? '';
   }
 
-
   Future<int> _deleteRows({
     required String table,
     required String filter,
-  })
-  async {
+  }) async {
     final url = Uri.parse('$_baseUrl/rest/v1/$table?$filter');
     // async call to database, handle errors and loading states carefully.
     final response = await http.delete(
@@ -756,15 +732,13 @@ class SetDBService {
     return response.statusCode;
   }
 
-
-  Future<List<Map<String, dynamic>>> _getCreatedEvents()
-  async {
+  Future<List<Map<String, dynamic>>> _getCreatedEvents() async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/events'
-            '?creator_user_id=eq.$userID'
-            '&select=event_id,place_id',
+        '?creator_user_id=eq.$userID'
+        '&select=event_id,place_id',
       );
       // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _jsonHeaders);
@@ -781,9 +755,7 @@ class SetDBService {
     }
   }
 
-
-  Future<void> _deleteProfilePhoto(String? profilePhotoUrl)
-  async {
+  Future<void> _deleteProfilePhoto(String? profilePhotoUrl) async {
     final String url = profilePhotoUrl?.trim() ?? '';
     if (url.isEmpty || !url.contains('/avatars/')) return;
 
@@ -804,12 +776,10 @@ class SetDBService {
     } catch (_) {}
   }
 
-
   Future<int?> _getExistingInviteId({
     required String eventId,
     required String invitedUserId,
-  })
-  async {
+  }) async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -830,15 +800,13 @@ class SetDBService {
     }
   }
 
-
-  Future<int?> _getExistingParticipationId({required String eventId})
-  async {
+  Future<int?> _getExistingParticipationId({required String eventId}) async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/participation'
-            '?event_id=eq.$eventId&user_id=eq.$userID&select=participation_id'
-            '&limit=1',
+        '?event_id=eq.$eventId&user_id=eq.$userID&select=participation_id'
+        '&limit=1',
       );
       // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _jsonHeaders);
@@ -854,12 +822,10 @@ class SetDBService {
     }
   }
 
-
   Future<String?> getURLEventBackgroundPhoto(
-      File imageFile,
-      String title,
-      )
-  async {
+    File imageFile,
+    String title,
+  ) async {
     // error handling block, ensures app stability.
     try {
       // async call to database, handle errors and loading states carefully.
@@ -868,12 +834,10 @@ class SetDBService {
         return null;
       }
 
-      // async call to database, handle errors and loading states carefully.
-      final int fileSize = await imageFile.length();
-      if (fileSize > _maxEventBackgroundSizeBytes) {
-        print('Upload failed: background image exceeds 1 MB.');
-        return null;
-      }
+      final List<int>? uploadBytes = await _compressedEventBackgroundBytes(
+        imageFile,
+      );
+      if (uploadBytes == null) return null;
 
       final String safeTitle = title
           .trim()
@@ -896,7 +860,7 @@ class SetDBService {
           'Content-Type': 'image/jpeg',
         },
         // async call to database, handle errors and loading states carefully.
-        body: await imageFile.readAsBytes(),
+        body: uploadBytes,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -912,6 +876,42 @@ class SetDBService {
     }
   }
 
+  Future<List<int>?> _compressedEventBackgroundBytes(File imageFile) async {
+    final originalBytes = await imageFile.readAsBytes();
+    if (originalBytes.length <= _maxEventBackgroundSizeBytes) {
+      return originalBytes;
+    }
+
+    // Supabase rejects large event backgrounds; compress locally so the user
+    // can still upload normal gallery photos without seeing a hard failure.
+    final decoded = img.decodeImage(originalBytes);
+    if (decoded == null) {
+      print('Upload failed: background image cannot be decoded.');
+      return null;
+    }
+
+    img.Image image = decoded;
+    if (image.width > 1600) {
+      image = img.copyResize(image, width: 1600);
+    }
+
+    // Try quality steps before resizing again, preserving detail when possible.
+    for (final quality in [85, 75, 65, 55, 45, 35]) {
+      final bytes = img.encodeJpg(image, quality: quality);
+      if (bytes.length <= _maxEventBackgroundSizeBytes) {
+        return bytes;
+      }
+    }
+
+    final small = img.copyResize(image, width: 1000);
+    final bytes = img.encodeJpg(small, quality: 35);
+    if (bytes.length <= _maxEventBackgroundSizeBytes) {
+      return bytes;
+    }
+
+    print('Upload failed: compressed background image still exceeds 1 MB.');
+    return null;
+  }
 
   Future<String> getCategoryID(String categoryName) async {
     // error handling block, ensures app stability.

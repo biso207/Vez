@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage> {
   bool _isAutoRefreshing = false;
 
   late int _filterIndex;
-  _YoursMode _yoursMode = _YoursMode.host;
+  final _YoursMode _yoursMode = _YoursMode.host;
 
   bool get _isVenueAccount => UserSession().accountType == 'venue';
 
@@ -421,10 +421,12 @@ class _HomePageState extends State<HomePage> {
                             username: guest.username,
                             profilePhoto: guest.profilePhoto,
                             state: guest.state,
+                            guest: guest,
                             roleLabel: guest.isCohost
                                 ? StringRes.at('cohost')
                                 : null,
-                            trailing: currentEvent.canRemoveGuests &&
+                            trailing:
+                                currentEvent.canRemoveGuests &&
                                     (!guest.isCohost || currentEvent.isByYou)
                                 ? GestureDetector(
                                     onTap: isBusy
@@ -435,9 +437,19 @@ class _HomePageState extends State<HomePage> {
                                       height: 22,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: const Color.fromARGB(128, 255, 49, 49,),
+                                        color: const Color.fromARGB(
+                                          128,
+                                          255,
+                                          49,
+                                          49,
+                                        ),
                                         border: Border.all(
-                                          color: const Color.fromARGB(204, 255, 49, 49,),
+                                          color: const Color.fromARGB(
+                                            204,
+                                            255,
+                                            49,
+                                            49,
+                                          ),
                                           width: 1.5,
                                         ),
                                       ),
@@ -693,11 +705,15 @@ class _HomePageState extends State<HomePage> {
             if (refreshed == null) return;
             currentEvent = refreshed;
             _controller.upsertEvent(refreshed);
-            setPopupState(() {});
+            // The popup may close while the async refresh is running.
+            // Guard setPopupState to avoid "dependent is no longer mounted".
+            if (context.mounted) setPopupState(() {});
           }
 
           Future<void> saveRole(String userId, HomeEventRole role) async {
-            setPopupState(() => isBusy = true);
+            // Role updates can outlive the popup context, so every popup
+            // state write is mounted-checked.
+            if (context.mounted) setPopupState(() => isBusy = true);
             final int res = await _controller.updateEventInviteRole(
               eventId: currentEvent.eventId,
               invitedUserId: userId,
@@ -706,9 +722,12 @@ class _HomePageState extends State<HomePage> {
             if (res == 200 || res == 204) {
               await refreshCurrentEvent();
             } else {
-              _showSnackBar(StringRes.at('cohost_update_failed'), isError: true);
+              _showSnackBar(
+                StringRes.at('cohost_update_failed'),
+                isError: true,
+              );
             }
-            setPopupState(() => isBusy = false);
+            if (context.mounted) setPopupState(() => isBusy = false);
           }
 
           Future<void> addCohost(
@@ -716,11 +735,14 @@ class _HomePageState extends State<HomePage> {
             required bool alreadyGuest,
           }) async {
             if (cohosts.length >= 5) {
-              _showSnackBar(StringRes.at('cohost_limit_reached'), isError: true);
+              _showSnackBar(
+                StringRes.at('cohost_limit_reached'),
+                isError: true,
+              );
               return;
             }
 
-            setPopupState(() => isBusy = true);
+            if (context.mounted) setPopupState(() => isBusy = true);
             final int res = alreadyGuest
                 ? await _controller.updateEventInviteRole(
                     eventId: currentEvent.eventId,
@@ -735,9 +757,12 @@ class _HomePageState extends State<HomePage> {
             if (res == 200 || res == 201 || res == 204) {
               await refreshCurrentEvent();
             } else {
-              _showSnackBar(StringRes.at('cohost_update_failed'), isError: true);
+              _showSnackBar(
+                StringRes.at('cohost_update_failed'),
+                isError: true,
+              );
             }
-            setPopupState(() => isBusy = false);
+            if (context.mounted) setPopupState(() => isBusy = false);
           }
 
           return Column(
@@ -769,10 +794,8 @@ class _HomePageState extends State<HomePage> {
                             guest: guest,
                             isBusy: isBusy,
                             onChanged: (role) => saveRole(guest.userId, role),
-                            onDemote: () => saveRole(
-                              guest.userId,
-                              HomeEventRole.guest,
-                            ),
+                            onDemote: () =>
+                                saveRole(guest.userId, HomeEventRole.guest),
                           ),
                         ),
                       ),
@@ -1199,7 +1222,9 @@ class _EventCarouselState extends State<_EventCarousel> {
             onManageCohostsTap: event.canManageCohosts
                 ? () => widget.onManageCohostsTap(event)
                 : null,
-            onEditTap: event.canEditEvent ? () => widget.onEditTap(event) : null,
+            onEditTap: event.canEditEvent
+                ? () => widget.onEditTap(event)
+                : null,
             onResponseSelected: !event.isByYou
                 ? (responseState) =>
                       widget.onResponseSelected(event, responseState)
@@ -1447,6 +1472,7 @@ class _PopupGuestRow extends StatelessWidget {
     required this.username,
     required this.profilePhoto,
     required this.state,
+    this.guest,
     this.roleLabel,
     this.trailing,
   });
@@ -1454,6 +1480,7 @@ class _PopupGuestRow extends StatelessWidget {
   final String username;
   final String profilePhoto;
   final String state;
+  final HomeEventGuestData? guest;
   final String? roleLabel;
   final Widget? trailing;
 
@@ -1494,8 +1521,7 @@ class _PopupGuestRow extends StatelessWidget {
           ),
           if (roleLabel == null)
             _PopupStateIcon(state: state), // no state for the host
-          if (roleLabel != null)
-            _RoleBadge(label: roleLabel!), // "host" target for the host
+          if (roleLabel != null) _RoleBadge(label: roleLabel!, guest: guest),
 
           if (trailing != null) ...[
             // remove guest buttons
@@ -1964,22 +1990,25 @@ class _PopupEmptyState extends StatelessWidget {
 //   used for: highlighting a user's role (e.g., "Host").
 //   design: small, colored capsule with bold text.
 class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({required this.label});
+  const _RoleBadge({required this.label, this.guest});
 
   final String label;
+  final HomeEventGuestData? guest;
 
-  // TODO: QUIIII
   // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    // Host rows don't have a guest object; co-host rows do, so the badge color
+    // can be derived without passing a second role flag around.
+    final bool isCohost = guest?.isCohost ?? false;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       child: Text(
         label,
-        style: const TextStyle(
-          color: guest.isCohost
-            ? Color.fromARGB(255, 255, 195, 0)
-            : Color.fromARGB(255, 255, 195, 0)
+        style: TextStyle(
+          color: isCohost
+              ? const Color.fromARGB(255, 255, 195, 0)
+              : Colors.white,
           fontSize: 17,
           fontWeight: FontWeight.bold,
         ),
