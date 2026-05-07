@@ -374,7 +374,7 @@ class SetDBService {
     }
   }
 
-  /// method to add or update invited users to an event in the 'event_invte
+  /// method to add or update invited users to an event in the 'event_invite
   Future<int> addOrUpdateEventInvite({
     required String eventId,
     required String invitedUserId,

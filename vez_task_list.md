@@ -25,13 +25,13 @@
 - [x] Rimuovere il cambio password dalla modifica del profilo e schiarire il bordo dell'immagine profilo
 - [x] Aggiungere l'eliminazione del Profilo
 - [ ] Aggiungere i dati e interazioni tra utenti:
-  - follow di un utente
-  - sblocco dello stato di "amicizia" al following reciproco
-  - conteggio followers, eventi creati, eventi partecipati, numero like ai propri eventi
-  - mostrare il profilo di un qualunque utente al click sulla sua foto profilo
+  - [ ] follow di un utente
+  - [ ] sblocco dello stato di "amicizia" al following reciproco
+  - [x] conteggio followers, eventi creati, eventi partecipati, numero like ai propri eventi
+  - [ ] mostrare il profilo di un qualunque utente al click sulla sua foto profilo
 - [ ] Evento "expired" quando passata la data:
-  - mostrato in bacheca (?)
-  - sparisce dai carousels (Invites, Yours, Nearby)
+  - [ ] mostrato in bacheca (?)
+  - [x] sparisce dai carousels (Invites, Yours, Nearby)
 
 ## NUOVE FEATURE CORE
 

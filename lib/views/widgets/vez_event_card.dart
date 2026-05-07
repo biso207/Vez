@@ -673,8 +673,16 @@ class _PreviewInfoText extends StatelessWidget {
 }
 
 class _CardIconCircle extends StatelessWidget {
-  const _CardIconCircle({required this.iconPath, this.onTap, this.isBlueAccent = false, this.size = 40, this.iconSize = 20});
+  const _CardIconCircle({
+    required this.iconPath,
+    required this.canInviteGuests,
+    this.onTap,
+    this.isBlueAccent = false,
+    this.size = 40,
+    this.iconSize = 20
+  });
   final String iconPath;
+  final bool canInviteGuests;
   final VoidCallback? onTap;
   final bool isBlueAccent;
   final double size;
@@ -682,20 +690,63 @@ class _CardIconCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget child = ClipOval(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isBlueAccent ? const Color.fromARGB(51, 6, 0, 92) : const Color.fromARGB(51, 0, 0, 0),
-            border: Border.all(color: isBlueAccent ? const Color.fromARGB(128, 0, 10, 218) : const Color.fromARGB(128, 255, 255, 255), width: 2),
+    final Widget child = Stack(
+      clipBehavior: Clip.none, // Permette al badge di uscire dai bordi senza essere tagliato
+      children: [
+        // 1. Widget Base (Il cerchio principale)
+        ClipOval(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: kBlurValue, sigmaY: kBlurValue),
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isBlueAccent ? const Color.fromARGB(51, 6, 0, 92) : const Color.fromARGB(51, 0, 0, 0),
+                border: Border.all(
+                    color: isBlueAccent ? const Color.fromARGB(128, 0, 10, 218) : const Color.fromARGB(128, 255, 255, 255),
+                    width: 2
+                ),
+              ),
+              child: Center(child: Image.asset(iconPath, width: iconSize, height: iconSize)),
+            ),
           ),
-          child: Center(child: Image.asset(iconPath, width: iconSize, height: iconSize)),
         ),
-      ),
+
+        // 2. co-host badge
+        if (canInviteGuests)
+          Positioned(
+            bottom: -4,
+            right: -4,
+            child: ClipOval(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: kBlurValue,
+                  sigmaY: kBlurValue,
+                ),
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(102, 13, 113, 0),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color.fromARGB(204, 30, 255, 0),
+                      width: 2,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(5),
+                  child: Image.asset(
+                    'assets/icons/event/co_host.png',
+                    color: Colors.white,
+                    height: 22,
+                    width: 22,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
     return onTap == null ? child : GestureDetector(onTap: () { HapticService.tap(); onTap!(); }, child: child);
   }
@@ -835,19 +886,19 @@ class _CardTopBar extends StatelessWidget {
         // Lato sinistro: Categoria e Tipo
         Row(
           children: [
-            _CardIconCircle(iconPath: event.categoryIconPath, isBlueAccent: true, size: 44 * s, iconSize: 28 * s),
+            _CardIconCircle(iconPath: event.categoryIconPath, canInviteGuests: event.canInviteGuests, isBlueAccent: true, size: 44 * s, iconSize: 28 * s),
             SizedBox(width: 12 * s),
-            _CardIconCircle(iconPath: event.typeIconPath, size: 44 * s, iconSize: 28 * s),
+            _CardIconCircle(iconPath: event.typeIconPath, canInviteGuests: event.canInviteGuests, size: 44 * s, iconSize: 28 * s),
           ],
         ),
         // Lato destro: Ospiti + (Tasto Edit o Foto Profilo)
         Row(
           children: [
-            _CardIconCircle(iconPath: 'assets/icons/event/guests.png', onTap: onGuestListTap, size: 44 * s, iconSize: 28 * s),
+            _CardIconCircle(iconPath: 'assets/icons/event/guests.png', canInviteGuests: event.canInviteGuests, onTap: onGuestListTap, size: 44 * s, iconSize: 28 * s),
             SizedBox(width: 12 * s),
             // Se l'evento è creato da te mostri Edit, altrimenti la foto del creatore
             if (event.isByYou)
-              _CardIconCircle(iconPath: 'assets/icons/event/edit.png', onTap: onEditTap, size: 44 * s, iconSize: 28 * s)
+              _CardIconCircle(iconPath: 'assets/icons/event/edit.png', canInviteGuests: event.canInviteGuests, onTap: onEditTap, size: 44 * s, iconSize: 28 * s)
             else
               _ProfilePhotoCircle(photo: event.creatorProfilePhoto, size: 44 * s),
           ],

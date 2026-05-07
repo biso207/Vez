@@ -148,14 +148,7 @@ class _HomePageState extends State<HomePage> {
   //
   //   used for: retrieving the list of events to display based on selected filter.
   List<HomeEventCardData> get _visibleEvents =>
-      _controller.eventsByType[_visibleEventType] ?? const [];
-
-  EventType get _visibleEventType {
-    if (_selectedType == EventType.byYou && _yoursMode == _YoursMode.cohost) {
-      return EventType.cohost;
-    }
-    return _selectedType;
-  }
+      _controller.eventsByType[_selectedType] ?? const [];
 
   // ── is nearby selected ─────────────────────────────────────────────────────
   //
@@ -750,7 +743,7 @@ class _HomePageState extends State<HomePage> {
           return Column(
             children: [
               _PopupHeaderBar(
-                title: '${StringRes.at('cohosts')} (${cohosts.length}/5)',
+                title: '${StringRes.at('cohosts')} • ${cohosts.length}/5',
                 onClose: () => Navigator.pop(context),
               ),
               Padding(
@@ -939,17 +932,6 @@ class _HomePageState extends State<HomePage> {
               onResponseSelected: _updateEventCardResponse,
             ),
           ),
-          if (_selectedType == EventType.byYou)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 78 * s,
-              left: 0,
-              right: 0,
-              child: _YoursModeSwitch(
-                s: s,
-                mode: _yoursMode,
-                onChanged: (mode) => setState(() => _yoursMode = mode),
-              ),
-            ),
           if (_isNearbySelected)
             Positioned(
               top: MediaQuery.of(context).padding.top + 82 * s,
@@ -1090,94 +1072,6 @@ class _NearbyRangeControl extends StatelessWidget {
 //
 //   used for: displaying a vertical list of event cards.
 //   design: vertical PageView that supports highlighting specific events.
-class _YoursModeSwitch extends StatelessWidget {
-  const _YoursModeSwitch({
-    required this.s,
-    required this.mode,
-    required this.onChanged,
-  });
-
-  final double s;
-  final _YoursMode mode;
-  final ValueChanged<_YoursMode> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: VezGlass.container(
-        padding: EdgeInsets.all(2 * s),
-        radius: BorderRadius.circular(17 * s),
-        child: SizedBox(
-          width: 176 * s,
-          height: 26 * s,
-          child: Row(
-            children: [
-              _YoursModeChip(
-                s: s,
-                label: StringRes.at('host'),
-                selected: mode == _YoursMode.host,
-                onTap: () => onChanged(_YoursMode.host),
-              ),
-              _YoursModeChip(
-                s: s,
-                label: StringRes.at('cohost'),
-                selected: mode == _YoursMode.cohost,
-                onTap: () => onChanged(_YoursMode.cohost),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _YoursModeChip extends StatelessWidget {
-  const _YoursModeChip({
-    required this.s,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final double s;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color.fromARGB(70, 255, 255, 255)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(13 * s),
-            border: selected
-                ? Border.all(color: Colors.white54, width: 1.5)
-                : null,
-          ),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 11 * s,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _EventCarousel extends StatefulWidget {
   const _EventCarousel({
@@ -1863,8 +1757,7 @@ class _PopupUserSelectionRow extends StatelessWidget {
           GestureDetector(
             onTap: onAdd,
             child: const Icon(
-              Icons
-                  .person_add_alt_1_rounded, // Quella che usavi prima o la tua custom
+              Icons.person_add_alt_1_rounded, // todo: change (?)
               color: Color(0xFF089D0D),
               size: 28,
             ),
@@ -2075,6 +1968,7 @@ class _RoleBadge extends StatelessWidget {
 
   final String label;
 
+  // TODO: QUIIII
   // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -2083,7 +1977,9 @@ class _RoleBadge extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          color: Color.fromARGB(255, 255, 195, 0),
+          color: guest.isCohost
+            ? Color.fromARGB(255, 255, 195, 0)
+            : Color.fromARGB(255, 255, 195, 0)
           fontSize: 17,
           fontWeight: FontWeight.bold,
         ),

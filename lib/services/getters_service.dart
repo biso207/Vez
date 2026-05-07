@@ -9,11 +9,9 @@ as http; // http packet (standard in Dart/Flutter).
 
 import 'api_keys.dart'; // private key to connect to the remote db
 
-// ── GetDBService ─────────────────────────────────────────────
-//
-//   used for: handling a specific group of database operations.
-//   design: keeps related methods grouped and reusable across the app.
-//
+/// ── GetDBService ─────────────────────────────────────────────
+// used for: handling a specific group of the DB operations
+// design: keeps related methods grouped and reusable across the app
 class GetDBService {
   static const String _eventSelect =
       'event_id,title,description,date_event,max_participants,type,'
@@ -38,13 +36,10 @@ class GetDBService {
   String get _nowFilter =>
       Uri.encodeComponent(DateTime.now().toUtc().toIso8601String());
 
-  /// generic method to get any user attribute
-  // ── method: getUserData ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<String?> getUserData(String column) async {
+  /// ── method: getUserData ─────────────────────────────────────────
+  //   generic method to get any user attribute
+  Future<String?> getUserData(String column)
+  async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -68,13 +63,34 @@ class GetDBService {
     }
   }
 
-  /// counts followers for a specific user ID
-  // ── method: getFollowersCount ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<int> getFollowersCount() async {
+  /// ── method: getFullUserData ─────────────────────────────────────────
+  // fetching all relevant user profile fields in a single HTTP request.
+  Future<Map<String, dynamic>?> getFullUserData()
+  async {
+    try {
+      // Selezioniamo solo le colonne che ci servono in un colpo solo
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/users?user_id=eq.$userID&select=profile_photo,username,city,city_aka_name,bio,category_badge',
+      );
+
+      final response = await http.get(url, headers: _headers);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        if (data.isNotEmpty) {
+          return Map<String, dynamic>.from(data[0]);
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// ── method: getFollowersCount ─────────────────────────────────────────
+  // counts followers for a specific user ID
+  Future<int> getFollowersCount()
+  async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -99,13 +115,10 @@ class GetDBService {
     }
   }
 
-  /// gets the list of users that a specific user ID is following
-  // ── method: getFollowing ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<List<Map<String, dynamic>>> getFollowing() async {
+  /// ── method: getFollowing ─────────────────────────────────────────
+  // gets the list of users that a specific user ID is following
+  Future<List<Map<String, dynamic>>> getFollowing()
+  async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -128,13 +141,10 @@ class GetDBService {
     }
   }
 
-  /// gets the list of users that are following the current user
-  // ── method: getFollowers ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<List<Map<String, dynamic>>> getFollowers() async {
+  /// ── method: getFollowers ─────────────────────────────────────────
+  // gets the list of users that are following the current user
+  Future<List<Map<String, dynamic>>> getFollowers()
+  async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -157,12 +167,10 @@ class GetDBService {
     }
   }
 
-  // ── method: getUsersBasic ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<List<Map<String, dynamic>>> getUsersBasic() async {
+  /// ── method: getUsersBasic ─────────────────────────────────────────
+  // used for: executing a specific database action. // todo change
+  Future<List<Map<String, dynamic>>> getUsersBasic()
+  async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -188,12 +196,10 @@ class GetDBService {
     }
   }
 
-  // ── method: getCreatedEvents ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<List<Map<String, dynamic>>> getCreatedEvents() async {
+  /// ── method: getCreatedEvents ─────────────────────────────────────────
+  // used for: executing a specific database action. // todo change
+  Future<List<Map<String, dynamic>>> getCreatedEvents()
+  async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -223,12 +229,10 @@ class GetDBService {
     }
   }
 
-  // ── method: getEventById ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<Map<String, dynamic>?> getEventById(String eventId) async {
+  /// ── method: getEventById ─────────────────────────────────────────
+  // used for: executing a specific database action. // todo change
+  Future<Map<String, dynamic>?> getEventById(String eventId)
+  async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -254,12 +258,10 @@ class GetDBService {
     }
   }
 
-  // ── method: getInvitedEvents ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<List<Map<String, dynamic>>> getInvitedEvents() async {
+  /// ── method: getInvitedEvents ─────────────────────────────────────────
+  // used for: executing a specific database action. // todo change
+  Future<List<Map<String, dynamic>>> getInvitedEvents()
+  async {
     // error handling block, ensures app stability.
     try {
       final Uri inviteUrl = Uri.parse(
@@ -307,7 +309,9 @@ class GetDBService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getCohostEvents() async {
+  // todo comment here
+  Future<List<Map<String, dynamic>>> getCohostEvents()
+  async {
     try {
       final Uri inviteUrl = Uri.parse(
         '$_baseUrl/rest/v1/event_invites?user_id=eq.$userID&select=event_id,role',
@@ -354,12 +358,10 @@ class GetDBService {
     }
   }
 
-  // ── method: getDiscoverableEvents ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<List<Map<String, dynamic>>> getDiscoverableEvents() async {
+  /// ── method: getDiscoverableEvents ─────────────────────────────────────────
+  // used for: executing a specific database action. // todo change
+  Future<List<Map<String, dynamic>>> getDiscoverableEvents()
+  async {
     // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
@@ -389,12 +391,10 @@ class GetDBService {
     }
   }
 
-  // ── method: getInviteNotifications ─────────────────────────────────────────
-  //
-  //   used for: executing a specific database action.
-  //   note: check parameters and returned values before modifying.
-  //
-  Future<List<Map<String, dynamic>>> getInviteNotifications() async {
+  /// ── method: getInviteNotifications ─────────────────────────────────────────
+  // used for: executing a specific database action. // todo change
+  Future<List<Map<String, dynamic>>> getInviteNotifications()
+  async {
     // error handling block, ensures app stability.
     try {
       final Uri url = Uri.parse(
@@ -424,7 +424,9 @@ class GetDBService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getExpiredCreatedEvents() async {
+  // todo comment here
+  Future<List<Map<String, dynamic>>> getExpiredCreatedEvents()
+  async {
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/events'
@@ -444,7 +446,9 @@ class GetDBService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getExpiredParticipatedEvents() async {
+  // todo comment here
+  Future<List<Map<String, dynamic>>> getExpiredParticipatedEvents()
+  async {
     try {
       final ids = <String>{};
       final participationUrl = Uri.parse(
@@ -502,9 +506,11 @@ class GetDBService {
     }
   }
 
+  // todo comment here
   Future<List<Map<String, dynamic>>> _attachEventInvites(
     List<Map<String, dynamic>> events,
-  ) async {
+  )
+  async {
     final Set<String> eventIds = events
         .map((event) => (event['event_id'] ?? '').toString())
         .where((id) => id.isNotEmpty)
@@ -540,9 +546,11 @@ class GetDBService {
     return _attachInviteUsers(events);
   }
 
+  // todo comment here
   Future<List<Map<String, dynamic>>> _attachInviteUsers(
     List<Map<String, dynamic>> events,
-  ) async {
+  )
+  async {
     final Set<String> userIds = {};
     for (final event in events) {
       final List<dynamic> inviteRows =
