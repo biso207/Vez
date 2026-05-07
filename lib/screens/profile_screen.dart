@@ -1,18 +1,18 @@
 // Developed and Designed by Outly • © 2026
-// profile screen : zone-2 content: user info card + stats pill + event grid.
+// Profile screen : zone-2 content: user info card + stats pill + event grid.
 //
-// layout zones used:
+// Layout zones used:
 //   zone 1 : background  : kBgColor from VezPageLayout
 //   zone 2 : body        : SingleChildScrollView anchored from top
 //   zone 3 : blur veil   : handled by VezPageLayout
 //   zone 4 : navbars     : settings / search / follow-requests + bottom pill
 //
-// top-bar left button = settings icon â†’ opens _SettingsPopup (full glass panel)
+// Top-bar left button = settings icon which opens _SettingsPopup (full glass panel)
 //   the settings popup replaces the old standalone language popup and groups
 //   all user preferences (language, badge toggle, etc.) in one place.
 //
-// top-bar left button on profile screen is intentionally NOT a profile avatar;
-// the settings icon is used instead since the user is already viewing their profile.
+// Top-bar left button on profile screen is intentionally NOT a profile avatar;
+//   the settings icon is used instead since the user is already viewing their profile.
 
 import 'dart:io';
 import 'dart:ui';
@@ -35,10 +35,9 @@ import 'notifications_screen.dart';
 
 const double kBlurValue = 5.0;
 
-// ─────────────────────────────────────────────────────────────
-// stateful widget wrapper
-// ─────────────────────────────────────────────────────────────
-
+// ── profile page ─────────────────────────────────────────────────────────────
+//
+//   used for: standardizing the user profile layout.
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -46,10 +45,9 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-// ─────────────────────────────────────────────────────────────
-// state
-// ─────────────────────────────────────────────────────────────
-
+// ── profile page state ────────────────────────────────────────────────────────
+//
+//   used for: managing user data, profile edits, settings popups, and account actions.
 class _ProfilePageState extends State<ProfilePage> {
   // ── controllers & services ────────────────────────────────────────────────
 
@@ -125,8 +123,9 @@ class _ProfilePageState extends State<ProfilePage> {
     },
   ];
 
-  // ── lifecycle ──────────────────────────────────────────────────────────────
-
+  // ── init state ─────────────────────────────────────────────────────────────
+  //
+  //   used for: initializing database services and loading user information.
   @override
   void initState() {
     super.initState();
@@ -138,6 +137,9 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // ── dispose ────────────────────────────────────────────────────────────────
+  //
+  //   used for: disposing text editing controllers.
   @override
   void dispose() {
     _searchController.dispose();
@@ -151,12 +153,16 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  // ── is valid ───────────────────────────────────────────────────────────────
+  //
+  //   used for: checking if the username field meets requirements.
   bool get _isValid =>
       _usernameCtrl.text.trim().isNotEmpty &&
       _usernameCtrl.text.trim().length >= 4;
 
-  // ── data loading ──────────────────────────────────────────────────────────
-
+  // ── load user data ─────────────────────────────────────────────────────────
+  //
+  //   used for: fetching all relevant user profile details from the database.
   Future<void> _loadUserData() async {
     final photo = await _dbGet.getUserData('profile_photo');
     final username = await _dbGet.getUserData('username');
@@ -186,8 +192,9 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  // ── save profile edits ────────────────────────────────────────────────────
-
+  // ── save profile data ──────────────────────────────────────────────────────
+  //
+  //   used for: committing profile modifications (text and photo) to the database.
   Future<void> _saveProfileData(StateSetter setPopupState) async {
     final String uName = _usernameCtrl.text.trim();
     final String akaName = _cityAkaNameCtrl.text.trim();
@@ -223,8 +230,9 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  // ── navigation helpers ────────────────────────────────────────────────────
-
+  // ── go to home ─────────────────────────────────────────────────────────────
+  //
+  //   used for: returning to the first route in the navigation stack.
   void _goToHome() {
     HapticService.tap();
     if (Navigator.of(context).canPop()) {
@@ -232,6 +240,9 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // ── go to create event ─────────────────────────────────────────────────────
+  //
+  //   used for: navigating to the creation flow and handling the refresh on return.
   void _goToCreateEvent() {
     HapticService.tap();
     Navigator.push<bool>(
@@ -244,6 +255,9 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  // ── go to notifications ────────────────────────────────────────────────────
+  //
+  //   used for: navigating to the notification list.
   void _goToNotifications() {
     Navigator.push(
       context,
@@ -251,6 +265,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // ── clear popup controllers ────────────────────────────────────────────────
+  //
+  //   used for: resetting internal form state between popup sessions.
   void _clearPopupControllers() {
     _usernameCtrl.clear();
     _passwordCtrl.clear();
@@ -265,14 +282,20 @@ class _ProfilePageState extends State<ProfilePage> {
     _popupError = null;
   }
 
+  // ── is strong password ─────────────────────────────────────────────────────
+  //
+  //   used for: validating password security requirements.
   bool _isStrongPassword(String password) {
     return password.length >= 12 &&
         RegExp(r'[A-Z]').hasMatch(password) &&
         RegExp(r'[a-z]').hasMatch(password) &&
         RegExp(r'[0-9]').hasMatch(password) &&
-        RegExp(r'[!@#$&*~Â£â‚¬?Â§+._-]').hasMatch(password);
+        RegExp(r'[!@#$&*~£€?§+._-]').hasMatch(password);
   }
 
+  // ── handle password change ─────────────────────────────────────────────────
+  //
+  //   used for: executing the secure password update process.
   Future<void> _handlePasswordChange(StateSetter setPopupState) async {
     final String currentPassword = _currentPasswordCtrl.text;
     final String newPassword = _passwordCtrl.text;
@@ -314,6 +337,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // ── handle account deletion ────────────────────────────────────────────────
+  //
+  //   used for: performing permanent removal of user data.
   Future<void> _handleAccountDeletion(StateSetter setPopupState) async {
     final String typedUsername = _deleteAccountCtrl.text.trim();
     if (typedUsername != _username) {
@@ -341,12 +367,18 @@ class _ProfilePageState extends State<ProfilePage> {
     setPopupState(() => _popupError = StringRes.at('account_delete_failed'));
   }
 
+  // ── handle logout ──────────────────────────────────────────────────────────
+  //
+  //   used for: triggering the logout procedure with user feedback.
   void _handleLogout() {
     HapticService.emphasis();
     Navigator.pop(context);
     _logoutAndRedirect();
   }
 
+  // ── logout and redirect ────────────────────────────────────────────────────
+  //
+  //   used for: clearing the session and redirecting to the login screen.
   Future<void> _logoutAndRedirect() async {
     await _remote.logout();
     if (!mounted) return;
@@ -358,7 +390,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ── build ──────────────────────────────────────────────────────────────────
-
+  //
+  //   used for: rendering the main profile view with cards and stats.
   @override
   Widget build(BuildContext context) {
     final double sw = MediaQuery.of(context).size.width;
@@ -474,7 +507,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── popup: settings ────────────────────────────────────────────────────────
+  // ── show settings popup ────────────────────────────────────────────────────
   //
   // this is the full settings panel opened by the gear icon in the top-bar.
   // it groups all user preferences together:
@@ -595,8 +628,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     // Troviamo i dati della lingua corrente nella lista _languages
                     final currentLang = _languages.firstWhere(
                       (lang) => lang['code'] == StringRes.locale,
-                      orElse: () => _languages
-                          .first, // Fallback sulla prima lingua se non trova il codice
+                      orElse: () => _languages.first,
                     );
 
                     return GestureDetector(
@@ -641,13 +673,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 const SizedBox(height: 2),
                                 Text(
                                   StringRes.at('click_to_change'),
-                                  style: TextStyle(
-                                    color: const Color.fromARGB(
-                                      128,
-                                      255,
-                                      255,
-                                      255,
-                                    ),
+                                  style: const TextStyle(
+                                    color: Color.fromARGB(128, 255, 255, 255),
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -655,9 +682,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               ],
                             ),
                             const Spacer(),
-                            Icon(
+                            const Icon(
                               Icons.arrow_forward_ios,
-                              color: const Color.fromARGB(128, 255, 255, 255),
+                              color: Color.fromARGB(128, 255, 255, 255),
                               size: 14,
                             ),
                           ],
@@ -681,10 +708,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     HapticService.selection();
                     setPopupState(() => _showBadge = val);
                     setState(() => _showBadge = val);
-                    _dbSet.updateUserData(
-                      'category_badge',
-                      val,
-                    ); // changing value in the db
+                    _dbSet.updateUserData('category_badge', val);
                   },
                 ),
               ),
@@ -696,8 +720,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 label: StringRes.at('account'),
                 iconPath: 'assets/icons/profile_page/account.png',
                 child: Column(
-                  mainAxisSize: MainAxisSize
-                      .min, // Opzionale: restringe la colonna al contenuto
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     _AccountActionButton(
                       s: s,
@@ -709,7 +732,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       onTap: () => _showChangePasswordPopup(s),
                     ),
                     SizedBox(height: 10 * s),
-                    _AccountActions(s: s, onLogout: _handleLogout), // logout
+                    _AccountActions(s: s, onLogout: _handleLogout),
                     SizedBox(height: 10 * s),
                     _AccountActionButton(
                       s: s,
@@ -764,11 +787,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── popup: edit profile ────────────────────────────────────────────────────
+  // ── show edit profile popup ────────────────────────────────────────────────
   //
-  // opened by tapping the user info card.
-  // fields: username, password, city aka-name, bio, profile photo.
-
+  //   used for: modifying visible user info like nickname, bio, and avatar.
   void _showEditProfilePopup(double s) {
     _usernameCtrl.text = _username;
     _cityAkaNameCtrl.text = _cityAkaName.replaceAll(' • ', '');
@@ -872,10 +893,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── popup: language selector ───────────────────────────────────────────────
+  // ── show change password popup ─────────────────────────────────────────────
   //
-  // opened by tapping the language in the settings.
-
+  //   used for: standardizing the password update interface.
   void _showChangePasswordPopup(double s) {
     _clearPopupControllers();
 
@@ -958,6 +978,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // ── show delete account popup ──────────────────────────────────────────────
+  //
+  //   used for: handling destructive account operations with safety confirmation.
   void _showDeleteAccountPopup(double s) {
     _clearPopupControllers();
 
@@ -1027,7 +1050,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// scrollable list of languages
+  // ── show language selector ─────────────────────────────────────────────────
+  //
+  //   used for: providing localized language choices within the settings view.
   void _showLanguageSelector({VoidCallback? onLanguageChanged}) {
     final double pw = MediaQuery.of(context).size.width * 0.50;
     final double totalHeight = (_languages.length * 50.0);
@@ -1073,8 +1098,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Padding interno per simulare il ListTile del category popup
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.start, // Forza l'allineamento a sinistra
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   // Icona leading (stesse dimensioni del category popup)
                   Image.asset(
@@ -1083,9 +1107,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     height: 32,
                     fit: BoxFit.contain,
                   ),
-
-                  const SizedBox(width: 12), // Spazio fisso tra icona e testo
-                  // Testo della lingua
+                  const SizedBox(width: 12),
                   Text(
                     StringRes.at(name),
                     style: TextStyle(
@@ -1116,10 +1138,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// _PopupDivider
-// ─────────────────────────────────────────────────────────────
-
+// ── popup divider ────────────────────────────────────────────────────────────
+//
+//   used for: visual separation in popups.
 class _PopupDivider extends StatelessWidget {
   final double width;
   const _PopupDivider({required this.width});
@@ -1140,10 +1161,9 @@ class _PopupDivider extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// _BottomNavPill
-// ─────────────────────────────────────────────────────────────
-
+// ── bottom nav pill ──────────────────────────────────────────────────────────
+//
+//   used for: standard navigation row at screen bottom.
 class _BottomNavPill extends StatelessWidget {
   final double s;
   final int activeIndex;
@@ -1197,12 +1217,9 @@ class _BottomNavPill extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// zone-2 sub-widgets
-// ─────────────────────────────────────────────────────────────
-
-// ── _UserCard ────────────────────────────────────────────────────────────────
-
+// ── user card ────────────────────────────────────────────────────────────────
+//
+//   used for: displaying primary user details (name, photo, bio).
 class _UserCard extends StatelessWidget {
   final double s;
   final String profilePhoto, username, cityAkaName, city, bio;
@@ -1224,10 +1241,10 @@ class _UserCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color.fromARGB(50, 0, 0, 0),
+        color: const Color.fromARGB(50, 0, 0, 0),
         borderRadius: BorderRadius.circular(50),
         border: Border.all(
-          color: Color.fromARGB(128, 255, 255, 255),
+          color: const Color.fromARGB(128, 255, 255, 255),
           width: 2 * s,
         ),
       ),
@@ -1294,8 +1311,9 @@ class _UserCard extends StatelessWidget {
   }
 }
 
-// ── _AvatarWithBadge ─────────────────────────────────────────────────────────
-
+// ── avatar with badge ────────────────────────────────────────────────────────
+//
+//   used for: showing user profile picture with a small top-right badge.
 class _AvatarWithBadge extends StatelessWidget {
   final String photo;
   final bool showBadge;
@@ -1365,8 +1383,9 @@ class _AvatarWithBadge extends StatelessWidget {
   }
 }
 
-// ── _StatsPill ───────────────────────────────────────────────────────────────
-
+// ── stats pill ───────────────────────────────────────────────────────────────
+//
+//   used for: summary numbers for followers, events, and following.
 class _StatsPill extends StatelessWidget {
   final double s;
   final int numFollowers, numEvents, numFollowing;
@@ -1383,10 +1402,10 @@ class _StatsPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       decoration: BoxDecoration(
-        color: Color.fromARGB(50, 0, 0, 0),
+        color: const Color.fromARGB(50, 0, 0, 0),
         borderRadius: BorderRadius.circular(40),
         border: Border.all(
-          color: Color.fromARGB(128, 255, 255, 255),
+          color: const Color.fromARGB(128, 255, 255, 255),
           width: 2 * s,
         ),
       ),
@@ -1411,6 +1430,9 @@ class _StatsPill extends StatelessWidget {
   }
 }
 
+// ── stat item ────────────────────────────────────────────────────────────────
+//
+//   used for: single statistic display in the stats pill.
 class _StatItem extends StatelessWidget {
   final String icon, value;
   const _StatItem({required this.icon, required this.value});
@@ -1688,12 +1710,9 @@ class _PastEventFallbackImage extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// settings
-// ─────────────────────────────────────────────────────────────
-
-// ── _SettingsSection ─────────────────────────────────────────────────────────
-
+// ── settings section ─────────────────────────────────────────────────────────
+//
+//   used for: logical grouping of items in the settings popup.
 class _SettingsSection extends StatelessWidget {
   final String label;
   final String iconPath;
@@ -1711,7 +1730,7 @@ class _SettingsSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: Color.fromARGB(50, 0, 0, 0),
+          color: const Color.fromARGB(50, 0, 0, 0),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: Colors.white54, width: 2),
         ),
@@ -1754,8 +1773,9 @@ class _SettingsSection extends StatelessWidget {
   }
 }
 
-// ── _BadgeToggleRow: category badge on/off switch ────────────────────────────
-
+// ── badge toggle row ─────────────────────────────────────────────────────────
+//
+//   used for: enabling or disabling the category badge on the avatar.
 class _BadgeToggleRow extends StatelessWidget {
   final double s;
   final bool value;
@@ -1781,8 +1801,8 @@ class _BadgeToggleRow extends StatelessWidget {
             ),
           ),
           padding: const EdgeInsets.all(5),
-          child: ImageIcon(
-            const AssetImage('assets/icons/categories/hang_out.png'),
+          child: const ImageIcon(
+            AssetImage('assets/icons/categories/hang_out.png'),
             color: Colors.white,
             size: 20,
           ),
@@ -1811,8 +1831,9 @@ class _BadgeToggleRow extends StatelessWidget {
   }
 }
 
-// ── _AccountActions: logout (and future account actions) ─────────────────────
-
+// ── account action button ────────────────────────────────────────────────────
+//
+//   used for: standard action button with localized label and icon.
 class _AccountActionButton extends StatelessWidget {
   final double s;
   final String label;
@@ -1869,6 +1890,9 @@ class _AccountActionButton extends StatelessWidget {
   }
 }
 
+// ── account actions ──────────────────────────────────────────────────────────
+//
+//   used for: containing logout logic and visual.
 class _AccountActions extends StatelessWidget {
   final double s;
   final VoidCallback onLogout;
@@ -1912,12 +1936,9 @@ class _AccountActions extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// edit-profile popup sub-widgets
-// ─────────────────────────────────────────────────────────────
-
-// ── _AvatarPicker: tappable circle that previews the new profile photo ───────
-
+// ── popup title ──────────────────────────────────────────────────────────────
+//
+//   used for: uniform popup header text.
 class _PopupTitle extends StatelessWidget {
   final String text;
 
@@ -1937,6 +1958,9 @@ class _PopupTitle extends StatelessWidget {
   }
 }
 
+// ── password visibility toggle ───────────────────────────────────────────────
+//
+//   used for: masking or revealing password characters in text fields.
 class _PasswordVisibilityToggle extends StatelessWidget {
   final bool visible;
   final VoidCallback onTap;
@@ -1959,6 +1983,9 @@ class _PasswordVisibilityToggle extends StatelessWidget {
   }
 }
 
+// ── confirm cancel row ───────────────────────────────────────────────────────
+//
+//   used for: standardized choice buttons in account-related popups.
 class _ConfirmCancelRow extends StatelessWidget {
   final double s;
   final VoidCallback onConfirm;
@@ -2001,6 +2028,9 @@ class _ConfirmCancelRow extends StatelessWidget {
   }
 }
 
+// ── avatar picker ────────────────────────────────────────────────────────────
+//
+//   used for: displaying a circular preview when choosing a new profile photo.
 class _AvatarPicker extends StatelessWidget {
   final File? newImage;
   final String networkPhoto;
@@ -2028,8 +2058,9 @@ class _AvatarPicker extends StatelessWidget {
   }
 }
 
-// ── _PopupInput: glass pill text field ───────────────────────────────────────
-
+// ── popup input ──────────────────────────────────────────────────────────────
+//
+//   used for: text input pills within popups.
 class _PopupInput extends StatelessWidget {
   final String hint;
   final TextEditingController controller;
@@ -2084,8 +2115,9 @@ class _PopupInput extends StatelessWidget {
   }
 }
 
-// ── _SaveDiscardRow: green save + red discard circle buttons ─────────────────
-
+// ── save discard row ─────────────────────────────────────────────────────────
+//
+//   used for: choice buttons in the edit profile popup.
 class _SaveDiscardRow extends StatelessWidget {
   final double s;
   final VoidCallback onSave, onDiscard;
@@ -2123,6 +2155,9 @@ class _SaveDiscardRow extends StatelessWidget {
   }
 }
 
+// ── action circle ────────────────────────────────────────────────────────────
+//
+//   used for: circular icon-buttons in profile popups.
 class _ActionCircle extends StatelessWidget {
   final String icon;
   final bool active;

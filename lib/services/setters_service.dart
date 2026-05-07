@@ -1,11 +1,20 @@
+// Developed and Designed by Outly • © 2026
+// This file is responsible for sending and updating data operations with the database.
+// It centralizes logic to keep the rest of the app clean and maintainable.
+
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart'
-    as http; // http packet (standard in Dart/Flutter).
+as http; // http packet (standard in Dart/Flutter).
 
 import 'api_keys.dart'; // private key to connect to the remote db
+
+// ── SetDBService ─────────────────────────────────────────────
+//
+// used for: handling a specific group of database operations.
+// design: keeps related methods grouped and reusable across the app.
 
 class SetDBService {
   static const int _maxEventBackgroundSizeBytes = 1024 * 1024;
@@ -23,14 +32,17 @@ class SetDBService {
     'apikey': _apiKey,
   };
 
-  /// Generic method to update any user attribute (column) in the database.
-  /// Uses a PATCH request to modify the existing row where userID matches.
-  Future<int> updateUserData(String column, dynamic value) async {
+  /// generic method to update any user attribute (column) in the database
+  /// uses a PATCH request to modify the existing row where userID matches
+  Future<int> updateUserData(String column, dynamic value)
+  async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse('$_baseUrl/rest/v1/users?user_id=eq.$userID');
 
       final Map<String, dynamic> updateData = {column: value};
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.patch(
         url,
         headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -38,31 +50,37 @@ class SetDBService {
       );
 
       return response.statusCode;
+      // catches exceptions from database or network.
     } catch (e) {
       return 0;
     }
   }
 
+  /// return an hashed password
   String _hashPassword(String password) {
     final bytes = utf8.encode(password + salt);
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
 
+  /// update the password in the 'users' table
   Future<int> changePassword({
     required String currentPassword,
     required String newPassword,
-  }) async {
+  })
+  async {
+    // error handling block, ensures app stability.
     try {
       final String currentHash = _hashPassword(currentPassword);
       final verifyUrl = Uri.parse(
         '$_baseUrl/rest/v1/users'
-        '?user_id=eq.$userID'
-        '&hash_psw=eq.$currentHash'
-        '&select=user_id'
-        '&limit=1',
+            '?user_id=eq.$userID'
+            '&hash_psw=eq.$currentHash'
+            '&select=user_id'
+            '&limit=1',
       );
 
+      // async call to database, handle errors and loading states carefully.
       final verifyResponse = await http.get(verifyUrl, headers: _jsonHeaders);
       if (verifyResponse.statusCode != 200) return verifyResponse.statusCode;
 
@@ -70,6 +88,8 @@ class SetDBService {
       if (rows.isEmpty) return 401;
 
       final updateUrl = Uri.parse('$_baseUrl/rest/v1/users?user_id=eq.$userID');
+
+      // async call to database, handle errors and loading states carefully.
       final updateResponse = await http.patch(
         updateUrl,
         headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -77,53 +97,69 @@ class SetDBService {
       );
 
       return updateResponse.statusCode == 204 ? 200 : updateResponse.statusCode;
+      // catches exceptions from database or network.
     } catch (e) {
       return 0;
     }
   }
 
-  Future<int> deleteCurrentUserAccount({String? profilePhotoUrl}) async {
+  /// delete permanently an user from the DB
+  Future<int> deleteCurrentUserAccount({String? profilePhotoUrl})
+  async {
+    // error handling block, ensures app stability.
     try {
-      final List<Map<String, dynamic>> createdEvents =
-          await _getCreatedEvents();
+      // async call to database, handle errors and loading states carefully.
+      final List<Map<String, dynamic>> createdEvents = await _getCreatedEvents();
 
+      // async call to database, handle errors and loading states carefully.
       await _deleteRows(table: 'event_invites', filter: 'user_id=eq.$userID');
+      // async call to database, handle errors and loading states carefully.
       await _deleteRows(table: 'participation', filter: 'user_id=eq.$userID');
+      // async call to database, handle errors and loading states carefully.
       await _deleteRows(table: 'follows', filter: 'follower_id=eq.$userID');
+      // async call to database, handle errors and loading states carefully.
       await _deleteRows(table: 'follows', filter: 'following_id=eq.$userID');
 
       for (final event in createdEvents) {
         final eventId = event['event_id']?.toString() ?? '';
         final placeId = event['place_id']?.toString();
         if (eventId.isEmpty) continue;
+
+        // async call to database, handle errors and loading states carefully.
         await deleteEvent(eventId, placeId: placeId);
       }
 
+      // async call to database, handle errors and loading states carefully.
       final userResponse = await _deleteRows(
         table: 'users',
         filter: 'user_id=eq.$userID',
       );
 
       if (userResponse == 200 || userResponse == 204) {
+        // async call to database, handle errors and loading states carefully.
         await _deleteProfilePhoto(profilePhotoUrl);
         return 200;
       }
 
       return userResponse;
+      // catches exceptions from database or network.
     } catch (_) {
       return 0;
     }
   }
 
-  /// Creates a place in the database and returns the generated place_id.
-  /// Returns null if the creation fails.
+
+  /// creates a place in the DB and returns the generated place_id
+  /// returns null if the creation fails
   Future<String?> storePlace({
     required String name,
     String? address,
     required bool isPrecise,
     double? latitude,
     double? longitude,
-  }) async {
+  })
+  async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse('$_baseUrl/rest/v1/place');
 
@@ -135,6 +171,7 @@ class SetDBService {
         'longitude': longitude ?? 0.0,
       };
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.post(
         url,
         headers: {..._jsonHeaders, 'Prefer': 'return=representation'},
@@ -150,12 +187,14 @@ class SetDBService {
         }
       }
       return null;
+      // catches exceptions from database or network.
     } catch (e) {
       print('storePlace error: $e');
       return null;
     }
   }
 
+  /// update the place infos in the 'place' table
   Future<int> updatePlace({
     required String placeId,
     required String name,
@@ -163,7 +202,9 @@ class SetDBService {
     required bool isPrecise,
     double? latitude,
     double? longitude,
-  }) async {
+  })
+  async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse('$_baseUrl/rest/v1/place?place_id=eq.$placeId');
       final Map<String, dynamic> placeData = {
@@ -174,6 +215,7 @@ class SetDBService {
         'longitude': longitude ?? 0.0,
       };
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.patch(
         url,
         headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -181,19 +223,23 @@ class SetDBService {
       );
 
       return response.statusCode;
+      // catches exceptions from database or network.
     } catch (e) {
       print('updatePlace error: $e');
       return 0;
     }
   }
 
-  /// Method to store an event in the db.
-  /// Requires a valid [placeId] obtained from [storePlace].
+  /// method to store an event in the db
+  /// requires a valid [placeId] obtained from [storePlace]
   Future<int> storeEvent(
-    Map<String, dynamic> eventData, {
-    required String placeId,
-  }) async {
+      Map<String, dynamic> eventData, {
+        required String placeId,
+      })
+  async {
+    // error handling block, ensures app stability.
     try {
+      // async call to database, handle errors and loading states carefully.
       final Map<String, dynamic>? insertData = await _buildEventPayload(
         eventData,
         placeId: placeId,
@@ -202,6 +248,7 @@ class SetDBService {
 
       final insertUrl = Uri.parse('$_baseUrl/rest/v1/events');
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.post(
         insertUrl,
         headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -210,17 +257,22 @@ class SetDBService {
 
       print('storeEvent response: ${response.statusCode} - ${response.body}');
       return response.statusCode;
+      // catches exceptions from database or network.
     } catch (e) {
       print('storeEvent error: $e');
       return 0;
     }
   }
 
+  /// stores an event in the DB and returns the generated event_id
   Future<String?> storeEventAndGetId(
-    Map<String, dynamic> eventData, {
-    required String placeId,
-  }) async {
+      Map<String, dynamic> eventData, {
+        required String placeId,
+      })
+  async {
+    // error handling block, ensures app stability.
     try {
+      // async call to database, handle errors and loading states carefully.
       final Map<String, dynamic>? insertData = await _buildEventPayload(
         eventData,
         placeId: placeId,
@@ -229,6 +281,7 @@ class SetDBService {
 
       final insertUrl = Uri.parse('$_baseUrl/rest/v1/events');
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.post(
         insertUrl,
         headers: {..._jsonHeaders, 'Prefer': 'return=representation'},
@@ -247,19 +300,24 @@ class SetDBService {
       }
 
       return null;
+      // catches exceptions from database or network.
     } catch (e) {
       print('storeEventAndGetId error: $e');
       return null;
     }
   }
 
+  /// updates data about an event in the 'events' table
   Future<int> updateEvent(
-    String eventId,
-    Map<String, dynamic> eventData, {
-    required String placeId,
-    String? currentBackgroundUrl,
-  }) async {
+      String eventId,
+      Map<String, dynamic> eventData, {
+        required String placeId,
+        String? currentBackgroundUrl,
+      })
+  async {
+    // error handling block, ensures app stability.
     try {
+      // async call to database, handle errors and loading states carefully.
       final Map<String, dynamic>? updateData = await _buildEventPayload(
         eventData,
         placeId: placeId,
@@ -268,6 +326,8 @@ class SetDBService {
       if (updateData == null) return 400;
 
       final url = Uri.parse('$_baseUrl/rest/v1/events?event_id=eq.$eventId');
+
+      // async call to database, handle errors and loading states carefully.
       final response = await http.patch(
         url,
         headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -276,17 +336,24 @@ class SetDBService {
 
       print('updateEvent response: ${response.statusCode} - ${response.body}');
       return response.statusCode;
+      // catches exceptions from database or network.
     } catch (e) {
       print('updateEvent error: $e');
       return 0;
     }
   }
 
-  Future<int> deleteEvent(String eventId, {String? placeId}) async {
+  /// permanently deletes and event from the DB
+  Future<int> deleteEvent(String eventId, {String? placeId})
+  async {
+    // error handling block, ensures app stability.
     try {
+      // async call to database, handle errors and loading states carefully.
       await _deleteRows(table: 'event_invites', filter: 'event_id=eq.$eventId');
+      // async call to database, handle errors and loading states carefully.
       await _deleteRows(table: 'participation', filter: 'event_id=eq.$eventId');
 
+      // async call to database, handle errors and loading states carefully.
       final eventResponse = await _deleteRows(
         table: 'events',
         filter: 'event_id=eq.$eventId',
@@ -295,22 +362,28 @@ class SetDBService {
       if ((eventResponse == 200 || eventResponse == 204) &&
           placeId != null &&
           placeId.isNotEmpty) {
+        // async call to database, handle errors and loading states carefully.
         await _deleteRows(table: 'place', filter: 'place_id=eq.$placeId');
       }
 
       return eventResponse == 204 ? 200 : eventResponse;
+      // catches exceptions from database or network.
     } catch (e) {
       print('deleteEvent error: $e');
       return 0;
     }
   }
 
+  /// method to add or update invited users to an event in the 'event_invte
   Future<int> addOrUpdateEventInvite({
     required String eventId,
     required String invitedUserId,
     String role = 'guest',
-  }) async {
+  })
+  async {
+    // error handling block, ensures app stability.
     try {
+      // async call to database, handle errors and loading states carefully.
       final existingInviteId = await _getExistingInviteId(
         eventId: eventId,
         invitedUserId: invitedUserId,
@@ -320,8 +393,9 @@ class SetDBService {
       if (existingInviteId != null) {
         final url = Uri.parse(
           '$_baseUrl/rest/v1/event_invites'
-          '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
+              '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
         );
+        // async call to database, handle errors and loading states carefully.
         final response = await http.patch(
           url,
           headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -333,6 +407,7 @@ class SetDBService {
           }),
         );
         if (response.statusCode == 200 || response.statusCode == 204) {
+          // async call to database, handle errors and loading states carefully.
           await _sendEventInviteNotification(
             eventId: eventId,
             invitedUserId: invitedUserId,
@@ -342,6 +417,7 @@ class SetDBService {
       }
 
       final url = Uri.parse('$_baseUrl/rest/v1/event_invites');
+      // async call to database, handle errors and loading states carefully.
       final response = await http.post(
         url,
         headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -356,6 +432,7 @@ class SetDBService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // async call to database, handle errors and loading states carefully.
         await _sendEventInviteNotification(
           eventId: eventId,
           invitedUserId: invitedUserId,
@@ -363,6 +440,7 @@ class SetDBService {
       }
 
       return response.statusCode;
+      // catches exceptions from database or network.
     } catch (e) {
       print('addOrUpdateEventInvite error: $e');
       return 0;
@@ -394,11 +472,14 @@ class SetDBService {
   Future<void> _sendEventInviteNotification({
     required String eventId,
     required String invitedUserId,
-  }) async {
+  })
+  async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/functions/v1/send-event-invite-notification',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.post(
         url,
         headers: _jsonHeaders,
@@ -414,20 +495,25 @@ class SetDBService {
           'sendEventInviteNotification failed: ${response.statusCode} - ${response.body}',
         );
       }
+      // catches exceptions from database or network.
     } catch (e) {
       print('sendEventInviteNotification error: $e');
     }
   }
 
+
   Future<int> removeEventInvite({
     required String eventId,
     required String invitedUserId,
-  }) async {
+  })
+  async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/event_invites'
-        '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
+            '?event_id=eq.$eventId&user_id=eq.$invitedUserId',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.delete(
         url,
         headers: {
@@ -437,22 +523,27 @@ class SetDBService {
         },
       );
       return response.statusCode == 204 ? 200 : response.statusCode;
+      // catches exceptions from database or network.
     } catch (e) {
       print('removeEventInvite error: $e');
       return 0;
     }
   }
 
+
   Future<int> updateEventInviteResponse({
     required String eventId,
     required String responseState,
-  }) async {
+  })
+  async {
+    // error handling block, ensures app stability.
     try {
       final normalizedState = _normalizeInviteResponse(responseState);
       final url = Uri.parse(
         '$_baseUrl/rest/v1/event_invites'
-        '?event_id=eq.$eventId&user_id=eq.$userID',
+            '?event_id=eq.$eventId&user_id=eq.$userID',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.patch(
         url,
         headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -462,20 +553,25 @@ class SetDBService {
         }),
       );
       return response.statusCode == 204 ? 200 : response.statusCode;
+      // catches exceptions from database or network.
     } catch (e) {
       print('updateEventInviteResponse error: $e');
       return 0;
     }
   }
 
+
   Future<int> upsertEventParticipation({
     required String eventId,
     required String participationState,
-  }) async {
+  })
+  async {
+    // error handling block, ensures app stability.
     try {
       final String normalizedState = _normalizeInviteResponse(
         participationState,
       );
+      // async call to database, handle errors and loading states carefully.
       final int? existingParticipationId = await _getExistingParticipationId(
         eventId: eventId,
       );
@@ -483,8 +579,9 @@ class SetDBService {
       if (existingParticipationId != null) {
         final url = Uri.parse(
           '$_baseUrl/rest/v1/participation'
-          '?participation_id=eq.$existingParticipationId',
+              '?participation_id=eq.$existingParticipationId',
         );
+        // async call to database, handle errors and loading states carefully.
         final response = await http.patch(
           url,
           headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -497,6 +594,7 @@ class SetDBService {
       }
 
       final url = Uri.parse('$_baseUrl/rest/v1/participation');
+      // async call to database, handle errors and loading states carefully.
       final response = await http.post(
         url,
         headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
@@ -508,11 +606,13 @@ class SetDBService {
         }),
       );
       return response.statusCode == 201 ? 200 : response.statusCode;
+      // catches exceptions from database or network.
     } catch (e) {
       print('upsertEventParticipation error: $e');
       return 0;
     }
   }
+
 
   String _normalizeInviteResponse(String rawState) {
     final normalized = rawState.trim().toLowerCase().replaceAll(' ', '_');
@@ -530,13 +630,17 @@ class SetDBService {
     return 'maybe';
   }
 
+
   Future<Map<String, dynamic>?> _buildEventPayload(
-    Map<String, dynamic> eventData, {
-    required String placeId,
-    String? currentBackgroundUrl,
-  }) async {
+      Map<String, dynamic> eventData, {
+        required String placeId,
+        String? currentBackgroundUrl,
+      })
+  async {
     print('===== EVENT PAYLOAD DEBUG =====');
     print('Category name to look up: "${eventData['category']}"');
+
+    // async call to database, handle errors and loading states carefully.
     final String categoryID = await getCategoryID(eventData['category']);
     print('Got categoryID: "$categoryID"');
 
@@ -552,6 +656,8 @@ class SetDBService {
     if (dateEventStr == null) return null;
 
     final String title = (eventData['title'] ?? '').toString().trim();
+
+    // async call to database, handle errors and loading states carefully.
     final String? photoUrl = await _resolveEventBackgroundUrl(
       backgroundValue: eventData['bg_photo'] ?? eventData['background_image'],
       title: title,
@@ -581,7 +687,9 @@ class SetDBService {
     return payload;
   }
 
+
   String? _formatEventDateTime(String? rawDate, String? rawTime) {
+    // error handling block, ensures app stability.
     try {
       if (rawDate == null || rawTime == null) return null;
 
@@ -595,18 +703,22 @@ class SetDBService {
       final String min = tParts[1].padLeft(2, '0');
 
       return "$y-$m-${d}T$h:$min:00.000Z";
+      // catches exceptions from database or network.
     } catch (e) {
       print('formatEventDateTime error: $e');
       return null;
     }
   }
 
+
   Future<String?> _resolveEventBackgroundUrl({
     required dynamic backgroundValue,
     required String title,
     String? currentBackgroundUrl,
-  }) async {
+  })
+  async {
     if (backgroundValue is File) {
+      // async call to database, handle errors and loading states carefully.
       final String? uploadedUrl = await getURLEventBackgroundPhoto(
         backgroundValue,
         title,
@@ -625,11 +737,14 @@ class SetDBService {
     return currentBackgroundUrl?.trim() ?? '';
   }
 
+
   Future<int> _deleteRows({
     required String table,
     required String filter,
-  }) async {
+  })
+  async {
     final url = Uri.parse('$_baseUrl/rest/v1/$table?$filter');
+    // async call to database, handle errors and loading states carefully.
     final response = await http.delete(
       url,
       headers: {
@@ -641,13 +756,17 @@ class SetDBService {
     return response.statusCode;
   }
 
-  Future<List<Map<String, dynamic>>> _getCreatedEvents() async {
+
+  Future<List<Map<String, dynamic>>> _getCreatedEvents()
+  async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/events'
-        '?creator_user_id=eq.$userID'
-        '&select=event_id,place_id',
+            '?creator_user_id=eq.$userID'
+            '&select=event_id,place_id',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _jsonHeaders);
       if (response.statusCode != 200) return [];
 
@@ -656,39 +775,49 @@ class SetDBService {
           .whereType<Map>()
           .map((row) => Map<String, dynamic>.from(row))
           .toList();
+      // catches exceptions from database or network.
     } catch (_) {
       return [];
     }
   }
 
-  Future<void> _deleteProfilePhoto(String? profilePhotoUrl) async {
+
+  Future<void> _deleteProfilePhoto(String? profilePhotoUrl)
+  async {
     final String url = profilePhotoUrl?.trim() ?? '';
     if (url.isEmpty || !url.contains('/avatars/')) return;
 
     final String objectName = Uri.decodeComponent(url.split('/avatars/').last);
     if (objectName.isEmpty) return;
 
+    // error handling block, ensures app stability.
     try {
       final deleteUrl = Uri.parse(
         '$_baseUrl/storage/v1/object/avatars/$objectName',
       );
+      // async call to database, handle errors and loading states carefully.
       await http.delete(
         deleteUrl,
         headers: {'Authorization': 'Bearer $_apiKey', 'apikey': _apiKey},
       );
+      // catches exceptions from database or network.
     } catch (_) {}
   }
+
 
   Future<int?> _getExistingInviteId({
     required String eventId,
     required String invitedUserId,
-  }) async {
+  })
+  async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/event_invites'
         '?event_id=eq.$eventId&user_id=eq.$invitedUserId&select=invite_id'
         '&limit=1',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _jsonHeaders);
       if (response.statusCode != 200) return null;
 
@@ -701,36 +830,45 @@ class SetDBService {
     }
   }
 
-  Future<int?> _getExistingParticipationId({required String eventId}) async {
+
+  Future<int?> _getExistingParticipationId({required String eventId})
+  async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/participation'
-        '?event_id=eq.$eventId&user_id=eq.$userID&select=participation_id'
-        '&limit=1',
+            '?event_id=eq.$eventId&user_id=eq.$userID&select=participation_id'
+            '&limit=1',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _jsonHeaders);
       if (response.statusCode != 200) return null;
 
       final List<dynamic> data = jsonDecode(response.body);
       if (data.isEmpty) return null;
       return data.first['participation_id'] as int?;
+      // catches exceptions from database or network.
     } catch (e) {
       print('getExistingParticipationId error: $e');
       return null;
     }
   }
 
-  // method get the url of a stored background photo of an event
+
   Future<String?> getURLEventBackgroundPhoto(
-    File imageFile,
-    String title,
-  ) async {
+      File imageFile,
+      String title,
+      )
+  async {
+    // error handling block, ensures app stability.
     try {
+      // async call to database, handle errors and loading states carefully.
       if (!await imageFile.exists()) {
         print('Upload failed: background image file not found.');
         return null;
       }
 
+      // async call to database, handle errors and loading states carefully.
       final int fileSize = await imageFile.length();
       if (fileSize > _maxEventBackgroundSizeBytes) {
         print('Upload failed: background image exceeds 1 MB.');
@@ -749,6 +887,7 @@ class SetDBService {
         '$_baseUrl/storage/v1/object/backgrounds_events/$fileName',
       );
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.post(
         url,
         headers: {
@@ -756,6 +895,7 @@ class SetDBService {
           'apikey': _apiKey,
           'Content-Type': 'image/jpeg',
         },
+        // async call to database, handle errors and loading states carefully.
         body: await imageFile.readAsBytes(),
       );
 
@@ -765,14 +905,16 @@ class SetDBService {
 
       print('Upload failed: ${response.statusCode} - ${response.body}');
       return null;
+      // catches exceptions from database or network.
     } catch (e) {
       print('Errore upload: $e');
       return null;
     }
   }
 
-  // getting an event's category ID
+
   Future<String> getCategoryID(String categoryName) async {
+    // error handling block, ensures app stability.
     try {
       final categoryUrl = Uri.parse(
         '$_baseUrl/rest/v1/event_category?select=category_id&name=eq.$categoryName',
@@ -780,6 +922,7 @@ class SetDBService {
       print('  getCategoryID: querying name="$categoryName"');
       print('  getCategoryID: URL = $categoryUrl');
 
+      // async call to database, handle errors and loading states carefully.
       final categoryResponse = await http.get(
         categoryUrl,
         headers: _jsonHeaders,
@@ -800,6 +943,7 @@ class SetDBService {
         );
       }
       return categoryResponse.statusCode.toString();
+      // catches exceptions from database or network.
     } catch (e) {
       print('  getCategoryID EXCEPTION: $e');
       return "0";

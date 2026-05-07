@@ -1,5 +1,5 @@
 // Developed and Designed by Outly • © 2026
-// entry point for the application.
+// Entry point for the application.
 
 import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';

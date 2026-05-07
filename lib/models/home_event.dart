@@ -1,5 +1,5 @@
 // Developed and Designed by Outly • © 2026
-// data models for events shown on the home screen.
+// Data models for events shown on the home screen.
 
 import 'event_catalog.dart';
 

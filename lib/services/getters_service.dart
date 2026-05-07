@@ -1,10 +1,19 @@
+// Developed and Designed by Outly • © 2026
+// This file is responsible for fetching data operations with the database.
+// It centralizes logic to keep the rest of the app clean and maintainable.
+
 import 'dart:convert';
 
 import 'package:http/http.dart'
-    as http; // http packet (standard in Dart/Flutter).
+as http; // http packet (standard in Dart/Flutter).
 
 import 'api_keys.dart'; // private key to connect to the remote db
 
+// ── GetDBService ─────────────────────────────────────────────
+//
+//   used for: handling a specific group of database operations.
+//   design: keeps related methods grouped and reusable across the app.
+//
 class GetDBService {
   static const String _eventSelect =
       'event_id,title,description,date_event,max_participants,type,'
@@ -30,12 +39,19 @@ class GetDBService {
       Uri.encodeComponent(DateTime.now().toUtc().toIso8601String());
 
   /// generic method to get any user attribute
+  // ── method: getUserData ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<String?> getUserData(String column) async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/users?user_id=eq.$userID&select=$column',
       );
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _headers);
 
       if (response.statusCode == 200) {
@@ -46,17 +62,25 @@ class GetDBService {
         }
       }
       return null;
+      // catches exceptions from database or network.
     } catch (e) {
       return null;
     }
   }
 
   /// counts followers for a specific user ID
+  // ── method: getFollowersCount ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<int> getFollowersCount() async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/follows?following_id=eq.$userID&select=count',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(
         url,
         headers: {..._headers, 'Prefer': 'count=exact'},
@@ -69,17 +93,25 @@ class GetDBService {
         }
       }
       return 0;
+      // catches exceptions from database or network.
     } catch (e) {
       return 0;
     }
   }
 
   /// gets the list of users that a specific user ID is following
+  // ── method: getFollowing ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<List<Map<String, dynamic>>> getFollowing() async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/follows?follower_id=eq.$userID&select=*',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _headers);
 
       if (response.statusCode == 200) {
@@ -90,17 +122,25 @@ class GetDBService {
             .toList();
       }
       return [];
+      // catches exceptions from database or network.
     } catch (e) {
       return [];
     }
   }
 
   /// gets the list of users that are following the current user
+  // ── method: getFollowers ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<List<Map<String, dynamic>>> getFollowers() async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/follows?following_id=eq.$userID&select=*',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _headers);
 
       if (response.statusCode == 200) {
@@ -111,19 +151,27 @@ class GetDBService {
             .toList();
       }
       return [];
+      // catches exceptions from database or network.
     } catch (e) {
       return [];
     }
   }
 
+  // ── method: getUsersBasic ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<List<Map<String, dynamic>>> getUsersBasic() async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/users'
-        '?user_id=neq.$userID'
-        '&select=user_id,username,profile_photo'
-        '&order=username.asc',
+            '?user_id=neq.$userID'
+            '&select=user_id,username,profile_photo'
+            '&order=username.asc',
       );
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _headers);
 
       if (response.statusCode == 200) {
@@ -134,12 +182,19 @@ class GetDBService {
             .toList();
       }
       return [];
+      // catches exceptions from database or network.
     } catch (e) {
       return [];
     }
   }
 
+  // ── method: getCreatedEvents ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<List<Map<String, dynamic>>> getCreatedEvents() async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/events'
@@ -149,6 +204,7 @@ class GetDBService {
         '&order=date_event.asc',
       );
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _headers);
 
       if (response.statusCode == 200) {
@@ -161,20 +217,28 @@ class GetDBService {
         );
       }
       return [];
+      // catches exceptions from database or network.
     } catch (e) {
       return [];
     }
   }
 
+  // ── method: getEventById ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<Map<String, dynamic>?> getEventById(String eventId) async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/events'
-        '?event_id=eq.$eventId'
-        '&select=$_eventSelect'
-        '&limit=1',
+            '?event_id=eq.$eventId'
+            '&select=$_eventSelect'
+            '&limit=1',
       );
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _headers);
       if (response.statusCode != 200) return null;
 
@@ -190,12 +254,19 @@ class GetDBService {
     }
   }
 
+  // ── method: getInvitedEvents ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<List<Map<String, dynamic>>> getInvitedEvents() async {
+    // error handling block, ensures app stability.
     try {
       final Uri inviteUrl = Uri.parse(
         '$_baseUrl/rest/v1/event_invites?user_id=eq.$userID&select=event_id,role',
       );
 
+      // async call to database, handle errors and loading states carefully.
       final inviteResponse = await http.get(inviteUrl, headers: _headers);
 
       if (inviteResponse.statusCode != 200) return [];
@@ -277,12 +348,19 @@ class GetDBService {
         );
       }
       return [];
+      // catches exceptions from database or network.
     } catch (e) {
       return [];
     }
   }
 
+  // ── method: getDiscoverableEvents ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<List<Map<String, dynamic>>> getDiscoverableEvents() async {
+    // error handling block, ensures app stability.
     try {
       final url = Uri.parse(
         '$_baseUrl/rest/v1/events'
@@ -292,6 +370,7 @@ class GetDBService {
         '&order=date_event.asc',
       );
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _headers);
 
       if (response.statusCode == 200) {
@@ -304,12 +383,19 @@ class GetDBService {
         );
       }
       return [];
+      // catches exceptions from database or network.
     } catch (e) {
       return [];
     }
   }
 
+  // ── method: getInviteNotifications ─────────────────────────────────────────
+  //
+  //   used for: executing a specific database action.
+  //   note: check parameters and returned values before modifying.
+  //
   Future<List<Map<String, dynamic>>> getInviteNotifications() async {
+    // error handling block, ensures app stability.
     try {
       final Uri url = Uri.parse(
         '$_baseUrl/rest/v1/event_invites'
@@ -323,6 +409,7 @@ class GetDBService {
         '&order=invited_at.desc',
       );
 
+      // async call to database, handle errors and loading states carefully.
       final response = await http.get(url, headers: _headers);
       if (response.statusCode != 200) return [];
 
@@ -331,6 +418,7 @@ class GetDBService {
           .whereType<Map>()
           .map((item) => Map<String, dynamic>.from(item))
           .toList();
+      // catches exceptions from database or network.
     } catch (e) {
       return [];
     }

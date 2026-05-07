@@ -1,7 +1,11 @@
+// Developed and Designed by Outly • © 2026
+// Bottom navigation sub-widget for the event creation screen.
+
 part of '../create_event_screen.dart';
 
-// bottom navigation pill used by the create event screen.
-
+// ── bottom nav pill ──────────────────────────────────────────────────────────
+//
+//   used for: consistent navigation whenOrganizzatore is in the creation flow.
 class _BottomNavPill extends StatelessWidget {
   final double s;
   final int activeIndex;
@@ -15,6 +19,9 @@ class _BottomNavPill extends StatelessWidget {
     required this.onNotificationsTap,
   });
 
+  // ── build ──────────────────────────────────────────────────────────────────
+  //
+  //   used for: rendering the navigation pill.
   @override
   Widget build(BuildContext context) {
     return VezGlass.container(

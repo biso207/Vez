@@ -1,5 +1,5 @@
 // Developed and Designed by Outly • © 2026
-// singleton class for managing the current user's session and preferences.
+// Singleton class for managing the current user's session and preferences.
 
 import 'package:shared_preferences/shared_preferences.dart';
 

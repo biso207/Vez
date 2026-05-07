@@ -1,5 +1,5 @@
 // Developed and Designed by Outly • © 2026
-// logic controller for the home screen.
+// Logic controller for the home screen.
 
 import 'dart:math' as math;
 

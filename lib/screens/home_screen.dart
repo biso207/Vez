@@ -1,3 +1,6 @@
+// Developed and Designed by Outly • © 2026
+// Main screen of the app used for displaying, managing and exploring different events
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';

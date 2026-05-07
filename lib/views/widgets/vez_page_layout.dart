@@ -1,7 +1,7 @@
 // Developed and Designed by Outly • © 2026
-// universal 4-zone page layout template used by every screen in the app.
+// Universal 4-zone page layout template used by every screen in the app.
 //
-// zone architecture (bottom → top in the stack):
+// Zone architecture (bottom → top in the stack):
 //   zone 1 — background  : solid dark color (#0E0E0E), fills the whole scaffold
 //   zone 2 — body        : the central content (carousel, event card, profile …)
 //                          constrained horizontally by [horizontalMargin]
@@ -9,7 +9,7 @@
 //                          that softly mask zone-2 content as it scrolls in / out
 //   zone 4 — navbars     : top search / filter bar  +  optional bottom nav pill
 //
-// usage: wrap every screen's Scaffold body with VezPageLayout and pass:
+// Usage: wrap every screen's Scaffold body with VezPageLayout and pass:
 //   • [body]          → the central zone-2 widget
 //   • [bottomNavBar]  → the pill-shaped bottom navigation row
 //   • [searchController], [profileIconPath], [filterIconPath] … → top-bar props

@@ -28,6 +28,7 @@
   - follow di un utente
   - sblocco dello stato di "amicizia" al following reciproco
   - conteggio followers, eventi creati, eventi partecipati, numero like ai propri eventi
+  - mostrare il profilo di un qualunque utente al click sulla sua foto profilo
 - [ ] Evento "expired" quando passata la data:
   - mostrato in bacheca (?)
   - sparisce dai carousels (Invites, Yours, Nearby)
