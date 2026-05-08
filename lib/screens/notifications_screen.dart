@@ -12,7 +12,7 @@ import '../views/widgets/vez_glass.dart';
 import '../views/widgets/vez_page_layout.dart';
 import 'create_event/create_event_screen.dart';
 import 'home_screen.dart';
-import 'profile_screen.dart';
+import 'profile/profile_screen.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});

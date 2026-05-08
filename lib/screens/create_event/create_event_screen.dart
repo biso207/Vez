@@ -21,7 +21,7 @@ import '../../views/widgets/vez_glass.dart';
 import '../../views/widgets/vez_page_layout.dart';
 import '../../views/widgets/vez_popup.dart';
 import '../notifications_screen.dart';
-import '../profile_screen.dart';
+import '../profile/profile_screen.dart';
 import 'vez_map_picker.dart';
 
 part 'widgets/event_editor_card.dart';

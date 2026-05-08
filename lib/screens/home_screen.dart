@@ -19,7 +19,7 @@ import '../views/widgets/vez_page_layout.dart';
 import '../views/widgets/vez_popup.dart';
 import 'create_event/create_event_screen.dart';
 import 'notifications_screen.dart';
-import 'profile_screen.dart';
+import 'profile/profile_screen.dart';
 
 // ── guest audience filter ──────────────────────────────────────────────────
 //
