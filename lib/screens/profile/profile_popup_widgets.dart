@@ -1,4 +1,4 @@
-// developed and designed by Outly • © 2026
+// Developed and Designed by Outly • © 2026
 // profile_popup_widgets.dart
 //
 // shared micro-widgets reused across the various profile popups:

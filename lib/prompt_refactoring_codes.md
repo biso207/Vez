@@ -1,4 +1,4 @@
-# Prompt per Refactoring Flutter: Pagina Profilo
+# Prompt per Refactoring Flutter: [file_name]
 
 Questo prompt è ottimizzato per istruire un LLM a trasformare un file monolitico in una struttura modulare e professionale.
 
@@ -6,7 +6,7 @@ Questo prompt è ottimizzato per istruire un LLM a trasformare un file monolitic
 
 ## Ruolo e Obiettivo
 Agisci come un **Senior Flutter Developer**. Ti viene fornito un file Dart che gestisce l'intera logica 
-e il rendering della pagina profilo. Il tuo obiettivo è ristrutturare il codice suddividendolo in più file 
+e il rendering della [funzionalità file]. Il tuo obiettivo è ristrutturare il codice suddividendolo in più file 
 per migliorare la manutenibilità, la leggibilità e la scalabilità.
 
 ## Istruzioni di Refactoring
@@ -27,5 +27,5 @@ Fornisci i blocchi di codice completi per ogni nuovo file creato, pronti per ess
 
 ---
 
-### Codice Sorgente da Elaborare:
+### (Opzionale) Codice Sorgente da Elaborare:
 `[INCOLLA QUI IL CONTENUTO DEL TUO FILE .DART O CARICALO COME FILE ALLA CHAT]`

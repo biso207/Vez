@@ -1,4 +1,4 @@
-// developed and designed by Outly • © 2026
+// Developed and Designed by Outly • © 2026
 // profile screen : zone-2 content: user info card + stats pill + event grid.
 //
 // layout zones used:
@@ -50,7 +50,7 @@ import '../../views/widgets/vez_popup.dart';
 // ─── screen imports ───────────────────────────────────────────────────────────
 
 import '../auth/login_screen.dart';
-import '../create_event/create_event_screen.dart';
+import '../event_creation/create_event_screen.dart';
 import '../notifications_screen.dart';
 
 // ─── part files (share this library namespace) ────────────────────────────────

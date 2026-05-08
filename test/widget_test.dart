@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vez/main.dart';
-import 'package:vez/screens/auth/loading_screen.dart';
+import 'package:vez/screens/loading_screen.dart';
 
 void main() {
   testWidgets('App boots into the loading screen', (WidgetTester tester) async {

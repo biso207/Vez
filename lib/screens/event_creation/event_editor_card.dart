@@ -1,4 +1,4 @@
-part of '../create_event_screen.dart';
+part of 'create_event_screen.dart';
 
 // event editor card and its small action/detail widgets.
 // this file stays visual-only; saving, validation, and navigation remain in the screen state.

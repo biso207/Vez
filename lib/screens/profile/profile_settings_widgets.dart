@@ -1,4 +1,4 @@
-// developed and designed by Outly • © 2026
+// Developed and Designed by Outly • © 2026
 // profile_settings_widgets.dart
 //
 // visual widgets that compose the settings popup panel:

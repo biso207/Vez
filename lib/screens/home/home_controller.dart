@@ -7,11 +7,11 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 
-import '../models/event_catalog.dart';
-import '../models/home_event.dart';
-import '../services/getters_service.dart';
-import '../services/setters_service.dart';
-import '../services/translation_service.dart';
+import '../../models/event_catalog.dart';
+import 'home_event.dart';
+import '../../services/getters_service.dart';
+import '../../services/setters_service.dart';
+import '../../services/translation_service.dart';
 
 // ── home controller ──────────────────────────────────────────────────────────
 //

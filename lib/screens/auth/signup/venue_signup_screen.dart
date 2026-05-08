@@ -3,10 +3,10 @@ import 'dart:ui';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
-import '../../services/auth_service.dart';
-import '../../services/translation_service.dart';
-import '../../views/widgets/vez_glass.dart';
-import 'venue_pending_screen.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/translation_service.dart';
+import '../../../views/widgets/vez_glass.dart';
+import '../venue_pending_screen.dart';
 
 const double _kErrorSlotH = 56.0;
 const double _kDotsSlotH = 24.0;

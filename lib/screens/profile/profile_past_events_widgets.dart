@@ -1,4 +1,4 @@
-// developed and designed by Outly • © 2026
+// Developed and Designed by Outly • © 2026
 // profile_past_events_widgets.dart
 //
 // widgets that render the archived past-events section:

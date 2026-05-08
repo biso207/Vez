@@ -1,4 +1,4 @@
-// developed and designed by Outly • © 2026
+// Developed and Designed by Outly • © 2026
 // profile_card_widgets.dart
 //
 // contains the primary profile-card visual widgets:

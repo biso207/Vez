@@ -10,8 +10,8 @@ import '../services/translation_service.dart';
 import '../services/user_session.dart';
 import '../views/widgets/vez_glass.dart';
 import '../views/widgets/vez_page_layout.dart';
-import 'create_event/create_event_screen.dart';
-import 'home_screen.dart';
+import 'event_creation/create_event_screen.dart';
+import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
 
 class NotificationsPage extends StatefulWidget {

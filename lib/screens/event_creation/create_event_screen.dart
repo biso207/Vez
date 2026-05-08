@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/event_catalog.dart';
-import '../../models/home_event.dart';
+import '../home/home_event.dart';
 import '../../services/getters_service.dart';
 import '../../services/haptic_service.dart';
 import '../../services/setters_service.dart';
@@ -24,8 +24,8 @@ import '../notifications_screen.dart';
 import '../profile/profile_screen.dart';
 import 'vez_map_picker.dart';
 
-part 'widgets/event_editor_card.dart';
-part 'widgets/create_event_bottom_nav.dart';
+part 'event_editor_card.dart';
+part 'create_event_bottom_nav.dart';
 
 class CreateEvent extends StatefulWidget {
   const CreateEvent({super.key, this.editingEvent, this.showTutorial = false});

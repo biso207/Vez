@@ -2,13 +2,13 @@
 // screen to manage the app's loading process.
 
 import 'package:flutter/material.dart';
-import '../../services/notification_service.dart';
-import '../../services/auth_service.dart';
-import '../../services/user_session.dart';
-import '../home_screen.dart';
-import '../../services/translation_service.dart';
-import 'login_screen.dart';
-import 'venue_pending_screen.dart';
+import '../services/notification_service.dart';
+import '../services/auth_service.dart';
+import '../services/user_session.dart';
+import 'home/home_screen.dart';
+import '../services/translation_service.dart';
+import 'auth/login_screen.dart';
+import 'auth/venue_pending_screen.dart';
 
 // ── loading page ─────────────────────────────────────────────────────────────
 //

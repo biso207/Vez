@@ -1,7 +1,7 @@
 // Developed and Designed by Outly • © 2026
 // Bottom navigation sub-widget for the event creation screen.
 
-part of '../create_event_screen.dart';
+part of 'create_event_screen.dart';
 
 // ── bottom nav pill ──────────────────────────────────────────────────────────
 //

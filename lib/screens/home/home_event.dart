@@ -1,8 +1,8 @@
 // Developed and Designed by Outly • © 2026
 // Data models for events shown on the home screen.
 
-import '../services/user_session.dart';
-import 'event_catalog.dart';
+import '../../services/user_session.dart';
+import '../../models/event_catalog.dart';
 
 /// ── event type ──────────────────────────────────────────────────────────────
 // categorizes events into feed tabs

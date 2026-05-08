@@ -11,10 +11,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-import '../../services/auth_service.dart';
-import '../../services/translation_service.dart';
-import '../../views/widgets/vez_glass.dart';
-import '../home_screen.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/translation_service.dart';
+import '../../../views/widgets/vez_glass.dart';
+import '../../home/home_screen.dart';
 
 // ── layout constants ─────────────────────────────────────────────────────────
 const double _kErrorSlotH = 56.0;

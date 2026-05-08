@@ -1,4 +1,4 @@
-// developed and designed by Outly • © 2026
+// Developed and Designed by Outly • © 2026
 // profile_nav_widgets.dart
 //
 // contains the bottom navigation pill shown on the profile screen:

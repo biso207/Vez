@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../services/translation_service.dart';
 import '../../views/widgets/vez_glass.dart';
-import 'signup_screen.dart';
-import 'venue_signup_screen.dart';
+import 'signup/user_signup_screen.dart';
+import 'signup/venue_signup_screen.dart';
 
 class AccountTypeChoicePage extends StatelessWidget {
   const AccountTypeChoicePage({super.key});
