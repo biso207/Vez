@@ -75,16 +75,6 @@ Key visual pillars:
 
 ---
 
-## 📈 Project Status
-
-- [x] Database Integration
-- [x] User Authentication
-- [x] UI Prototype (Glassmorphism)
-- [ ] Event Feed Implementation
-- [ ] Notifications System
-
----
-
 ## 🤝 Contributing
 
 We welcome contributions! If you'd like to improve Vez, please fork the repository and create a pull request, or open an issue with the tag "enhancement".
