@@ -1,4 +1,4 @@
-﻿// contains reusable widgets used by the home screen.
+// contains reusable widgets used by the home screen.
 
 import 'package:flutter/material.dart';
 
@@ -137,6 +137,7 @@ class HomeEventCarousel extends StatefulWidget {
     required this.onManageCohostsTap,
     required this.onEditTap,
     required this.onResponseSelected,
+    required this.onUserProfileTap,
   });
 
   final List<HomeEventCardData> events;
@@ -149,6 +150,7 @@ class HomeEventCarousel extends StatefulWidget {
   final ValueChanged<HomeEventCardData> onGuestListTap;
   final ValueChanged<HomeEventCardData> onManageCohostsTap;
   final ValueChanged<HomeEventCardData> onEditTap;
+  final ValueChanged<String> onUserProfileTap;
   final void Function(HomeEventCardData event, String responseState)
   onResponseSelected;
 
@@ -245,6 +247,7 @@ class HomeEventCarouselState extends State<HomeEventCarousel> {
             onEditTap: event.canEditEvent
                 ? () => widget.onEditTap(event)
                 : null,
+            onUserProfileTap: widget.onUserProfileTap,
             onResponseSelected: !event.isByYou
                 ? (responseState) =>
                       widget.onResponseSelected(event, responseState)
@@ -486,6 +489,8 @@ class PopupGuestRow extends StatelessWidget {
     required this.username,
     required this.profilePhoto,
     required this.state,
+    this.userId,
+    this.onAvatarTap,
     this.guest,
     this.roleLabel,
     this.trailing,
@@ -494,6 +499,8 @@ class PopupGuestRow extends StatelessWidget {
   final String username;
   final String profilePhoto;
   final String state;
+  final String? userId;
+  final ValueChanged<String>? onAvatarTap;
   final HomeEventGuestData? guest;
   final String? roleLabel;
   final Widget? trailing;
@@ -512,7 +519,11 @@ class PopupGuestRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          PopupUserAvatar(photo: profilePhoto),
+          PopupUserAvatar(
+            photo: profilePhoto,
+            userId: userId,
+            onTap: onAvatarTap,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Row(
@@ -607,11 +618,13 @@ class CohostPermissionRow extends StatelessWidget {
     super.key,
     required this.guest,
     required this.isBusy,
+    this.onAvatarTap,
     required this.onDemote,
   });
 
   final HomeEventGuestData guest;
   final bool isBusy;
+  final ValueChanged<String>? onAvatarTap;
   final VoidCallback onDemote;
 
   @override
@@ -630,7 +643,11 @@ class CohostPermissionRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              PopupUserAvatar(photo: guest.profilePhoto),
+              PopupUserAvatar(
+                photo: guest.profilePhoto,
+                userId: guest.userId,
+                onTap: onAvatarTap,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -716,12 +733,16 @@ class PopupUserSelectionRow extends StatelessWidget {
     super.key,
     required this.username,
     required this.profilePhoto,
+    required this.userId,
+    this.onAvatarTap,
     required this.relationIconPath,
     required this.onAdd,
   });
 
   final String username;
   final String profilePhoto;
+  final String userId;
+  final ValueChanged<String>? onAvatarTap;
   final String relationIconPath;
   final VoidCallback? onAdd;
 
@@ -739,7 +760,11 @@ class PopupUserSelectionRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          PopupUserAvatar(photo: profilePhoto),
+          PopupUserAvatar(
+            photo: profilePhoto,
+            userId: userId,
+            onTap: onAvatarTap,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -780,15 +805,23 @@ class PopupUserSelectionRow extends StatelessWidget {
 //   used for: displaying a circular user profile picture within popups.
 //   design: handles both network and asset images with a placeholder icon.
 class PopupUserAvatar extends StatelessWidget {
-  const PopupUserAvatar({super.key, required this.photo});
+  const PopupUserAvatar({
+    super.key,
+    required this.photo,
+    this.userId,
+    this.onTap,
+  });
 
   final String photo;
+  final String? userId;
+  final ValueChanged<String>? onTap;
 
   @override
   Widget build(BuildContext context) {
     final bool isNetworkImage = photo.startsWith('http');
 
-    return Container(
+    final String safeUserId = userId?.trim() ?? '';
+    final child = Container(
       width: 34,
       height: 34,
       decoration: BoxDecoration(
@@ -797,7 +830,10 @@ class PopupUserAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: photo.isEmpty
-            ? const Icon(Icons.person, color: Colors.white70, size: 18)
+            ? Image.asset(
+                'assets/icons/home_page/profile_photo.png', // TODO: modify the path here
+                fit: BoxFit.cover,
+              )
             : Image(
                 image: isNetworkImage
                     ? NetworkImage(photo)
@@ -806,6 +842,8 @@ class PopupUserAvatar extends StatelessWidget {
               ),
       ),
     );
+    if (safeUserId.isEmpty || onTap == null) return child;
+    return GestureDetector(onTap: () => onTap!(safeUserId), child: child);
   }
 }
 

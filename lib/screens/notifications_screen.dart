@@ -11,6 +11,7 @@ import '../services/user_session.dart';
 import '../views/widgets/vez_glass.dart';
 import '../views/widgets/vez_page_layout.dart';
 import 'event_creation/create_event_screen.dart';
+import 'profile/general_user_profile_screen.dart';
 import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
 
@@ -63,7 +64,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const HomePage(initialFilterIndex: 0)),
-          (route) => false,
+      (route) => false,
     );
   }
 
@@ -74,7 +75,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         builder: (_) =>
             HomePage(initialFilterIndex: 0, initialEventId: eventId),
       ),
-          (route) => false,
+      (route) => false,
     );
   }
 
@@ -100,7 +101,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
         for (int i = 0; i < _notifications.length; i++) {
           final row = _notifications[i];
           final eventMap = row['event'] is Map ? row['event'] : {};
-          final String eId = (eventMap['event_id'] ?? row['event_id'] ?? '').toString().trim();
+          final String eId = (eventMap['event_id'] ?? row['event_id'] ?? '')
+              .toString()
+              .trim();
 
           if (eId == eventId) {
             // copy map to avoid modifying an unmodifiable map
@@ -135,6 +138,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
     ).then((_) => _loadPageData());
   }
 
+  void _openUserProfile(String userId) {
+    final String targetId = userId.trim();
+    if (targetId.isEmpty) return;
+    if (targetId == UserSession().userID) {
+      _goToProfile();
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GeneralUserProfilePage(userId: targetId),
+      ),
+    );
+  }
+
   // filter visible notifications based on search text
   List<Map<String, dynamic>> get _visibleNotifications {
     final String query = _searchController.text.trim().toLowerCase();
@@ -147,7 +166,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ? Map<String, dynamic>.from(row['event'] as Map)
           : <String, dynamic>{};
       final Map<String, dynamic> creator =
-      event['creator'] is Map<String, dynamic>
+          event['creator'] is Map<String, dynamic>
           ? Map<String, dynamic>.from(event['creator'] as Map<String, dynamic>)
           : event['creator'] is Map
           ? Map<String, dynamic>.from(event['creator'] as Map)
@@ -197,29 +216,29 @@ class _NotificationsPageState extends State<NotificationsPage> {
         onNotificationsTap: () {},
       ),
 
-
       body: Padding(
         padding: EdgeInsets.only(top: topInset),
         child: _isLoading
             ? const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        )
+                child: CircularProgressIndicator(color: Colors.white),
+              )
             : _visibleNotifications.isEmpty
             ? _EmptyNotificationsState(
-          s: s,
-          title: StringRes.at('no_events_invited'),
-        )
+                s: s,
+                title: StringRes.at('no_events_invited'),
+              )
             : ListView.separated(
-          padding: EdgeInsets.fromLTRB(20 * s, 0, 20 * s, 140 * s),
-          itemCount: _visibleNotifications.length,
-          separatorBuilder: (_, _) => SizedBox(height: 14 * s),
-          itemBuilder: (_, index) => _NotificationCard(
-            row: _visibleNotifications[index],
-            s: s,
-            onTap: _openNotificationEvent,
-            onRespond: _respondToInvite,
-          ),
-        ),
+                padding: EdgeInsets.fromLTRB(20 * s, 0, 20 * s, 140 * s),
+                itemCount: _visibleNotifications.length,
+                separatorBuilder: (_, _) => SizedBox(height: 14 * s),
+                itemBuilder: (_, index) => _NotificationCard(
+                  row: _visibleNotifications[index],
+                  s: s,
+                  onTap: _openNotificationEvent,
+                  onUserProfileTap: _openUserProfile,
+                  onRespond: _respondToInvite,
+                ),
+              ),
       ),
     );
   }
@@ -230,12 +249,14 @@ class _NotificationCard extends StatelessWidget {
     required this.row,
     required this.s,
     required this.onTap,
+    required this.onUserProfileTap,
     required this.onRespond,
   });
 
   final Map<String, dynamic> row;
   final double s;
   final ValueChanged<String?> onTap;
+  final ValueChanged<String> onUserProfileTap;
   final void Function(String eventId, String responseState) onRespond;
 
   @override
@@ -246,7 +267,7 @@ class _NotificationCard extends StatelessWidget {
         ? Map<String, dynamic>.from(row['event'] as Map)
         : <String, dynamic>{};
     final Map<String, dynamic> creator =
-    event['creator'] is Map<String, dynamic>
+        event['creator'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(event['creator'] as Map<String, dynamic>)
         : event['creator'] is Map
         ? Map<String, dynamic>.from(event['creator'] as Map)
@@ -265,6 +286,7 @@ class _NotificationCard extends StatelessWidget {
         .trim();
     final String host = (creator['username'] ?? '').toString().trim();
     final String photo = (creator['profile_photo'] ?? '').toString().trim();
+    final String hostId = (event['creator_user_id'] ?? '').toString().trim();
     final String placeName = (place['name'] ?? '').toString().trim();
     final String dateLabel = _formatDate(
       (event['date_event'] ?? row['invited_at'])?.toString(),
@@ -279,7 +301,11 @@ class _NotificationCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _NotificationAvatar(photo: photo),
+            _NotificationAvatar(
+              photo: photo,
+              userId: hostId,
+              onTap: onUserProfileTap,
+            ),
             SizedBox(width: 12 * s),
             Expanded(
               child: Column(
@@ -365,11 +391,19 @@ class _NotificationCard extends StatelessWidget {
 
   // normalize raw database states
   static String _normalizeState(String rawState) {
-    final String normalized = rawState.trim().toLowerCase().replaceAll(' ', '_');
-    if (normalized == 'going' || normalized == 'accepted' || normalized == 'yes') {
+    final String normalized = rawState.trim().toLowerCase().replaceAll(
+      ' ',
+      '_',
+    );
+    if (normalized == 'going' ||
+        normalized == 'accepted' ||
+        normalized == 'yes') {
       return 'going';
     }
-    if (normalized == 'not_going' || normalized == 'notgoing' || normalized == 'declined' || normalized == 'no') {
+    if (normalized == 'not_going' ||
+        normalized == 'notgoing' ||
+        normalized == 'declined' ||
+        normalized == 'no') {
       return 'not_going';
     }
     return 'maybe';
@@ -459,22 +493,28 @@ class _InviteResponseButton extends StatelessWidget {
             width: 2,
           ),
         ),
-        child: Image.asset(iconPath, width: 20, height: 20)
+        child: Image.asset(iconPath, width: 20, height: 20),
       ),
     );
   }
 }
 
 class _NotificationAvatar extends StatelessWidget {
-  const _NotificationAvatar({required this.photo});
+  const _NotificationAvatar({
+    required this.photo,
+    required this.userId,
+    required this.onTap,
+  });
 
   final String photo;
+  final String userId;
+  final ValueChanged<String> onTap;
 
   @override
   Widget build(BuildContext context) {
     final bool isNetworkImage = photo.startsWith('http');
 
-    return Container(
+    final child = Container(
       width: 44,
       height: 44,
       decoration: BoxDecoration(
@@ -483,15 +523,20 @@ class _NotificationAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: photo.isEmpty
-            ? const Icon(Icons.person, color: Colors.white70)
+            ? Image.asset(
+                'assets/icons/home_page/profile_photo.png', // TODO: modify the path here
+                fit: BoxFit.cover,
+              )
             : Image(
-          image: isNetworkImage
-              ? NetworkImage(photo)
-              : AssetImage(photo) as ImageProvider,
-          fit: BoxFit.cover,
-        ),
+                image: isNetworkImage
+                    ? NetworkImage(photo)
+                    : AssetImage(photo) as ImageProvider,
+                fit: BoxFit.cover,
+              ),
       ),
     );
+    if (userId.isEmpty) return child;
+    return GestureDetector(onTap: () => onTap(userId), child: child);
   }
 }
 

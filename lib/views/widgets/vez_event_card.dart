@@ -24,6 +24,7 @@ class VezEventCard extends StatelessWidget {
     this.onManageCohostsTap,
     this.onEditTap,
     this.onResponseSelected,
+    this.onUserProfileTap,
   });
 
   final HomeEventCardData event;
@@ -32,6 +33,7 @@ class VezEventCard extends StatelessWidget {
   final VoidCallback? onManageCohostsTap;
   final VoidCallback? onEditTap;
   final ValueChanged<String>? onResponseSelected;
+  final ValueChanged<String>? onUserProfileTap;
 
   // ── build ──────────────────────────────────────────────────────────────────
   @override
@@ -44,6 +46,7 @@ class VezEventCard extends StatelessWidget {
         onGuestListTap: onGuestListTap,
         onManageCohostsTap: onManageCohostsTap,
         onEditTap: onEditTap,
+        onUserProfileTap: onUserProfileTap,
       );
     }
 
@@ -54,6 +57,7 @@ class VezEventCard extends StatelessWidget {
       onAddGuestsTap: onAddGuestsTap,
       onGuestListTap: onGuestListTap,
       onResponseSelected: onResponseSelected,
+      onUserProfileTap: onUserProfileTap,
     );
   }
 }
@@ -68,12 +72,14 @@ class _PreviewEventCard extends StatefulWidget {
     required this.onGuestListTap,
     required this.onResponseSelected,
     this.onAddGuestsTap,
+    this.onUserProfileTap,
   });
 
   final HomeEventCardData event;
   final VoidCallback? onAddGuestsTap;
   final VoidCallback? onGuestListTap;
   final ValueChanged<String>? onResponseSelected;
+  final ValueChanged<String>? onUserProfileTap;
 
   @override
   State<_PreviewEventCard> createState() => _PreviewEventCardState();
@@ -136,7 +142,7 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
                     image: isNetworkImage
                         ? NetworkImage(widget.event.resolvedImagePath)
                         : AssetImage(widget.event.resolvedImagePath)
-                    as ImageProvider,
+                              as ImageProvider,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -168,6 +174,7 @@ class _PreviewEventCardState extends State<_PreviewEventCard> {
                       event: widget.event,
                       s: s,
                       onGuestListTap: widget.onGuestListTap,
+                      onUserProfileTap: widget.onUserProfileTap,
                     ),
 
                     const Spacer(),
@@ -564,6 +571,7 @@ class _ByYouEventCard extends StatelessWidget {
     required this.onGuestListTap,
     required this.onManageCohostsTap,
     required this.onEditTap,
+    this.onUserProfileTap,
   });
 
   final HomeEventCardData event;
@@ -571,6 +579,7 @@ class _ByYouEventCard extends StatelessWidget {
   final VoidCallback? onGuestListTap;
   final VoidCallback? onManageCohostsTap;
   final VoidCallback? onEditTap;
+  final ValueChanged<String>? onUserProfileTap;
 
   @override
   Widget build(BuildContext context) {
@@ -636,6 +645,7 @@ class _ByYouEventCard extends StatelessWidget {
                       s: s,
                       onGuestListTap: onGuestListTap,
                       onEditTap: onEditTap,
+                      onUserProfileTap: onUserProfileTap,
                     ),
                     if (event.canManageCohosts)
                       Padding(
@@ -823,12 +833,12 @@ class _CardIconCircle extends StatelessWidget {
     return onTap == null
         ? child
         : GestureDetector(
-      onTap: () {
-        HapticService.tap();
-        onTap!();
-      },
-      child: child,
-    );
+            onTap: () {
+              HapticService.tap();
+              onTap!();
+            },
+            child: child,
+          );
   }
 }
 
@@ -836,7 +846,8 @@ class _CardPillButton extends StatelessWidget {
   const _CardPillButton({
     required this.label,
     this.onTap,
-    this.maxGuests, this.goingGuests,
+    this.maxGuests,
+    this.goingGuests,
   });
   final String label;
   final VoidCallback? onTap;
@@ -847,11 +858,12 @@ class _CardPillButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        if(goingGuests!<maxGuests! || maxGuests==0) {
+        if (goingGuests! < maxGuests! || maxGuests == 0) {
           HapticService.tap();
           onTap?.call();
+        } else {
+          null;
         }
-        else {null;}
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -860,12 +872,12 @@ class _CardPillButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
             decoration: BoxDecoration(
-              color: goingGuests!<maxGuests! || maxGuests==0
+              color: goingGuests! < maxGuests! || maxGuests == 0
                   ? Color.fromARGB(51, 255, 255, 255)
                   : Color.fromARGB(13, 255, 255, 255),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: goingGuests!<maxGuests! || maxGuests==0
+                color: goingGuests! < maxGuests! || maxGuests == 0
                     ? Color.fromARGB(128, 255, 255, 255)
                     : Color.fromARGB(26, 255, 255, 255),
                 width: 2,
@@ -874,7 +886,7 @@ class _CardPillButton extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: goingGuests!<maxGuests! || maxGuests==0
+                color: goingGuests! < maxGuests! || maxGuests == 0
                     ? Color.fromARGB(255, 255, 255, 255)
                     : Color.fromARGB(51, 255, 255, 255),
                 fontSize: 18,
@@ -945,13 +957,18 @@ class _GuestStateBanner extends StatelessWidget {
 }
 
 class _ProfilePhotoCircle extends StatelessWidget {
-  const _ProfilePhotoCircle({required this.photo, required this.size});
+  const _ProfilePhotoCircle({
+    required this.photo,
+    required this.size,
+    this.onTap,
+  });
   final String photo;
   final double size;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final child = Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
@@ -963,15 +980,19 @@ class _ProfilePhotoCircle extends StatelessWidget {
       ),
       child: ClipOval(
         child: photo.isEmpty
-            ? Icon(Icons.person, color: Colors.white70, size: size * 0.52)
+            ? Image.asset(
+                'assets/icons/home_page/profile_photo.png', // TODO: modify the path here
+                fit: BoxFit.cover,
+              )
             : Image(
-          image: photo.startsWith('http')
-              ? NetworkImage(photo)
-              : AssetImage(photo) as ImageProvider,
-          fit: BoxFit.cover,
-        ),
+                image: photo.startsWith('http')
+                    ? NetworkImage(photo)
+                    : AssetImage(photo) as ImageProvider,
+                fit: BoxFit.cover,
+              ),
       ),
     );
+    return onTap == null ? child : GestureDetector(onTap: onTap, child: child);
   }
 }
 
@@ -1006,11 +1027,13 @@ class _CardTopBar extends StatelessWidget {
     required this.s,
     this.onGuestListTap,
     this.onEditTap,
+    this.onUserProfileTap,
   });
   final HomeEventCardData event;
   final double s;
   final VoidCallback? onGuestListTap;
   final VoidCallback? onEditTap;
+  final ValueChanged<String>? onUserProfileTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1057,6 +1080,12 @@ class _CardTopBar extends StatelessWidget {
               _ProfilePhotoCircle(
                 photo: event.creatorProfilePhoto,
                 size: 44 * s,
+                onTap: event.creatorUserId.isEmpty
+                    ? null
+                    : () {
+                        HapticService.tap();
+                        onUserProfileTap?.call(event.creatorUserId);
+                      },
               ),
           ],
         ),

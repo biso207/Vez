@@ -81,6 +81,12 @@ const Map<String, String> zh = {
   "no_events_by_you": "暂无活动",
   "no_events_invited": "暂无邀请",
   "no_events_nearby": "暂无附近活动",
+  "follow": "关注",
+  "follow_back": "回关",
+  "unfollow": "取消关注",
+  "follow_failed": "关注失败",
+  "unfollow_failed": "取消关注失败",
+  "user_not_found": "未找到用户",
 
   // edit profile //
   "edit_username": "用户名",

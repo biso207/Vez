@@ -18,6 +18,7 @@ import '../../views/widgets/vez_page_layout.dart';
 import '../../views/widgets/vez_popup.dart';
 import '../event_creation/create_event_screen.dart';
 import '../notifications_screen.dart';
+import '../profile/general_user_profile_screen.dart';
 import '../profile/profile_screen.dart';
 
 //
@@ -189,6 +190,27 @@ class _HomePageState extends State<HomePage> {
         _controller.loadProfilePhoto(),
         _controller.loadEvents(),
       ]);
+    });
+  }
+
+  //
+  //   used for: opening either the local profile or another user's profile.
+  void _openUserProfile(String userId) {
+    final String targetId = userId.trim();
+    if (targetId.isEmpty) return;
+    if (targetId == UserSession().userID) {
+      _goToProfile();
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GeneralUserProfilePage(userId: targetId),
+      ),
+    ).then((_) async {
+      if (!mounted) return;
+      await _controller.ensureUserDirectoryLoaded();
     });
   }
 
@@ -418,6 +440,8 @@ class _HomePageState extends State<HomePage> {
                           : StringRes.at('host'),
                       profilePhoto: currentEvent.creatorProfilePhoto,
                       state: 'going',
+                      userId: currentEvent.creatorUserId,
+                      onAvatarTap: _openUserProfile,
                       roleLabel: StringRes.at('host'),
                     ),
                     const SizedBox(height: 10),
@@ -432,6 +456,8 @@ class _HomePageState extends State<HomePage> {
                             profilePhoto: guest.profilePhoto,
                             state: guest.state,
                             guest: guest,
+                            userId: guest.userId,
+                            onAvatarTap: _openUserProfile,
                             roleLabel: guest.isCohost
                                 ? StringRes.at('cohost')
                                 : null,
@@ -640,6 +666,8 @@ class _HomePageState extends State<HomePage> {
                             username: (user['username'] ?? '').toString(),
                             profilePhoto: (user['profile_photo'] ?? '')
                                 .toString(),
+                            userId: userId,
+                            onAvatarTap: _openUserProfile,
                             relationIconPath: relationIconPath,
                             onAdd: isBusy ? null : () => addGuest(userId),
                           );
@@ -801,6 +829,7 @@ class _HomePageState extends State<HomePage> {
                           child: CohostPermissionRow(
                             guest: guest,
                             isBusy: isBusy,
+                            onAvatarTap: _openUserProfile,
                             onDemote: () =>
                                 saveRole(guest.userId, HomeEventRole.guest),
                           ),
@@ -819,6 +848,8 @@ class _HomePageState extends State<HomePage> {
                             username: guest.username,
                             profilePhoto: guest.profilePhoto,
                             state: guest.state,
+                            userId: guest.userId,
+                            onAvatarTap: _openUserProfile,
                             trailing: PopupMiniActionButton(
                               icon: Icons.admin_panel_settings_rounded,
                               color: const Color(0xFF55D6FF),
@@ -839,6 +870,8 @@ class _HomePageState extends State<HomePage> {
                             username: (user['username'] ?? '').toString(),
                             profilePhoto: (user['profile_photo'] ?? '')
                                 .toString(),
+                            userId: (user['user_id'] ?? '').toString(),
+                            onAvatarTap: _openUserProfile,
                             relationIconPath: 'assets/icons/event/public.png',
                             onAdd: isBusy
                                 ? null
@@ -953,6 +986,7 @@ class _HomePageState extends State<HomePage> {
               onGuestListTap: _showGuestListPopup,
               onManageCohostsTap: _showCohostManagerPopup,
               onEditTap: _editEvent,
+              onUserProfileTap: _openUserProfile,
               onResponseSelected: _updateEventCardResponse,
             ),
           ),

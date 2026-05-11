@@ -56,6 +56,71 @@ class SetDBService {
     }
   }
 
+  /// creates a follow row from the current user to the selected user.
+  Future<int> followUser(String followingUserId) async {
+    try {
+      final String targetId = followingUserId.trim();
+      if (targetId.isEmpty || targetId == userID) return 400;
+
+      final existingUrl = Uri.parse(
+        '$_baseUrl/rest/v1/follows'
+        '?follower_id=eq.$userID'
+        '&following_id=eq.$targetId'
+        '&select=follow_id'
+        '&limit=1',
+      );
+      final existingResponse = await http.get(
+        existingUrl,
+        headers: _jsonHeaders,
+      );
+      if (existingResponse.statusCode == 200) {
+        final List<dynamic> rows = jsonDecode(existingResponse.body);
+        if (rows.isNotEmpty) return 200;
+      }
+
+      final url = Uri.parse('$_baseUrl/rest/v1/follows');
+      final response = await http.post(
+        url,
+        headers: {..._jsonHeaders, 'Prefer': 'return=minimal'},
+        body: jsonEncode({
+          'follower_id': userID,
+          'following_id': targetId,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+        }),
+      );
+
+      return response.statusCode == 201 ? 200 : response.statusCode;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// removes the follow row from the current user to the selected user.
+  Future<int> unfollowUser(String followingUserId) async {
+    try {
+      final String targetId = followingUserId.trim();
+      if (targetId.isEmpty || targetId == userID) return 400;
+
+      final url = Uri.parse(
+        '$_baseUrl/rest/v1/follows'
+        '?follower_id=eq.$userID'
+        '&following_id=eq.$targetId',
+      );
+      final response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'apikey': _apiKey,
+          'Prefer': 'return=minimal',
+        },
+      );
+
+      return response.statusCode == 204 ? 200 : response.statusCode;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   /// return an hashed password
   String _hashPassword(String password) {
     final bytes = utf8.encode(password + salt);

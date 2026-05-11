@@ -65,6 +65,9 @@ class VezPageLayout extends StatelessWidget {
   /// when true the right button renders the icon of the event group selected; otherwise as an icon
   final bool isFilterSelected;
 
+  /// when true the right button renders as a photo avatar instead of an icon
+  final bool isFilterAvatar;
+
   /// callback fired when the user taps the left (profile) button
   final VoidCallback? onProfileTap;
 
@@ -96,6 +99,7 @@ class VezPageLayout extends StatelessWidget {
     this.profileIconPath = '',
     this.isProfileAvatar = false,
     this.isFilterSelected = false,
+    this.isFilterAvatar = false,
     this.onProfileTap,
     this.onFilterTap,
     this.searchHint = 'Search',
@@ -183,6 +187,7 @@ class VezPageLayout extends StatelessWidget {
               profileIconPath: profileIconPath,
               isProfileAvatar: isProfileAvatar,
               isFilterSelected: isFilterSelected,
+              isFilterAvatar: isFilterAvatar,
               onProfileTap: onProfileTap,
               onFilterTap: onFilterTap,
               searchController: searchController,
@@ -260,6 +265,7 @@ class _TopNavBar extends StatelessWidget {
   final String profileIconPath;
   final bool isProfileAvatar;
   final bool isFilterSelected;
+  final bool isFilterAvatar;
   final VoidCallback? onProfileTap;
   final VoidCallback? onFilterTap;
   final TextEditingController searchController;
@@ -274,6 +280,7 @@ class _TopNavBar extends StatelessWidget {
     required this.profileIconPath,
     required this.isProfileAvatar,
     required this.isFilterSelected,
+    required this.isFilterAvatar,
     required this.onProfileTap,
     required this.onFilterTap,
     required this.searchController,
@@ -290,6 +297,7 @@ class _TopNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isNetworkImage = profileIconPath.startsWith('http');
+    final bool isFilterNetworkImage = filterIconPath.startsWith('http');
     final double popupWidth = MediaQuery.of(context).size.width * 0.50;
 
     return Row(
@@ -299,29 +307,31 @@ class _TopNavBar extends StatelessWidget {
           onTap: onProfileTap ?? () {},
           child: _CircleButton(
             size: 45,
-            border: Border.all(
-              color: Colors.white54,
-              width: 2,
-            ),
+            border: Border.all(color: Colors.white54, width: 2),
             child: isProfileAvatar
                 ? (profileIconPath.isEmpty
-                ? const Icon(Icons.person, color: Colors.white)
-                : Image(
-              image: isNetworkImage
-                  ? NetworkImage(profileIconPath)
-                  : AssetImage(profileIconPath) as ImageProvider,
-              fit: BoxFit.cover,
-              width: 45,
-              height: 45,
-            ))
+                      ? Image.asset(
+                          'assets/icons/home_page/profile_photo.png', // TODO: modify the path here
+                          fit: BoxFit.cover,
+                          width: 45,
+                          height: 45,
+                        )
+                      : Image(
+                          image: isNetworkImage
+                              ? NetworkImage(profileIconPath)
+                              : AssetImage(profileIconPath) as ImageProvider,
+                          fit: BoxFit.cover,
+                          width: 45,
+                          height: 45,
+                        ))
                 : Center(
-              child: Image.asset(
-                profileIconPath,
-                width: 28,
-                height: 28,
-                color: Colors.white,
-              ),
-            ),
+                    child: Image.asset(
+                      profileIconPath,
+                      width: 28,
+                      height: 28,
+                      color: Colors.white,
+                    ),
+                  ),
           ),
         ),
 
@@ -361,12 +371,30 @@ class _TopNavBar extends StatelessWidget {
               width: 2,
             ),
             child: Center(
-              child: Image.asset(
-                filterIconPath,
-                width: 28,
-                height: 28,
-                color: Colors.white,
-              ),
+              child: isFilterAvatar
+                  ? (filterIconPath.isEmpty
+                        ? Image.asset(
+                            'assets/icons/home_page/profile_photo.png', // TODO: modify the path here
+                            width: 45,
+                            height: 45,
+                            fit: BoxFit.cover,
+                          )
+                        : Image(
+                            image: isFilterNetworkImage
+                                ? NetworkImage(filterIconPath)
+                                : AssetImage(filterIconPath) as ImageProvider,
+                            fit: BoxFit.cover,
+                            width: 45,
+                            height: 45,
+                          ))
+                  : filterIconPath.isEmpty
+                  ? const SizedBox.shrink()
+                  : Image.asset(
+                      filterIconPath,
+                      width: 28,
+                      height: 28,
+                      color: Colors.white,
+                    ),
             ),
           ),
         ),

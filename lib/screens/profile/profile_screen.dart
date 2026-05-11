@@ -1008,7 +1008,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         padding: EdgeInsets.zero,
         itemCount: _languages.length,
-        separatorBuilder: (_, __) => _PopupDivider(width: pw),
+        separatorBuilder: (_, _) => _PopupDivider(width: pw),
         itemBuilder: (context, i) {
           final String code     = _languages[i]['code']!;
           final String name     = _languages[i]['name']!;

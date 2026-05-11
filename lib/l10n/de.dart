@@ -84,6 +84,12 @@ const Map<String, String> de = {
   "no_events_by_you": "Keine Events",
   "no_events_invited": "Keine Einladungen",
   "no_events_nearby": "Keine Events In Der Nähe",
+  "follow": "Folgen",
+  "follow_back": "Zurueck Folgen",
+  "unfollow": "Entfolgen",
+  "follow_failed": "Folgen Fehlgeschlagen",
+  "unfollow_failed": "Entfolgen Fehlgeschlagen",
+  "user_not_found": "Benutzer Nicht Gefunden",
 
   // edit profile //
   "edit_username": "Benutzername",

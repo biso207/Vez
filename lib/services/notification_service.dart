@@ -40,7 +40,7 @@ class NotificationService {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/launcher_icon',
+      '@mipmap/ic_launcher',
     );
     const initializationSettings = InitializationSettings(
       android: androidSettings,
@@ -125,7 +125,7 @@ class NotificationService {
           channelDescription: _androidChannel.description,
           importance: Importance.high,
           priority: Priority.high,
-          icon: '@mipmap/launcher_icon',
+          icon: '@mipmap/ic_launcher',
         ),
       ),
       payload: message.data.isEmpty ? null : jsonEncode(message.data),
