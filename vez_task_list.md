@@ -35,9 +35,9 @@
 
 ## NUOVE FEATURE CORE
 
-- [ ] Implementare i "Social Groups" per la tipologia "Private"
-- [ ] UI gestione gruppi sociali (creazione, modifica, aggiunta utenti)
-- [ ] Implementare selezione gruppo durante creazione evento Private
+- [ ] Implementare i "Circles" per la tipologia "Private"
+- [ ] UI gestione Circles (creazione, modifica, aggiunta utenti)
+- [ ] Implementare selezione Circles durante creazione evento Private
 
 ## Gestione ruoli evento
 
