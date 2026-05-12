@@ -4,6 +4,7 @@
 // libraries
 import 'dart:convert';
 import 'dart:io'; // library to manage files
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart'
     as http; // http packet (standard in Dart/Flutter).
@@ -18,6 +19,212 @@ class RemoteDbService {
   final String _baseUrl = ApiKeys.baseUrl;
   String? errorMessage;
   final salt = "biso207_and_lasagnezio_the_best";
+
+  /// requests a new signup otp in the remote otp table.
+  Future<int> requestSignupOtp({
+    required String phone,
+    required String accountType,
+  }) async {
+    try {
+      final String otpCode = (Random.secure().nextInt(900000) + 100000)
+          .toString();
+      final DateTime expiresAt = DateTime.now().toUtc().add(
+        const Duration(minutes: 10),
+      );
+      final Uri url = Uri.parse('$_baseUrl/rest/v1/venue_otp_verifications');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_apiKey',
+          'apikey': _apiKey,
+          'Prefer': 'return=representation',
+        },
+        body: jsonEncode({
+          'otp_code': otpCode,
+          'expires_at': expiresAt.toIso8601String(),
+        }),
+      );
+
+      debugPrint(
+        'Signup OTP requested for $accountType phone $phone: $otpCode',
+      );
+      return response.statusCode;
+    } catch (e) {
+      debugPrint('Signup OTP request error: $e');
+      return 0;
+    }
+  }
+
+  /// verifies a signup otp and marks it as consumed.
+  Future<int> verifySignupOtp(String code) async {
+    try {
+      final String otpCode = code.trim();
+      final String encodedCode = Uri.encodeComponent(otpCode);
+      final Uri queryUrl = Uri.parse(
+        '$_baseUrl/rest/v1/venue_otp_verifications'
+        '?otp_code=eq.$encodedCode'
+        '&verified_at=is.null'
+        '&select=expires_at'
+        '&order=created_at.desc'
+        '&limit=1',
+      );
+
+      final queryResponse = await http.get(
+        queryUrl,
+        headers: {'Authorization': 'Bearer $_apiKey', 'apikey': _apiKey},
+      );
+      if (queryResponse.statusCode != 200) return queryResponse.statusCode;
+
+      final List<dynamic> rows = jsonDecode(queryResponse.body);
+      if (rows.isEmpty) return 401;
+
+      final DateTime? expiresAt = DateTime.tryParse(
+        (rows.first['expires_at'] ?? '').toString(),
+      );
+      if (expiresAt == null || expiresAt.isBefore(DateTime.now().toUtc())) {
+        return 410;
+      }
+
+      final Uri patchUrl = Uri.parse(
+        '$_baseUrl/rest/v1/venue_otp_verifications'
+        '?otp_code=eq.$encodedCode'
+        '&verified_at=is.null',
+      );
+      final patchResponse = await http.patch(
+        patchUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_apiKey',
+          'apikey': _apiKey,
+        },
+        body: jsonEncode({
+          'verified_at': DateTime.now().toUtc().toIso8601String(),
+        }),
+      );
+
+      return patchResponse.statusCode == 204 ? 200 : patchResponse.statusCode;
+    } catch (e) {
+      debugPrint('Signup OTP verification error: $e');
+      return 0;
+    }
+  }
+
+  /// registers a user or venue account from the restored signup flow.
+  Future<int> signupAuthFlow({
+    required String accountType,
+    required String displayName,
+    required String phone,
+    required String password,
+    required String city,
+    File? profileImage,
+  }) async {
+    try {
+      String photoUrl = "";
+      if (profileImage != null) {
+        photoUrl = await uploadProfilePhoto(profileImage, displayName) ?? "";
+      }
+
+      final String hashedPassword = sha256
+          .convert(utf8.encode(password + salt))
+          .toString();
+      final Uri userUrl = Uri.parse('$_baseUrl/rest/v1/users');
+      final Map<String, dynamic> userData = {
+        'username': displayName,
+        'phone': phone,
+        'hash_psw': hashedPassword,
+        'date_of_birth': '1900-01-01',
+        'city': city,
+        'profile_photo': photoUrl,
+        'bio': '',
+        'account_state': 'active',
+        'account_type': accountType,
+        'num_created_events': 0,
+        'num_participated_events': 0,
+        'language': StringRes.locale,
+      };
+
+      final userResponse = await http.post(
+        userUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_apiKey',
+          'apikey': _apiKey,
+          'Prefer': 'return=representation',
+        },
+        body: jsonEncode(userData),
+      );
+      if (userResponse.statusCode != 200 && userResponse.statusCode != 201) {
+        return userResponse.statusCode;
+      }
+
+      final List<dynamic> data = jsonDecode(userResponse.body);
+      final String userId = data.isNotEmpty
+          ? (data[0]['user_id'] ?? '').toString()
+          : '';
+      if (userId.isEmpty) return 0;
+
+      if (accountType == 'venue') {
+        final int venueResult = await _createVenueProfile(
+          ownerId: userId,
+          name: displayName,
+          phone: phone,
+          city: city,
+          profilePhoto: photoUrl,
+          hashPsw: hashedPassword,
+        );
+        if (venueResult != 200 && venueResult != 201) return venueResult;
+      }
+
+      await UserSession().startSession(
+        userID: userId,
+        locale: StringRes.locale,
+        accountType: accountType,
+        accountState: 'active',
+      );
+      await NotificationService().syncTokenForCurrentUser();
+      return userResponse.statusCode;
+    } catch (e) {
+      debugPrint('Signup auth flow error: $e');
+      return 0;
+    }
+  }
+
+  /// creates the venue profile row linked to the auth user row.
+  Future<int> _createVenueProfile({
+    required String ownerId,
+    required String name,
+    required String phone,
+    required String city,
+    required String profilePhoto,
+    required String hashPsw,
+  }) async {
+    final Uri venueUrl = Uri.parse('$_baseUrl/rest/v1/venues');
+    final response = await http.post(
+      venueUrl,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_apiKey',
+        'apikey': _apiKey,
+        'Prefer': 'return=representation',
+      },
+      body: jsonEncode({
+        'owner_id': ownerId,
+        'name': name,
+        'description': '',
+        'phone': phone,
+        'address': '',
+        'city': city,
+        'website_url': '',
+        'instagram_url': '',
+        'is_verified': true,
+        'profile_photo': profilePhoto,
+        'hash_psw': hashPsw,
+      }),
+    );
+    return response.statusCode;
+  }
 
   /// Registers a new user in the remote database
   Future<int> signup({

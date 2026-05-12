@@ -11,7 +11,7 @@ import '../../services/translation_service.dart';
 import '../../services/user_session.dart';
 import '../../views/widgets/vez_glass.dart';
 import '../home/home_screen.dart';
-import 'account_type_choice_screen.dart';
+import 'signup/account_type_choice_screen.dart';
 import 'venue_pending_screen.dart';
 
 // ── layout constants ─────────────────────────────────────────────────────────
@@ -70,10 +70,7 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           // background image
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg/bg_login.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/bg/login.jpg', fit: BoxFit.cover),
           ),
 
           SafeArea(
@@ -113,12 +110,13 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.only(right: 6),
-                                child: Icon(
+                                child: Image.asset(
                                   _showPassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
+                                      ? 'assets/icons/auth/eye.png'
+                                      : 'assets/icons/auth/eye_off.png',
                                   color: Colors.white54,
-                                  size: 20,
+                                  width: 20,
+                                  height: 20,
                                 ),
                               ),
                             ),

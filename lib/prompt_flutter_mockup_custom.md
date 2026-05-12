@@ -16,7 +16,7 @@ fedelmente il mockup caricato. Devi garantire una perfetta integrazione con lo s
 
 2. **Gestione Asset Icone (Custom Icons)**:
    * **NON** utilizzare le icone di sistema (`Icons.abc`).
-   * Utilizza esclusivamente icone personalizzate (`Image.asset` o `SvgPicture.asset`) con il percorso generico `assets/icons/nome_icona.png`.
+   * Utilizza esclusivamente icone personalizzate (`Image.asset`) con il percorso generico `assets/icons/nome_icona.png`.
    * **MANDATORIO**: Accanto a ogni istanza di asset icona, aggiungi un commento TODO: `// TODO: modify the path here` per permettermi di inserire il percorso corretto.
 
 3. **Fedeltà al Design e Riuso**:
