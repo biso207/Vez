@@ -63,7 +63,8 @@ class RemoteDbService {
   }
 
   /// verifies a signup otp and marks it as consumed.
-  Future<int> verifySignupOtp(String code) async {
+  Future<int> verifySignupOtp(String code)
+  async {
     try {
       final String otpCode = code.trim();
       final String encodedCode = Uri.encodeComponent(otpCode);
@@ -120,7 +121,8 @@ class RemoteDbService {
   Future<int> login({
     required String username,
     required String password,
-  }) async {
+  })
+  async {
     try {
       // 1. Hashing the password (must match the salt used in signup)
       var bytes = utf8.encode(password + salt);
@@ -169,7 +171,8 @@ class RemoteDbService {
   }
 
   /// Logout a user from the local device
-  Future<void> logout() async {
+  Future<void> logout()
+  async {
     final notificationService = NotificationService();
 
     try {
@@ -218,12 +221,12 @@ class RemoteDbService {
     required String phone,
     required String password,
     required String city,
-  }) async {
+  })
+  async {
     try {
       String photoUrl = "";
       if (profileImage != null) {
-        photoUrl =
-            await uploadProfilePhoto("avatars", profileImage, username) ?? "";
+        photoUrl = await uploadProfilePhoto("avatars", profileImage, username) ?? "";
       }
 
       // STEP HASHING PSW //
@@ -301,13 +304,12 @@ class RemoteDbService {
     required String city,
     required String websiteUrl,
     required String instagramUrl,
-  }) async {
+  })
+  async {
     try {
       String photoUrl = "";
       if (profileImage != null) {
-        photoUrl =
-            await uploadProfilePhoto("avatars_venues", profileImage, name) ??
-            "";
+        photoUrl = await uploadProfilePhoto("avatars_venues", profileImage, name) ?? "";
       }
 
       // STEP HASHING PSW //
@@ -355,36 +357,6 @@ class RemoteDbService {
     }
   }
 
-  /// Verify the identity of a venue -> if it fails the account is suspended
-  Future<int> verifyVenueCode(String code) async {
-    try {
-      final url = Uri.parse('$_baseUrl/functions/v1/verify-venue-code');
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-          'apikey': _apiKey,
-        },
-        body: jsonEncode({
-          'user_id': UserSession().userID,
-          'verification_code': code.trim().toUpperCase(),
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        await UserSession().updateAccountStatus(
-          accountType: AccountType.venue,
-          accountState: 'pending_verification',
-        );
-      }
-
-      return response.statusCode;
-    } catch (_) {
-      return 0;
-    }
-  }
-
   Future<int> completeSignup({
     required AccountType accountType,
     required String username,
@@ -392,13 +364,12 @@ class RemoteDbService {
     required String password,
     required String city,
     File? profileImage,
-  }) async {
+  })
+  async {
     try {
       final type = accountType.name;
 
-      final state = accountType == AccountType.venue
-          ? 'pending_verification'
-          : 'active';
+      final state = 'active';
 
       String? authUserId;
       if (_useSupabaseAuthUserId) {
@@ -407,18 +378,22 @@ class RemoteDbService {
         authUserId = user.id;
       }
 
-      // 🔐 hash password
+      // hash password
       final bytes = utf8.encode(password + salt);
       final hashedPassword = sha256.convert(bytes).toString();
 
-      // 📸 upload immagine
+      // upload immagine
       String photoUrl = '';
       if (profileImage != null) {
-        photoUrl =
-            await uploadProfilePhoto("avatars", profileImage, username) ?? '';
+        photoUrl = await uploadProfilePhoto(
+          "avatars",
+          profileImage,
+          username,
+        ) ??
+            '';
       }
 
-      // 🧱 CREA USER BASE
+      // CREA USER BASE
       final userData = {
         'username': username,
         'phone': phone,
@@ -453,7 +428,7 @@ class RemoteDbService {
       final String userId = (data.first['user_id'] ?? '').toString();
       if (userId.isEmpty) return 500;
 
-      // 🏢 CREA VENUE EXTRA
+      // CREA VENUE EXTRA
       if (accountType == AccountType.venue) {
         await http.post(
           Uri.parse('$_baseUrl/rest/v1/venues'),
@@ -462,11 +437,14 @@ class RemoteDbService {
             'Authorization': 'Bearer $_apiKey',
             'apikey': _apiKey,
           },
-          body: jsonEncode({'venue_id': userId, 'owner_id': userId}),
+          body: jsonEncode({
+            'venue_id': userId,
+            'owner_id': userId,
+          }),
         );
       }
 
-      // 💾 SESSION
+      // SESSION
       await UserSession().startSession(
         userID: userId,
         locale: StringRes.locale,
@@ -485,7 +463,8 @@ class RemoteDbService {
     }
   }
 
-  Future<void> refreshCurrentAccountStatus() async {
+  Future<void> refreshCurrentAccountStatus()
+  async {
     final String userId = UserSession().userID;
     if (userId.isEmpty) return;
 
@@ -517,12 +496,11 @@ class RemoteDbService {
     String bucketName,
     File imageFile,
     String username,
-  ) async {
+  )
+  async {
     try {
       final fileName = '$username-${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final url = Uri.parse(
-        '$_baseUrl/storage/v1/object/$bucketName/$fileName',
-      );
+      final url = Uri.parse('$_baseUrl/storage/v1/object/$bucketName/$fileName');
 
       final response = await http.post(
         url,
