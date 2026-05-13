@@ -13,7 +13,6 @@ import '../../views/widgets/vez_glass.dart';
 import '../home/home_screen.dart';
 import 'blocked_screen.dart';
 import 'signup/account_type_choice_screen.dart';
-import 'venue_pending_screen.dart';
 
 // ── layout constants ─────────────────────────────────────────────────────────
 const double _kErrorSlotH = 56.0;

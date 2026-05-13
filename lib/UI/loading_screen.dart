@@ -8,7 +8,6 @@ import '../services/user_session.dart';
 import 'home/home_screen.dart';
 import '../services/translation_service.dart';
 import 'auth/login_screen.dart';
-import 'auth/venue_pending_screen.dart';
 
 // ── loading page ─────────────────────────────────────────────────────────────
 //

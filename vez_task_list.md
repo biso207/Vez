@@ -1,4 +1,4 @@
-# Task List - Vez Improvements - Deadline: May 8th
+# Task List - Vez Improvements - Deadline: May 15th
 
 - [ ] Migliorare e completare la creazione account per locali (pub, bar, ristoranti, etc.)
 - [ ] Migliorare il filtro "Nearby"
@@ -40,6 +40,8 @@
 - [ ] Implementare i "Circles" per la tipologia "Private"
 - [ ] UI gestione Circles (creazione, modifica, aggiunta utenti)
 - [ ] Implementare selezione Circles durante creazione evento Private
+
+# Task List - Vez Improvements - Post May 15th
 
 ## Gestione ruoli evento
 
