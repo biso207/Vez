@@ -1,11 +1,12 @@
 // Developed and Designed by Outly • © 2026
-// Singleton class for managing the current user's session and preferences.
+// FIXED by Senior → enum-safe, clean, production-ready
 
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/account_type.dart';
 
 // ── user session ─────────────────────────────────────────────────────────────
 //
-//   used for: persisting user ID and locale settings across app launches.
+// used for: persisting user session across app launches.
 class UserSession {
   UserSession._internal();
 
@@ -20,32 +21,44 @@ class UserSession {
   String userID = '';
   String profilePic = 'assets/icons/home_page/icon_profile.png';
   String locale = '';
-  String accountType = 'user';
+  AccountType accountType = AccountType.user;
   String accountState = 'active';
 
   // ── is logged in ───────────────────────────────────────────────────────────
-  //
-  //   used for: determining if there is an active user session.
-  bool get isLoggedIn => userID.isNotEmpty;
+  bool get isLoggedIn => userID.isNotEmpty && accountState == 'active';
+  // ── is active ──────────────────────────────────────────────────────────────
+  bool get isActive => accountState == 'active';
+
+  // ── ENUM HELPERS ───────────────────────────────────────────────────────────
+
+  AccountType _accountTypeFromString(String type) {
+    switch (type) {
+      case 'venue':
+        return AccountType.venue;
+      case 'user':
+      default:
+        return AccountType.user;
+    }
+  }
 
   // ── restore ────────────────────────────────────────────────────────────────
-  //
-  //   used for: loading session data from local storage at startup.
   Future<void> restore() async {
     final prefs = await SharedPreferences.getInstance();
+
     userID = prefs.getString(_userIdKey) ?? '';
     locale = prefs.getString(_localeKey) ?? '';
-    accountType = prefs.getString(_accountTypeKey) ?? 'user';
+
+    final typeString = prefs.getString(_accountTypeKey) ?? 'user';
+    accountType = _accountTypeFromString(typeString);
+
     accountState = prefs.getString(_accountStateKey) ?? 'active';
   }
 
   // ── start session ──────────────────────────────────────────────────────────
-  //
-  //   used for: initializing and persisting a new user session.
   Future<void> startSession({
     required String userID,
     String? locale,
-    String accountType = 'user',
+    AccountType accountType = AccountType.user,
     String accountState = 'active',
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -53,8 +66,9 @@ class UserSession {
     this.userID = userID;
     this.accountType = accountType;
     this.accountState = accountState;
+
     await prefs.setString(_userIdKey, userID);
-    await prefs.setString(_accountTypeKey, accountType);
+    await prefs.setString(_accountTypeKey, accountType.name);
     await prefs.setString(_accountStateKey, accountState);
 
     if (locale != null && locale.isNotEmpty) {
@@ -63,20 +77,21 @@ class UserSession {
     }
   }
 
+  // ── update account status ──────────────────────────────────────────────────
   Future<void> updateAccountStatus({
-    required String accountType,
+    required AccountType accountType,
     required String accountState,
   }) async {
+    final prefs = await SharedPreferences.getInstance();
+
     this.accountType = accountType;
     this.accountState = accountState;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accountTypeKey, accountType);
+
+    await prefs.setString(_accountTypeKey, accountType.name);
     await prefs.setString(_accountStateKey, accountState);
   }
 
   // ── save locale ────────────────────────────────────────────────────────────
-  //
-  //   used for: persisting the user's selected language.
   Future<void> saveLocale(String locale) async {
     this.locale = locale;
     final prefs = await SharedPreferences.getInstance();
@@ -84,15 +99,16 @@ class UserSession {
   }
 
   // ── clear session ──────────────────────────────────────────────────────────
-  //
-  //   used for: removing session data and optionally resetting the locale.
   Future<void> clearSession({bool keepLocale = true}) async {
     final prefs = await SharedPreferences.getInstance();
 
+    // 🔥 Reset memoria
     userID = '';
     profilePic = 'assets/icons/home_page/icon_profile.png';
-    accountType = 'user';
+    accountType = AccountType.user;
     accountState = 'active';
+
+    // 🔥 Pulizia storage
     await prefs.remove(_userIdKey);
     await prefs.remove(_accountTypeKey);
     await prefs.remove(_accountStateKey);

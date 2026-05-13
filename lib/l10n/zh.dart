@@ -42,6 +42,10 @@ const Map<String, String> zh = {
   "resend_otp_code": "Resend OTP Code",
   "cancel_signup_title": "Cancel Signup?",
   "cancel_signup_message": "Your signup data will be deleted.",
+  'blocked_account': "账号已封锁",
+  'this_account_is_blocked': "此账号已被封锁",
+  'write_to': "写信给",
+  'request_unlock_account': "申请解锁",
 
   // errors //
   "fill_all_fields": "请填写所有字段",

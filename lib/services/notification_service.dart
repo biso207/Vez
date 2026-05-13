@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -19,6 +20,7 @@ class NotificationService {
 
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
+  StreamSubscription<String>? _tokenRefreshSub;
 
   static const AndroidNotificationChannel _androidChannel =
       AndroidNotificationChannel(
@@ -62,10 +64,17 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen(_showForegroundNotification);
     _messaging.onTokenRefresh.listen(_saveTokenForCurrentUser);
 
+    _tokenRefreshSub = _messaging.onTokenRefresh.listen((token) {
+      if (UserSession().isLoggedIn) {
+        _saveTokenForCurrentUser(token);
+      }
+    });
+
     _isInitialized = true;
   }
 
-  Future<void> syncTokenForCurrentUser() async {
+  Future<void> syncTokenForCurrentUser()
+  async {
     if (kIsWeb || !UserSession().isLoggedIn) return;
 
     await _messaging.requestPermission(alert: true, badge: true, sound: true);
@@ -80,7 +89,8 @@ class NotificationService {
     await _saveTokenForCurrentUser(token);
   }
 
-  Future<void> _saveTokenForCurrentUser(String token) async {
+  Future<void> _saveTokenForCurrentUser(String token)
+  async {
     final String userId = UserSession().userID;
     if (userId.isEmpty) return;
 
@@ -110,7 +120,8 @@ class NotificationService {
     }
   }
 
-  Future<void> _showForegroundNotification(RemoteMessage message) async {
+  Future<void> _showForegroundNotification(RemoteMessage message)
+  async {
     final notification = message.notification;
     if (notification == null) return;
 
@@ -130,5 +141,35 @@ class NotificationService {
       ),
       payload: message.data.isEmpty ? null : jsonEncode(message.data),
     );
+  }
+
+  Future<void> removeTokenForCurrentUser()
+  async {
+    final String userId = UserSession().userID;
+    if (userId.isEmpty) return;
+
+    final url = Uri.parse(
+      '${ApiKeys.baseUrl}/rest/v1/users?user_id=eq.$userId',
+    );
+
+    try {
+      await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${ApiKeys.remoteDbKey}',
+          'apikey': ApiKeys.remoteDbKey,
+          'Prefer': 'return=minimal',
+        },
+        body: jsonEncode({'fcm_token': null}),
+      );
+    } catch (e) {
+      debugPrint('FCM token remove error: $e');
+    }
+  }
+
+  Future<void> dispose() async {
+    await _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = null;
   }
 }

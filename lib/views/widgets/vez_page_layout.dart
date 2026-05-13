@@ -17,7 +17,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-import '../../screens/home/home_event.dart';
+import '../../UI/home/home_event.dart';
 import '../../services/haptic_service.dart';
 import '../../services/translation_service.dart';
 import 'vez_glass.dart';

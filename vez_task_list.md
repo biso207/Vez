@@ -32,6 +32,8 @@
 - [x] Evento "expired" quando passata la data:
   - [x] mostrato in bacheca
   - [x] sparisce dai carousels (Invites, Yours, Nearby)
+- [x] Pulire completamente la sessione utente e rimuovere il bug delle notifiche che arrivano ai vecchi account loggati
+- [x] Implementare la schermata per gli account bloccati (ban, sospensione, not_verified)
 
 ## NUOVE FEATURE CORE
 

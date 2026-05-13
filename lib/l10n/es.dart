@@ -43,6 +43,10 @@ const Map<String, String> es = {
   "resend_otp_code": "Reenviar Codigo OTP",
   "cancel_signup_title": "Cancelar Registro?",
   "cancel_signup_message": "Tus datos de registro se eliminaran.",
+  'blocked_account': "Cuenta Bloqueada",
+  'this_account_is_blocked': "Esta cuenta está bloqueada",
+  'write_to': "Escribe a",
+  'request_unlock_account': "per solicitar el desbloqueo",
 
   // errors //
   "fill_all_fields": "Completa Todos Los Campos",
