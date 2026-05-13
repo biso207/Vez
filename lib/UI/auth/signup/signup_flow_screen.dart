@@ -1,4 +1,4 @@
-// Developed and Designed by Outly • © 2026
+// Developed and Designed by Outly • 2026
 // main screen that assembles the shared user and venue signup flow.
 
 import 'package:flutter/material.dart';
@@ -11,21 +11,18 @@ import '../../home/home_screen.dart';
 import 'signup_controller.dart';
 import 'signup_widgets.dart';
 
-// ── signup flow screen ────────────────────────────────────────────────────────
-//
-//   displays the three-step signup flow for one account type.
+// displays the three-step signup flow for one account type.
 class SignupFlowScreen extends StatefulWidget {
   final AccountType accountType;
 
   const SignupFlowScreen({super.key, required this.accountType});
 
+  // creates the signup flow state.
   @override
   State<SignupFlowScreen> createState() => _SignupFlowScreenState();
 }
 
-// ── signup flow screen state ──────────────────────────────────────────────────
-//
-//   coordinates the signup controller with the screen lifecycle.
+// coordinates the signup controller with the screen lifecycle.
 class _SignupFlowScreenState extends State<SignupFlowScreen> {
   late final SignupFlowController _controller;
 
@@ -37,7 +34,7 @@ class _SignupFlowScreenState extends State<SignupFlowScreen> {
     _controller.addListener(_refresh);
   }
 
-  // releases the controller when the screen is disposed.
+  // releases the controller when the screen closes.
   @override
   void dispose() {
     _controller.removeListener(_refresh);
@@ -45,7 +42,7 @@ class _SignupFlowScreenState extends State<SignupFlowScreen> {
     super.dispose();
   }
 
-  // triggers a rebuild when the controller state changes.
+  // rebuilds the screen when the controller changes.
   void _refresh() {
     if (mounted) setState(() {});
   }
@@ -53,93 +50,97 @@ class _SignupFlowScreenState extends State<SignupFlowScreen> {
   // builds the signup flow screen.
   @override
   Widget build(BuildContext context) {
-    final double sw = MediaQuery.of(context).size.width;
-    final double fieldWidth = sw * 0.75;
+    final Size size = MediaQuery.of(context).size;
+    final double fieldWidth = size.width * 0.75;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: kAuthBlack,
       body: Stack(
         children: [
-          // background image for the current account type
+          // background image
           Positioned.fill(
-            child: Image.asset(
-              widget.accountType.backgroundAsset,
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset(widget.accountType.backgroundAsset, fit: BoxFit.cover),
           ),
 
           SafeArea(
-            child: Column(
-              children: [
-                // ── top header: close button + title ────────────────────────
-                //   close button overlaps top-right; title sits at kAuthTopPad.
-                SizedBox(
-                  height: kAuthTopPad + 80, // enough room for title block
-                  child: Stack(
-                    children: [
-                      // close button pinned to top-right
-                      Positioned(
-                        top: 6,
-                        right: 18,
-                        child: AuthCircleButton(
-                          assetPath: 'assets/icons/auth/close.png', // TODO: modify the path here
-                          onTap: _confirmCancel,
-                          size: 50,
-                          iconSize: 40,
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 148,
+                    child: Stack(
+                      children: [
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 6, right: 18),
+                            child: AuthCircleButton(
+                              assetPath: 'assets/icons/auth/close.png',
+                              onTap: _confirmCancel,
+                              size: 50,
+                              iconSize: 40,
+                            ),
+                          ),
                         ),
-                      ),
-                      // title block placed at kAuthTopPad from the top
-                      Positioned(
-                        top: kAuthTopPad,
-                        left: kAuthHPad,
-                        right: kAuthHPad,
-                        child: TitleBlock(
-                          title: widget.accountType.title,
-                          subtitle: widget.accountType.subtitle,
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: TitleBlock(
+                              title: widget.accountType.title,
+                              subtitle: widget.accountType.subtitle,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-
-                // ── center: paged content steps ──────────────────────────────
-                Expanded(
-                  child: PageView(
-                    controller: _controller.pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    onPageChanged: _controller.setPage,
-                    children: [
-                      _SignupStepOne(
-                        controller: _controller,
-                        fieldWidth: fieldWidth,
-                      ),
-                      _SignupStepTwo(
-                        controller: _controller,
-                        fieldWidth: fieldWidth,
-                      ),
-                      _SignupStepThree(
-                        controller: _controller,
-                        fieldWidth: fieldWidth,
-                      ),
-                    ],
+                  Expanded(
+                    child: PageView(
+                      controller: _controller.pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      onPageChanged: _controller.setPage,
+                      children: [
+                        _SignupStepOne(
+                          controller: _controller,
+                          fieldWidth: fieldWidth,
+                        ),
+                        _SignupStepTwo(
+                          controller: _controller,
+                          fieldWidth: fieldWidth,
+                        ),
+                        _SignupStepThree(
+                          controller: _controller,
+                          fieldWidth: fieldWidth,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-
-                // ── bottom: error · dots · nav buttons ───────────────────────
-                AuthErrorSlot(message: _controller.error),
-                const SizedBox(height: kAuthBottomGap),
-                AuthStepDots(currentPage: _controller.page, total: 3),
-                const SizedBox(height: kAuthBottomGap),
-                _BottomNavigation(
-                  controller: _controller,
-                  onComplete: _handleComplete,
-                ),
-                const SizedBox(height: kAuthBottomPad),
-              ],
+                  SizedBox(
+                    height: 218,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 28),
+                          child: AuthErrorSlot(message: _controller.error),
+                        ),
+                        const SizedBox(height: 18),
+                        AuthStepDots(currentPage: _controller.page, total: 3),
+                        const SizedBox(height: 18),
+                        _BottomNavigation(
+                          controller: _controller,
+                          onComplete: _handleComplete,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-
           if (_controller.loading) const AuthLoadingOverlay(),
         ],
       ),
@@ -154,7 +155,7 @@ class _SignupFlowScreenState extends State<SignupFlowScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
-        (_) => false,
+            (_) => false,
       );
     }
   }
@@ -175,9 +176,7 @@ class _SignupFlowScreenState extends State<SignupFlowScreen> {
   }
 }
 
-// ── step 1: profile photo + name ──────────────────────────────────────────────
-//
-//   renders the profile photo picker and name / venue-name input.
+// renders profile photo and name input.
 class _SignupStepOne extends StatelessWidget {
   final SignupFlowController controller;
   final double fieldWidth;
@@ -191,7 +190,6 @@ class _SignupStepOne extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // profile photo picker — icon is always icon_camera.png
           AuthProfilePicker(
             image: controller.profileImage,
             onTap: controller.pickImage,
@@ -209,9 +207,7 @@ class _SignupStepOne extends StatelessWidget {
   }
 }
 
-// ── step 2: phone + password ──────────────────────────────────────────────────
-//
-//   renders the phone number and password inputs.
+// renders phone and password input.
 class _SignupStepTwo extends StatelessWidget {
   final SignupFlowController controller;
   final double fieldWidth;
@@ -234,7 +230,7 @@ class _SignupStepTwo extends StatelessWidget {
               FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s()-]')),
             ],
           ),
-          const SizedBox(height: kAuthFieldGap),
+          const SizedBox(height: 18),
           AuthGlassTextField(
             controller: controller.passwordController,
             hint: StringRes.at('password'),
@@ -246,10 +242,10 @@ class _SignupStepTwo extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 8),
                 child: Image.asset(
                   controller.showPassword
-                      ? 'assets/icons/auth/eye.png'      // TODO: modify the path here
-                      : 'assets/icons/auth/eye_off.png', // TODO: modify the path here
-                  width: 22,
-                  height: 22,
+                      ? 'assets/icons/auth/eye.png'
+                      : 'assets/icons/auth/eye_off.png',
+                  width: 20,
+                  height: 20,
                   color: kAuthWhite70,
                 ),
               ),
@@ -261,10 +257,7 @@ class _SignupStepTwo extends StatelessWidget {
   }
 }
 
-// ── step 3: city + OTP ───────────────────────────────────────────────────────
-//
-//   renders the city picker and the OTP input.
-//   the OTP field uses isOtp=true → white-20 background instead of black-20.
+// renders city and otp input.
 class _SignupStepThree extends StatelessWidget {
   final SignupFlowController controller;
   final double fieldWidth;
@@ -278,7 +271,6 @@ class _SignupStepThree extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // city field with optional location spinner
           Stack(
             alignment: Alignment.centerRight,
             children: [
@@ -305,10 +297,7 @@ class _SignupStepThree extends StatelessWidget {
                 ),
             ],
           ),
-
-          const SizedBox(height: kAuthFieldGap),
-
-          // OTP field — white-20 background to visually distinguish it.
+          const SizedBox(height: 18),
           AuthGlassTextField(
             controller: controller.otpController,
             hint: StringRes.at('otp_code'),
@@ -316,11 +305,8 @@ class _SignupStepThree extends StatelessWidget {
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             maxLength: 6,
-            isOtp: true, // ← white-20 fill instead of black-20
           ),
-
-          const SizedBox(height: kAuthFieldGap),
-
+          const SizedBox(height: 18),
           if (controller.page == 2)
             AuthResendOtpButton(onTap: controller.requestOtp),
         ],
@@ -329,19 +315,14 @@ class _SignupStepThree extends StatelessWidget {
   }
 }
 
-// ── bottom navigation ─────────────────────────────────────────────────────────
-//
-//   renders back and next/save controls for the signup flow.
+// renders back and next controls for the signup flow.
 class _BottomNavigation extends StatelessWidget {
   final SignupFlowController controller;
   final VoidCallback onComplete;
 
-  const _BottomNavigation({
-    required this.controller,
-    required this.onComplete,
-  });
+  const _BottomNavigation({required this.controller, required this.onComplete});
 
-  // builds the bottom navigation row.
+  // builds the bottom navigation buttons.
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -349,16 +330,16 @@ class _BottomNavigation extends StatelessWidget {
       children: [
         if (controller.page > 0) ...[
           AuthCircleButton(
-            assetPath: 'assets/icons/auth/icon_next.png', // TODO: modify the path here
-            rotation: 3.1416,                              // flipped = back arrow
+            assetPath: 'assets/icons/auth/icon_next.png',
+            rotation: 3.1416,
             onTap: controller.back,
           ),
           const SizedBox(width: 40),
         ],
         AuthCircleButton(
           assetPath: controller.page == 2
-              ? 'assets/icons/auth/icon_save.png' // TODO: modify the path here
-              : 'assets/icons/auth/icon_next.png', // TODO: modify the path here
+              ? 'assets/icons/auth/icon_save.png'
+              : 'assets/icons/auth/icon_next.png',
           enabled: controller.canContinue,
           onTap: onComplete,
         ),
