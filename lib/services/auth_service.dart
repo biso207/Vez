@@ -6,7 +6,8 @@ import 'dart:convert';
 import 'dart:io'; // library to manage files
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http; // http packet (standard in Dart/Flutter).
+import 'package:http/http.dart'
+    as http; // http packet (standard in Dart/Flutter).
 import 'package:crypto/crypto.dart'; // library for the hashing of the psw
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vez/services/notification_service.dart';
@@ -17,6 +18,8 @@ import '../models/account_type.dart';
 import 'api_keys.dart'; // private key to connect to the remote db
 
 class RemoteDbService {
+  static const bool _useSupabaseAuthUserId = false;
+
   final String _apiKey = ApiKeys.remoteDbKey;
   final String _baseUrl = ApiKeys.baseUrl;
   String? errorMessage;
@@ -26,8 +29,7 @@ class RemoteDbService {
   Future<int> requestSignupOtp({
     required String phone,
     required String accountType,
-  })
-  async {
+  }) async {
     try {
       final String otpCode = (Random.secure().nextInt(900000) + 100000)
           .toString();
@@ -61,8 +63,7 @@ class RemoteDbService {
   }
 
   /// verifies a signup otp and marks it as consumed.
-  Future<int> verifySignupOtp(String code)
-  async {
+  Future<int> verifySignupOtp(String code) async {
     try {
       final String otpCode = code.trim();
       final String encodedCode = Uri.encodeComponent(otpCode);
@@ -119,8 +120,7 @@ class RemoteDbService {
   Future<int> login({
     required String username,
     required String password,
-  })
-  async {
+  }) async {
     try {
       // 1. Hashing the password (must match the salt used in signup)
       var bytes = utf8.encode(password + salt);
@@ -169,8 +169,7 @@ class RemoteDbService {
   }
 
   /// Logout a user from the local device
-  Future<void> logout()
-  async {
+  Future<void> logout() async {
     final notificationService = NotificationService();
 
     try {
@@ -197,7 +196,6 @@ class RemoteDbService {
       // ======================================
       // Cancella SharedPreferences + memoria singleton
       await UserSession().clearSession();
-
     } catch (e) {
       debugPrint('Logout error: $e');
     }
@@ -220,12 +218,12 @@ class RemoteDbService {
     required String phone,
     required String password,
     required String city,
-  })
-  async {
+  }) async {
     try {
       String photoUrl = "";
       if (profileImage != null) {
-        photoUrl = await uploadProfilePhoto("avatars", profileImage, username) ?? "";
+        photoUrl =
+            await uploadProfilePhoto("avatars", profileImage, username) ?? "";
       }
 
       // STEP HASHING PSW //
@@ -303,12 +301,13 @@ class RemoteDbService {
     required String city,
     required String websiteUrl,
     required String instagramUrl,
-  })
-  async {
+  }) async {
     try {
       String photoUrl = "";
       if (profileImage != null) {
-        photoUrl = await uploadProfilePhoto("avatars_venues", profileImage, name) ?? "";
+        photoUrl =
+            await uploadProfilePhoto("avatars_venues", profileImage, name) ??
+            "";
       }
 
       // STEP HASHING PSW //
@@ -357,8 +356,7 @@ class RemoteDbService {
   }
 
   /// Verify the identity of a venue -> if it fails the account is suspended
-  Future<int> verifyVenueCode(String code)
-  async {
+  Future<int> verifyVenueCode(String code) async {
     try {
       final url = Uri.parse('$_baseUrl/functions/v1/verify-venue-code');
       final response = await http.post(
@@ -394,8 +392,7 @@ class RemoteDbService {
     required String password,
     required String city,
     File? profileImage,
-  })
-  async {
+  }) async {
     try {
       final type = accountType.name;
 
@@ -403,10 +400,12 @@ class RemoteDbService {
           ? 'pending_verification'
           : 'active';
 
-      final supabase = Supabase.instance.client;
-
-      final user = supabase.auth.currentUser;
-      if (user == null) return 500;
+      String? authUserId;
+      if (_useSupabaseAuthUserId) {
+        final user = Supabase.instance.client.auth.currentUser;
+        if (user == null) return 500;
+        authUserId = user.id;
+      }
 
       // 🔐 hash password
       final bytes = utf8.encode(password + salt);
@@ -415,17 +414,12 @@ class RemoteDbService {
       // 📸 upload immagine
       String photoUrl = '';
       if (profileImage != null) {
-        photoUrl = await uploadProfilePhoto(
-          "avatars",
-          profileImage,
-          username,
-        ) ??
-            '';
+        photoUrl =
+            await uploadProfilePhoto("avatars", profileImage, username) ?? '';
       }
 
       // 🧱 CREA USER BASE
       final userData = {
-        'user_id': user.id,
         'username': username,
         'phone': phone,
         'hash_psw': hashedPassword,
@@ -435,6 +429,9 @@ class RemoteDbService {
         'type': type,
         'state': state,
       };
+      if (authUserId != null) {
+        userData['user_id'] = authUserId;
+      }
 
       final userRes = await http.post(
         Uri.parse('$_baseUrl/rest/v1/users'),
@@ -452,6 +449,9 @@ class RemoteDbService {
       }
 
       final data = jsonDecode(userRes.body);
+      if (data is! List || data.isEmpty) return 500;
+      final String userId = (data.first['user_id'] ?? '').toString();
+      if (userId.isEmpty) return 500;
 
       // 🏢 CREA VENUE EXTRA
       if (accountType == AccountType.venue) {
@@ -462,16 +462,13 @@ class RemoteDbService {
             'Authorization': 'Bearer $_apiKey',
             'apikey': _apiKey,
           },
-          body: jsonEncode({
-            'venue_id': user.id,
-            'owner_id': user.id,
-          }),
+          body: jsonEncode({'venue_id': userId, 'owner_id': userId}),
         );
       }
 
       // 💾 SESSION
       await UserSession().startSession(
-        userID: user.id,
+        userID: userId,
         locale: StringRes.locale,
         accountType: accountType == AccountType.venue
             ? AccountType.venue
@@ -488,8 +485,7 @@ class RemoteDbService {
     }
   }
 
-  Future<void> refreshCurrentAccountStatus()
-  async {
+  Future<void> refreshCurrentAccountStatus() async {
     final String userId = UserSession().userID;
     if (userId.isEmpty) return;
 
@@ -517,11 +513,16 @@ class RemoteDbService {
   }
 
   // method to upload a file (profile photo)
-  Future<String?> uploadProfilePhoto(String bucketName, File imageFile, String username)
-  async {
+  Future<String?> uploadProfilePhoto(
+    String bucketName,
+    File imageFile,
+    String username,
+  ) async {
     try {
       final fileName = '$username-${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final url = Uri.parse('$_baseUrl/storage/v1/object/$bucketName/$fileName');
+      final url = Uri.parse(
+        '$_baseUrl/storage/v1/object/$bucketName/$fileName',
+      );
 
       final response = await http.post(
         url,

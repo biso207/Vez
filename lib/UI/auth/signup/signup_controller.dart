@@ -8,15 +8,17 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/account_type.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/translation_service.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 // manages validation, location, otp, and persistence for signup screens.
 class SignupFlowController extends ChangeNotifier {
+  static const String _developmentOtpCode = '123456';
+  static const bool _useSupabasePhoneAuth = false;
+
   final AccountType accountType;
   final RemoteDbService _db = RemoteDbService();
   final ImagePicker _picker = ImagePicker();
@@ -186,15 +188,14 @@ class SignupFlowController extends ChangeNotifier {
     }
   }
 
-  // requests a new otp using supabase phone auth.
+  // requests a new otp, or skips the sms in development mode.
   //
   // used for:
-  // sending a verification sms to the user's phone number.
+  // sending a verification sms when the provider is enabled.
   //
   // design:
-  // relies entirely on supabase auth instead of custom otp tables.
-  // supabase automatically handles otp generation, expiration,
-  // security, rate limiting and verification.
+  // Supabase phone auth remains available behind [_useSupabasePhoneAuth].
+  // while it is disabled, [_developmentOtpCode] is accepted locally.
   Future<bool> requestOtp() async {
     if (!await _hasInternet()) {
       error = StringRes.at('no_internet_connection');
@@ -215,9 +216,9 @@ class SignupFlowController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await Supabase.instance.client.auth.signInWithOtp(
-        phone: phone,
-      );
+      if (_useSupabasePhoneAuth) {
+        await Supabase.instance.client.auth.signInWithOtp(phone: phone);
+      }
 
       loading = false;
       notifyListeners();
@@ -241,8 +242,7 @@ class SignupFlowController extends ChangeNotifier {
   // verifying the sms code and creating the user profile.
   //
   // design:
-  // supabase auth handles authentication and session persistence,
-  // while the custom "users" table stores profile data.
+  // Supabase verifies real sms codes when enabled. Otherwise 123456 is accepted.
   Future<int> completeSignup() async {
     if (!canContinue) {
       error = StringRes.at('fill_all_fields');
@@ -251,9 +251,23 @@ class SignupFlowController extends ChangeNotifier {
     }
 
     loading = true;
+    error = null;
     notifyListeners();
 
     try {
+      if (_useSupabasePhoneAuth) {
+        await Supabase.instance.client.auth.verifyOTP(
+          phone: phoneController.text.trim(),
+          token: otpController.text.trim(),
+          type: OtpType.sms,
+        );
+      } else if (otpController.text.trim() != _developmentOtpCode) {
+        loading = false;
+        error = StringRes.at('otp_invalid');
+        notifyListeners();
+        return 401;
+      }
+
       final result = await _db.completeSignup(
         accountType: accountType,
         username: nameController.text.trim(),
@@ -264,9 +278,16 @@ class SignupFlowController extends ChangeNotifier {
       );
 
       loading = false;
+      if (result != 200 && result != 201) {
+        error = '${StringRes.at("signup_failed")} ($result)';
+      }
       notifyListeners();
       return result;
-
+    } on AuthException catch (e) {
+      loading = false;
+      error = e.message;
+      notifyListeners();
+      return 401;
     } catch (e) {
       loading = false;
       error = StringRes.at('something_went_wrong');
