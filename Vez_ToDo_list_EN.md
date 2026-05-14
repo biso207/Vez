@@ -140,6 +140,9 @@
   - [ ] Sections in the dedicated UI for Users (friends, following, all), Events & Venues
   - [ ] Possibility to interact with the results in the dedicated UI
 
+## Profile & Account Management
+- [ ] Show the list of followers and friends from the profile screen of local and general user
+
 ## 'Circles' Feature
 - [ ] Implement "Circles" for "Private" events
   - [ ] Circles management UI (creation, editing, user management)
