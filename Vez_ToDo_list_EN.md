@@ -1,4 +1,7 @@
-# Vez ToDos
+### Vez is a social platform focused on real-world events and user interaction.
+### This document contains the current development roadmap and implemented features.
+
+# Roadmap 2026
 
 ---
 
@@ -178,3 +181,11 @@
 
 ## UI Improvements
 - [ ] Dark / Light Mode switch
+
+---
+
+Luca Bisognin — Technical Lead  
+Bologna, Italy — May 14, 2026
+
+Vez — Social Event Platform  
+Designed and developed by Outly
