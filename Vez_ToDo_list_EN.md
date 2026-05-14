@@ -1,38 +1,37 @@
 # Vez ToDos
 
 ---
+
 # 1st Task List — Deadline: May 15th
+
 ---
 
 # Bug Fixes
-
 - [x] Fix the title length counter bug during event creation
 - [x] Fully clean the user session and fix the notification bug that sends notifications to previously logged-in accounts
-- [x] In the notifications page, the user must immediately see the updated selection and remain on the same page
-- [x] Center the "Delete Event" button in the event edit page without moving the other page elements
+- [x] In the notifications page, users must immediately see updated selections while remaining on the same page
+- [x] Centre the "Delete Event" button on the event edit page without moving other page elements
 
 ---
 
 # UI / UX Improvements
 
 ## Event Creation & Event UI
-
-- [x] Improve location selection during event creation and specify that the map should be used to display the event in "Nearby"
-- [x] Improve the event preview graphics for "By You" events following the mockup style
-- [x] Complete the preview UI for "Invited" and "Nearby" events
-- [x] Force the user to change the background image during event creation
-- [x] Add guest limit number and price to carousel cards also in the "Yours" group
-- [x] "Expired" event after the event date has passed:
-  - [x] shown in the dashboard
-  - [x] removed from carousels ("Invites", "Yours", "Nearby")
+- [x] Improve location selection during event creation and specify that the map is used to display the event in "Nearby"
+- [x] Improve the event preview graphics for "Yours" events following the mockup style
+- [x] Complete the preview UI for "Invites" and "Nearby" events
+- [x] Force users to change the background image during event creation
+- [x] Add guest limit and price information to carousel cards in the "Yours" section
+- [x] Handle expired events after the event date has passed:
+  - [x] Show expired events in the dashboard
+  - [x] Remove expired events from carousels ("Invites", "Yours", "Nearby")
 
 ## Profile & Settings
-
 - [x] Improve the profile page UI
 - [x] Remove password change from profile editing and lighten the profile image border
-- [x] Improve settings and add password change inside the "User" settings section
-- [x] The top-right button in the profile page opens profile editing
-- [x] Profile info should only display:
+- [x] Improve settings and move password change into the "User" settings section
+- [x] Make the top-right button in the profile page open profile editing
+- [x] Limit visible profile information to:
   - username
   - city
   - bio
@@ -40,13 +39,12 @@
 - [x] Disable click actions on profile information
 
 ## General UI Improvements
-
 - [x] Improve popups by increasing blur and lowering background opacity
 - [x] Improve popup menus for adding and managing guests
-- [x] Improve language labels/texts
+- [x] Improve language labels and texts
 - [x] Remove the "Add Guests" button from public event previews
-- [x] Set "Invited" events as primary in the "Home Page"
-- [x] Add automatic refresh in the "Home Page" every X seconds
+- [x] Set "Invites" events as the primary section on the Home Page
+- [x] Add automatic refresh on the Home Page every X seconds
 - [ ] Improve the "Nearby" filter
 
 ---
@@ -54,106 +52,106 @@
 # New Features & Implementations
 
 ## Business Accounts
-
-- [ ] Improve and complete account creation for venues:
+- [ ] Improve and complete venue account creation for:
   - pubs
   - bars
   - restaurants
   - other venues
 
 ## Social Features
-
 - [x] Allow invited users to see other invited users for a specific event
-- [x] Add user data and interactions:
+- [x] Add user data and social interactions:
   - [x] follow / follow back / unfollow
   - [x] unlock "friendship" status on mutual following
   - [x] followers count
   - [x] created events count
   - [x] attended events count
-  - [x] received likes count on own events
+  - [x] received likes count on owned events
   - [x] display any user's profile when clicking their profile picture
-- [ ] Implement "Circles" for "Private" events
-- [ ] Circles management UI (creation, editing, adding users)
-- [ ] Implement Circles selection during Private event creation
+- [ ] Implement "Circles" for private events
+  - [ ] Circles management UI (creation, editing, user management)
+  - [ ] Circles selection during private event creation
 
 ## Profile & Account Management
-
 - [x] Add profile deletion
-- [x] Implement the screen for blocked accounts:
+- [x] Implement screens for blocked accounts:
   - ban
   - suspension
   - not_verified
+- [ ] Display the event category badge based on the user's most attended event category
 
 ## Architecture & Standardization
-
 - [x] Create a standard inside `vez_page_layout`
   to make top navbar buttons global
-  and easier to modify
+  and easier to manage
 
 ---
 
-# 2nd Task List — Post May 15th
+# 2nd Task List — Deadline: June 1st
 
 ## Event Role Management
-
-- [x] Implement "Co-Host" role (max. 5 per event)
+- [x] Implement the "Co-Host" role (max. 5 per event)
 - [x] Co-Host permissions:
   - invite users
   - remove invited users
   - view participant list
 - [x] Restrict Co-Host permissions (NO event editing, NO event deletion)
 
-## RSVP & Deadline System
+## Expired Event UI
+- [ ] Correctly retrieve the event category and type
+- [ ] Complete the expired event UI in the "Past Events" dashboard
 
+## Event Modification System
+- [ ] Distinguish critical and non-critical changes
+- [ ] Implement "Soft Lock"
+
+## RSVP & Deadline System
 - [ ] Implement "Response Deadline" (Time X)
 - [ ] Automatic deadline calculation based on event distance
 - [ ] Allow manual override by the Host
 - [ ] Handle "Maybe" status after expiration
-- [ ] Event deadline countdown UI
-
-## Event Modification System
-
-- [ ] Distinguish critical / non-critical changes
-- [ ] Implement "Soft Lock"
+- [ ] Add event deadline countdown UI
 
 ## Last-Minute Changes
-
 - [ ] Allow override changes after deadline
-- [ ] Host warning popup
-- [ ] Instant notification for critical changes
+- [ ] Add Host warning popup
+- [ ] Instant notifications for critical changes
 - [ ] Specific notifications (location, time, price)
 
 ## User Reactions
-
 - [ ] Reset user status on critical changes
-- [ ] Participation reconfirmation button
+- [ ] Add participation reconfirmation button
 - [ ] Highlight modifications
 
 ## Event Transparency
-
 - [ ] Show "Last Updated"
 - [ ] Implement Change Log
-- [ ] UI badges for modifications
+- [ ] Add UI badges for modifications
 
 ## Real UX Improvements
-
-- [ ] Google Maps deep links
-- [ ] Direct navigation
+- [ ] Add Google Maps deep links in the event page
+- [ ] Add direct navigation
 - [ ] Improve RSVP clarity
+- [ ] Improve Home Page auto-update system
 
 ## Nearby & Discovery
-
-- [ ] Nearby events ranking
-- [ ] Advanced filters
+- [ ] Improve nearby events ranking
+- [ ] Add advanced filters
 - [ ] Improve search
 - [ ] Create a map showing all events in the searched area
 
+## Event Page
+- [ ] Create the "Event Page" to display detailed information about selected events:
+  - [ ] Google Maps deep link
+  - [ ] Direct navigation
+  - [ ] Improved RSVP clarity
+  - [ ] Dedicated details section
+
 ---
 
-# 3rd Task List — Deadline: June 1st
+# 3rd Task List — Deadline: TBD
 
 ## Achievement System
-
 - [ ] Define the system
 - [ ] Create achievements list
 - [ ] Automatic assignment
@@ -161,26 +159,22 @@
 - [ ] Database saving
 
 ## Attendance Verification
-
-- [ ] Check-in method
+- [ ] Define check-in method
 - [ ] Save attendance status
-- [ ] Anti-fake system
+- [ ] Implement anti-fake system
 - [ ] Show attendance in profile
 - [ ] Achievement integration
 
 ## Reputation System
-
 - [ ] Event ratings
 - [ ] Host ratings
 - [ ] Last-minute modification penalties
 - [ ] Host badges
 
 ## Post-Event Features
-
 - [ ] Photo upload
 - [ ] Events timeline
-- [ ] Attended events
+- [ ] Attended events history
 
 ## UI Improvements
-
-- [ ] Dark/Light Mode switch
+- [ ] Dark / Light Mode switch
