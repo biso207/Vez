@@ -116,6 +116,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _showPassword = false;
   bool _showCurrentPassword = false;
   bool _showConfirmPassword = false;
+  bool _isLoadingProfile = true;
   File? _newProfileImage;
   String? _popupError;
 
@@ -160,15 +161,28 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    final String uid = UserSession().userID;
-    if (uid.isNotEmpty) {
-      _dbGet = GetDBService(userID: uid);
-      _dbSet = SetDBService(userID: uid);
-      _loadUserData();
-    }
+    _initProfileServices();
 
     if (widget.showTutorial) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _runTutorial());
+    }
+  }
+
+  Future<void> _initProfileServices() async {
+    String uid = UserSession().userID;
+    if (uid.isEmpty) {
+      await UserSession().restore();
+      uid = UserSession().userID;
+    }
+
+    if (!mounted) return;
+
+    if (uid.isNotEmpty) {
+      _dbGet = GetDBService(userID: uid);
+      _dbSet = SetDBService(userID: uid);
+      await _loadUserData();
+    } else {
+      setState(() => _isLoadingProfile = false);
     }
   }
 
@@ -217,10 +231,10 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!mounted) return;
 
     // extract positional results from Future.wait
-    final userData         = results[0] as Map<String, dynamic>?;
-    final followersCount   = results[1] as int;
-    final pastCreated      = results[3] as List<Map<String, dynamic>>;
-    final pastParticipated = results[4] as List<Map<String, dynamic>>;
+    final userData = results[0] as Map<String, dynamic>?;
+    final followersCount = results[1] as int;
+    final pastCreated = results[2] as List<Map<String, dynamic>>;
+    final pastParticipated = results[3] as List<Map<String, dynamic>>;
     final pastEvents = ProfileEventHelpers.mergePastEvents(
       pastCreated,
       pastParticipated,
@@ -249,10 +263,11 @@ class _ProfilePageState extends State<ProfilePage> {
       // Count both hosted and guest past events.
       _numParticipatedEvents = pastEvents.length;
 
-      _numFollowers           = followersCount;
-      _numEventLikesReceived  = 0; // todo: this will calculated in future
-      _pastCreatedEvents      = pastCreated;
+      _numFollowers = followersCount;
+      _numEventLikesReceived = 0;
+      _pastCreatedEvents = pastCreated;
       _pastParticipatedEvents = pastParticipated;
+      _isLoadingProfile = false;
     });
   }
 
@@ -1041,6 +1056,7 @@ class _ProfilePageState extends State<ProfilePage> {
       profileIconPath: 'assets/icons/profile_page/settings.png',
       isProfileAvatar: false,
       onProfileTap: () {
+        if (_isLoadingProfile) return;
         HapticService.emphasis();
         _showSettingsPopup(s);
       },
@@ -1049,6 +1065,7 @@ class _ProfilePageState extends State<ProfilePage> {
       filterIconPath: 'assets/icons/event/edit.png',
       isFilterSelected: false,
       onFilterTap: () {
+        if (_isLoadingProfile) return;
         HapticService.emphasis();
         _showEditProfilePopup(s);
       },
@@ -1064,50 +1081,52 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
 
       // ── zone-2 body: scrollable profile content ────────────────────────────
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // top spacer to clear the navbar + blur veil
-            SizedBox(height: 130 * s),
+      body: _isLoadingProfile
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // top spacer to clear the navbar + blur veil
+                  SizedBox(height: 130 * s),
 
-            // user info card
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 5 * s),
-              child: ProfileInfoCard(
-                scale: s,
-                profilePhoto: _profilePhoto,
-                username: _username,
-                cityAkaName: _cityAkaName,
-                city: _city,
-                bio: _bio,
-                showBadge: _effectiveShowBadge,
-                categoryBadgeIconPath: _categoryBadgeIconPath,
+                  // user info card
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5 * s),
+                    child: ProfileInfoCard(
+                      scale: s,
+                      profilePhoto: _profilePhoto,
+                      username: _username,
+                      cityAkaName: _cityAkaName,
+                      city: _city,
+                      bio: _bio,
+                      showBadge: _effectiveShowBadge,
+                      categoryBadgeIconPath: _categoryBadgeIconPath,
+                    ),
+                  ),
+
+                  SizedBox(height: 16 * s),
+
+                  // stats pill
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 50 * s),
+                    child: ProfileStatsPill(
+                      scale: s,
+                      followers: _numFollowers,
+                      events: _numParticipatedEvents,
+                      likes: _numEventLikesReceived,
+                    ),
+                  ),
+
+                  SizedBox(height: 18 * s),
+
+                  ProfilePastEventsGrid(events: _pastEvents, scale: s),
+
+                  SizedBox(height: 120 * s),
+                ],
               ),
             ),
-
-            SizedBox(height: 16 * s),
-
-            // stats pill
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 50 * s),
-              child: ProfileStatsPill(
-                scale: s,
-                followers: _numFollowers,
-                events: _numParticipatedEvents,
-                likes: _numEventLikesReceived,
-              ),
-            ),
-
-            SizedBox(height: 18 * s),
-
-            ProfilePastEventsGrid(events: _pastEvents, scale: s),
-
-            SizedBox(height: 120 * s),
-          ],
-        ),
-      ),
     );
   }
 }
