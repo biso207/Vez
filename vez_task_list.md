@@ -1,134 +1,186 @@
-# Task List - Vez Improvements - Deadline: May 15th
+# Vez ToDos
 
-- [ ] Migliorare e completare la creazione account per locali (pub, bar, ristoranti, etc.)
-- [ ] Migliorare il filtro "Nearby"
-- [x] Migliorare la scelta del luogo nella creazione eventi e specificare di usare la mappa per mostrare l'evento in "Nearby"
-- [x] Completare la UI preview per eventi "Invited" e "Nearby"
-- [x] Migliorare i menù popup per aggiungere e gestire gli invitati
-- [x] Nella pagina delle notifiche l'utente deve vedere il cambio scelta immediatamente e deve rimanere in quella pagina
-- [x] Aggiungere il refresh nella "Home Page" automatico ogni X secondi
-- [x] Togliere il pulsante "Add Guests" dalla preview degli eventi pubblici
-- [x] Impostare gli eventi "Invited" come i principali nella "Home Page"
-- [x] Centrare il pulsante "Delete event" nella modifica evento senza che muova gli altri elementi della pagina
-- [x] Migliorare la grafica della preview per gli eventi "By You" seguendo lo stile del mockup
-- [x] Migliorare le scritte delle lingue
-- [x] Obbligare l'utente a cambiare l'immagine di sfondo nella creazione evento
-- [x] Correggere il bug del contatore di lunghezza del titolo alla creazione evento
-- [x] Permettere agli invitati di vedere gli altri invitati a un determinato evento
-- [x] Aggiungere numero limite ospiti e prezzo nelle card del carousel anche nel gruppo "Yours"
-- [x] Migliorare la UI dei popup aumentando il blur e abbassando l'opacità dello sfondo
-- [x] Migliorare la UI della pagina profilo
-- [x] Il tasto in alto a dx della pagina profilo apre la modifica del profilo, le info del profilo mostrano solo 
-      username, città, bio e foto profilo. Al click non fa più nulla.
-- [x] Creazione di uno standard in vez_page_layout per rendere i pulsante della top navbar "globali" e più facilmente modificabili
-- [x] Migliorare le impostazioni e aggiungere il cambio password nella zona "Utente" delle impostazioni
-- [x] Rimuovere il cambio password dalla modifica del profilo e schiarire il bordo dell'immagine profilo
-- [x] Aggiungere l'eliminazione del Profilo
-- [x] Aggiungere i dati e interazioni tra utenti:
-  - [x] follow/follow_back/unfollow di un utente
-  - [x] sblocco dello stato di "amicizia" al following reciproco
-  - [x] conteggio followers, eventi creati, eventi partecipati, numero like ai propri eventi
-  - [x] mostrare il profilo di un qualunque utente al click sulla sua foto profilo
-- [x] Evento "expired" quando passata la data:
-  - [x] mostrato in bacheca
-  - [x] sparisce dai carousels (Invites, Yours, Nearby)
-- [x] Pulire completamente la sessione utente e rimuovere il bug delle notifiche che arrivano ai vecchi account loggati
-- [x] Implementare la schermata per gli account bloccati (ban, sospensione, not_verified)
+---
+# 1st Task List — Deadline: May 15th
+---
 
-## NUOVE FEATURE CORE
+# Bug Fixes
 
-- [ ] Implementare i "Circles" per la tipologia "Private"
-- [ ] UI gestione Circles (creazione, modifica, aggiunta utenti)
-- [ ] Implementare selezione Circles durante creazione evento Private
-
-# Task List - Vez Improvements - Post May 15th
-
-## Gestione ruoli evento
-
-- [x] Implementare ruolo "Co-Host" (max. 5 per evento)
-- [x] Permessi Co-Host:
-  - invitare utenti
-  - rimuovere invitati
-  - vedere lista partecipanti
-- [x] Limitare Co-Host (NO modifica evento, NO eliminazione)
-
-## Sistema RSVP e Deadline
-
-- [ ] Implementare "Deadline risposta" (Ora X)
-- [ ] Calcolo automatico deadline basato su distanza evento
-- [ ] Possibilità override manuale da parte dell’Host
-- [ ] Gestione stato "Maybe" alla scadenza
-- [ ] UI countdown deadline evento
-
-## Sistema modifiche evento
-
-- [ ] Distinzione modifiche critiche / non critiche
-- [ ] Implementare "Soft Lock"
-
-## Modifiche last-minute
-
-- [ ] Consentire override modifiche dopo deadline
-- [ ] Popup warning Host
-- [ ] Notifica immediata modifiche critiche
-- [ ] Notifiche specifiche (luogo, orario, prezzo)
-
-## Reazione utenti
-
-- [ ] Reset stato utenti su modifiche critiche
-- [ ] Bottone riconferma partecipazione
-- [ ] Highlight modifiche
-
-## Trasparenza evento
-
-- [ ] Mostrare "Last Updated"
-- [ ] Implementare Change Log
-- [ ] Badge UI modifiche
-
-## UX reale
-
-- [ ] Deep link Google Maps
-- [ ] Navigazione diretta
-- [ ] Migliorare chiarezza RSVP
-
-## Nearby & Discovery
-
-- [ ] Ranking eventi Nearby
-- [ ] Filtri avanzati
-- [ ] Migliorare ricerca
-- [ ] Creare una mappa che mostri tutti gli eventi nella zona cercata
+- [x] Fix the title length counter bug during event creation
+- [x] Fully clean the user session and fix the notification bug that sends notifications to previously logged-in accounts
+- [x] In the notifications page, the user must immediately see the updated selection and remain on the same page
+- [x] Center the "Delete Event" button in the event edit page without moving the other page elements
 
 ---
 
-# 2nd Task List - Deadline: June 1st
+# UI / UX Improvements
 
-## Sistema achievements
+## Event Creation & Event UI
 
-- [ ] Definire sistema
-- [ ] Creare lista
-- [ ] Assegnazione automatica
-- [ ] UI profilo
-- [ ] Salvataggio DB
+- [x] Improve location selection during event creation and specify that the map should be used to display the event in "Nearby"
+- [x] Improve the event preview graphics for "By You" events following the mockup style
+- [x] Complete the preview UI for "Invited" and "Nearby" events
+- [x] Force the user to change the background image during event creation
+- [x] Add guest limit number and price to carousel cards also in the "Yours" group
+- [x] "Expired" event after the event date has passed:
+  - [x] shown in the dashboard
+  - [x] removed from carousels ("Invites", "Yours", "Nearby")
 
-## Verifica presenza
+## Profile & Settings
 
-- [ ] Metodo check-in
-- [ ] Salvare stato partecipazione
-- [ ] Anti-fake
-- [ ] Mostrare nel profilo
-- [ ] Collegamento achievement
+- [x] Improve the profile page UI
+- [x] Remove password change from profile editing and lighten the profile image border
+- [x] Improve settings and add password change inside the "User" settings section
+- [x] The top-right button in the profile page opens profile editing
+- [x] Profile info should only display:
+  - username
+  - city
+  - bio
+  - profile picture
+- [x] Disable click actions on profile information
 
-## Sistema reputazione
+## General UI Improvements
 
-- [ ] Rating eventi
-- [ ] Rating Host
-- [ ] Penalità modifiche last-minute
-- [ ] Badge Host
+- [x] Improve popups by increasing blur and lowering background opacity
+- [x] Improve popup menus for adding and managing guests
+- [x] Improve language labels/texts
+- [x] Remove the "Add Guests" button from public event previews
+- [x] Set "Invited" events as primary in the "Home Page"
+- [x] Add automatic refresh in the "Home Page" every X seconds
+- [ ] Improve the "Nearby" filter
 
-## Post-evento
+---
 
-- [ ] Upload foto
-- [ ] Timeline eventi
-- [ ] Eventi partecipati
+# New Features & Implementations
 
-## Miglioramento UI
-- [ ] Switch Dark/Light Mode
+## Business Accounts
+
+- [ ] Improve and complete account creation for venues:
+  - pubs
+  - bars
+  - restaurants
+  - other venues
+
+## Social Features
+
+- [x] Allow invited users to see other invited users for a specific event
+- [x] Add user data and interactions:
+  - [x] follow / follow back / unfollow
+  - [x] unlock "friendship" status on mutual following
+  - [x] followers count
+  - [x] created events count
+  - [x] attended events count
+  - [x] received likes count on own events
+  - [x] display any user's profile when clicking their profile picture
+- [ ] Implement "Circles" for "Private" events
+- [ ] Circles management UI (creation, editing, adding users)
+- [ ] Implement Circles selection during Private event creation
+
+## Profile & Account Management
+
+- [x] Add profile deletion
+- [x] Implement the screen for blocked accounts:
+  - ban
+  - suspension
+  - not_verified
+
+## Architecture & Standardization
+
+- [x] Create a standard inside `vez_page_layout`
+  to make top navbar buttons global
+  and easier to modify
+
+---
+
+# 2nd Task List — Post May 15th
+
+## Event Role Management
+
+- [x] Implement "Co-Host" role (max. 5 per event)
+- [x] Co-Host permissions:
+  - invite users
+  - remove invited users
+  - view participant list
+- [x] Restrict Co-Host permissions (NO event editing, NO event deletion)
+
+## RSVP & Deadline System
+
+- [ ] Implement "Response Deadline" (Time X)
+- [ ] Automatic deadline calculation based on event distance
+- [ ] Allow manual override by the Host
+- [ ] Handle "Maybe" status after expiration
+- [ ] Event deadline countdown UI
+
+## Event Modification System
+
+- [ ] Distinguish critical / non-critical changes
+- [ ] Implement "Soft Lock"
+
+## Last-Minute Changes
+
+- [ ] Allow override changes after deadline
+- [ ] Host warning popup
+- [ ] Instant notification for critical changes
+- [ ] Specific notifications (location, time, price)
+
+## User Reactions
+
+- [ ] Reset user status on critical changes
+- [ ] Participation reconfirmation button
+- [ ] Highlight modifications
+
+## Event Transparency
+
+- [ ] Show "Last Updated"
+- [ ] Implement Change Log
+- [ ] UI badges for modifications
+
+## Real UX Improvements
+
+- [ ] Google Maps deep links
+- [ ] Direct navigation
+- [ ] Improve RSVP clarity
+
+## Nearby & Discovery
+
+- [ ] Nearby events ranking
+- [ ] Advanced filters
+- [ ] Improve search
+- [ ] Create a map showing all events in the searched area
+
+---
+
+# 3rd Task List — Deadline: June 1st
+
+## Achievement System
+
+- [ ] Define the system
+- [ ] Create achievements list
+- [ ] Automatic assignment
+- [ ] Profile UI
+- [ ] Database saving
+
+## Attendance Verification
+
+- [ ] Check-in method
+- [ ] Save attendance status
+- [ ] Anti-fake system
+- [ ] Show attendance in profile
+- [ ] Achievement integration
+
+## Reputation System
+
+- [ ] Event ratings
+- [ ] Host ratings
+- [ ] Last-minute modification penalties
+- [ ] Host badges
+
+## Post-Event Features
+
+- [ ] Photo upload
+- [ ] Events timeline
+- [ ] Attended events
+
+## UI Improvements
+
+- [ ] Dark/Light Mode switch
