@@ -434,7 +434,7 @@ body::before {
 }
 
 .hero-mockup img {
-  max-width: 420px;
+  max-width: 720px;
   width: 100%;
   filter: drop-shadow(0 20px 60px rgba(0,0,0,0.5));
   animation: floatMockup 4s ease-in-out infinite;
