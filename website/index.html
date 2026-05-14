@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vez — Eventi Reali, Connessioni Autentiche</title>
-  <meta name="description" content="Vez è l'app che ti permette di scoprire, organizzare e partecipare a eventi reali nella tua zona. Connessioni autentiche, comunità locali, esperienze vere." />
+  <title>Vez — Eventi vicini, uscite facili</title>
+  <meta name="description" content="Vez è l'app per scoprire eventi vicino a te, organizzare uscite con gli amici e incontrarsi dal vivo senza chat infinite." />
   <meta name="keywords" content="eventi, app eventi, uscite, giovani, comunità, vez, social, eventi reali" />
   <meta name="author" content="Vez Team" />
+  <meta name="theme-color" content="#050505" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="Vez — Eventi Reali, Connessioni Autentiche" />
-  <meta property="og:description" content="Scopri, organizza e partecipa a eventi reali nella tua zona." />
+  <meta property="og:title" content="Vez — Eventi vicini, uscite facili" />
+  <meta property="og:description" content="Scopri eventi, crea uscite e porta le connessioni fuori dallo schermo." />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="assets/app_icon.png" />
+  <meta property="og:locale" content="it_IT" />
+  <meta property="og:image" content="assets/app_mockup.png" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -21,6 +23,7 @@
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="assets/app_icon.png" />
+  <link rel="apple-touch-icon" href="assets/app_icon.png" />
 
   <!-- Styles -->
   <link rel="stylesheet" href="index.css" />
@@ -28,9 +31,9 @@
 <body>
 
   <!-- ===== NAVBAR ===== -->
-  <nav class="navbar" id="navbar">
+  <nav class="navbar" id="navbar" aria-label="Navigazione principale">
     <div class="container">
-      <a href="#" class="navbar-logo">
+      <a href="#hero" class="navbar-logo">
         <img src="assets/app_icon.png" alt="Vez Logo" />
         <span>Vez</span>
       </a>
@@ -38,17 +41,18 @@
       <ul class="navbar-links" id="navLinks">
         <li><a href="#problema">Il Problema</a></li>
         <li><a href="#funzionalita">Funzionalità</a></li>
+        <li><a href="#idee">Idee d'uso</a></li>
         <li><a href="#come-funziona">Come Funziona</a></li>
         <li><a href="#team">Team</a></li>
         <li><a href="#tech">Tecnologie</a></li>
       </ul>
 
-      <button class="navbar-cta" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth',block:'start'})">Scopri di più</button>
+      <button class="navbar-cta" type="button" data-scroll-target="#cta">Scopri di più</button>
 
-      <button class="menu-toggle" id="menuToggle" aria-label="Menu">
-        <span></span>
-        <span></span>
-        <span></span>
+      <button class="menu-toggle" id="menuToggle" type="button" aria-label="Apri menu" aria-controls="navLinks" aria-expanded="false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
       </button>
     </div>
   </nav>
@@ -62,28 +66,28 @@
       <div class="hero-content">
         <div class="hero-badge">
           <span class="dot"></span>
-          In fase di sviluppo
+          Beta in sviluppo
         </div>
 
         <h1 class="hero-title">
-          Esci. Incontra.<br /><span class="highlight">Vivi davvero.</span>
+          Eventi tra amici,<br /><span class="highlight">senza chat infinite.</span>
         </h1>
 
         <p class="hero-description">
-          Vez è l'app che porta le connessioni fuori dallo schermo. Scopri eventi vicino a te, organizza uscite con gli amici e costruisci comunità reali.
+          Vez ti aiuta a scoprire cosa succede vicino a te, creare uscite in pochi tap e ritrovarti dal vivo con persone della tua zona.
         </p>
 
         <div class="hero-actions">
-          <a href="assets/vez.apk" download class="btn-primary btn-download">
+          <a class="btn-primary btn-download btn-disabled" aria-disabled="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-            Scarica APK
+            APK in arrivo
           </a>
-          <a href="#funzionalita" class="btn-secondary">Scopri le funzionalità</a>
+          <a href="#funzionalita" class="btn-secondary">Guarda cosa fa</a>
         </div>
       </div>
 
       <div class="hero-mockup">
-        <img src="assets/app_mockup.png" alt="Vez App Mockup" />
+        <img src="assets/app_mockup.png" alt="Schermate dell'app Vez con eventi e profilo" />
       </div>
     </div>
   </section>
@@ -99,26 +103,26 @@
         </p>
       </div>
 
-      <div class="problem-stats" style="margin-top: 48px;">
+      <div class="problem-stats">
         <div class="stat-card reveal reveal-delay-1">
           <div class="stat-icon">📱</div>
-          <div class="stat-value" data-count="78" data-suffix="%">0%</div>
-          <div class="stat-label">dei giovani usa chat non strutturate per organizzarsi</div>
+          <div class="stat-value">Chat</div>
+          <div class="stat-label">gruppi pieni di messaggi, proposte perse e decisioni rimandate</div>
         </div>
         <div class="stat-card reveal reveal-delay-2">
           <div class="stat-icon">😤</div>
-          <div class="stat-value" data-count="65" data-suffix="%">0%</div>
-          <div class="stat-label">rinuncia a uscire per la complessità organizzativa</div>
+          <div class="stat-value">Caos</div>
+          <div class="stat-label">orari, luoghi e conferme sparsi tra app diverse</div>
         </div>
         <div class="stat-card reveal reveal-delay-3">
           <div class="stat-icon">🔍</div>
-          <div class="stat-value" data-count="0" data-suffix="">0</div>
-          <div class="stat-label">piattaforme dedicate agli eventi tra giovani</div>
+          <div class="stat-value">Scoperta</div>
+          <div class="stat-label">è difficile capire cosa succede davvero vicino a te</div>
         </div>
         <div class="stat-card reveal reveal-delay-4">
           <div class="stat-icon">🎯</div>
-          <div class="stat-value" data-count="1" data-suffix="">0</div>
-          <div class="stat-label">soluzione: Vez. Semplice, moderna, sociale.</div>
+          <div class="stat-value">Vez</div>
+          <div class="stat-label">un posto unico per proporre, trovare e vivere eventi locali</div>
         </div>
       </div>
     </div>
@@ -131,7 +135,7 @@
         <span class="section-label">Funzionalità</span>
         <h2 class="section-title">Tutto ciò che serve.<br />Niente di superfluo.</h2>
         <p class="section-subtitle">
-          Vez è progettata per essere intuitiva, veloce e focalizzata su ciò che conta: connetterti con le persone attorno a te.
+          Vez è progettata per essere intuitiva, veloce e focalizzata su ciò che conta: passare dall'idea dell'uscita all'evento vero.
         </p>
       </div>
 
@@ -175,14 +179,45 @@
     </div>
   </section>
 
+  <!-- ===== USE CASES ===== -->
+  <section class="section use-cases" id="idee">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-label">Idee d'uso</span>
+        <h2 class="section-title">Dalla proposta al ritrovo.</h2>
+        <p class="section-subtitle">
+          Vez funziona per momenti piccoli e spontanei, non solo per grandi eventi organizzati.
+        </p>
+      </div>
+
+      <div class="use-case-strip">
+        <div class="use-case reveal reveal-delay-1">
+          <span>Sport</span>
+          <strong>Partita al campetto</strong>
+          <p>Crea l'evento, scegli luogo e orario, raccogli adesioni.</p>
+        </div>
+        <div class="use-case reveal reveal-delay-2">
+          <span>Social</span>
+          <strong>Aperitivo di zona</strong>
+          <p>Trova chi c'è, evita mille messaggi e conferma il gruppo.</p>
+        </div>
+        <div class="use-case reveal reveal-delay-3">
+          <span>Studio</span>
+          <strong>Sessione in biblioteca</strong>
+          <p>Organizza un ritrovo utile con persone vicine a te.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== HOW IT WORKS ===== -->
   <section class="section how-it-works" id="come-funziona">
     <div class="container">
-      <div class="reveal" style="text-align: center;">
+      <div class="reveal section-centered">
         <span class="section-label">Come Funziona</span>
         <h2 class="section-title">Tre passi per iniziare.</h2>
-        <p class="section-subtitle" style="margin: 0 auto;">
-          Dal download alla tua prima esperienza reale, in meno di un minuto.
+        <p class="section-subtitle">
+          Dalla scoperta dell'evento alla conferma del gruppo, tutto resta nello stesso posto.
         </p>
       </div>
 
@@ -233,7 +268,7 @@
           <div class="team-avatar">LB</div>
           <div class="team-info">
             <h3>Luca Bisognin</h3>
-            <div class="role">Technical Lead &amp; Developer</div>
+            <div class="role">Technical Lead, Designer &amp; Developer</div>
             <p>Sviluppo tecnico, analisi dei requisiti, testing e validazione del prodotto.</p>
           </div>
         </div>
@@ -287,13 +322,14 @@
       <div class="cta-box reveal">
         <h2 class="section-title">Pronto a vivere<br />esperienze reali?</h2>
         <p class="section-subtitle">
-          Vez sta arrivando. Un nuovo modo di scoprire eventi, incontrare persone e costruire comunità — tutto inizia qui.
+          Vez sta arrivando. Un nuovo modo di scoprire eventi, incontrare persone e costruire comunità locali.
         </p>
         <div class="cta-buttons">
-          <a href="assets/vez.apk" download class="btn-primary btn-download">
+          <a class="btn-primary btn-download btn-disabled" aria-disabled="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-            Scarica APK
+            APK in arrivo
           </a>
+          <a href="mailto:outly@gmail.com" class="btn-secondary">Contattaci</a>
           <a href="#hero" class="btn-secondary">
             Torna su
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -308,11 +344,11 @@
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <a href="#" class="navbar-logo">
+          <a href="#hero" class="navbar-logo">
             <img src="assets/app_icon.png" alt="Vez Logo" />
             <span>Vez</span>
           </a>
-          <p>L'app che porta le connessioni fuori dallo schermo. Eventi reali, persone vere, esperienze autentiche.</p>
+          <p>L'app per trasformare idee, inviti e gruppi locali in eventi reali.</p>
         </div>
 
         <div class="footer-links-group">
