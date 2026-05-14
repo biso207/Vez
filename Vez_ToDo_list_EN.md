@@ -28,7 +28,7 @@
 - [x] Handle expired events after the event date has passed:
   - [x] Show expired events in the dashboard
   - [x] Remove expired events from carousels ("Invites", "Yours", "Nearby")
-- [ ] Change default background image during event creation
+- [x] Change default background image during event creation
 - [x] Set the max length of the event title to 20 chars
 
 ## Profile & Settings
@@ -57,9 +57,6 @@
 
 ## Business Accounts
 - [x] Improve and complete venue account creation
-- [ ] Complete the Profile Page for the venue with:
-  - [ ] Details about the venue
-  - [ ] Social Media platforms and Website links
 
 ## Social Features
 - [x] Allow invited users to see other invited users for a specific event
@@ -142,6 +139,10 @@
 
 ## Profile & Account Management
 - [ ] Show the list of followers and friends from the profile screen of local and general user
+- [ ] Complete the Profile Page for the venue with:
+  - [ ] Details about the venue
+  - [ ] Social Media platforms and Website links
+  - [ ] Others important features and details
 
 ## 'Circles' Feature
 - [ ] Implement "Circles" for "Private" events
