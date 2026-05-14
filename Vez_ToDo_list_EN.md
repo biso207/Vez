@@ -105,7 +105,7 @@
   - view participant list
 - [x] Restrict Co-Host permissions (NO event editing, NO event deletion)
 
-## ## Event Creation & Event UI
+## Event Creation & Event UI
 - [x] Correctly retrieve the event category and type for the events in the user dashboard
 - [x] Complete the expired event UI in the "Past Events" dashboard
 - [ ] Improve the Map general UI in the location setting during the event creation
