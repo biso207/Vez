@@ -16,23 +16,19 @@
 //
 // file structure (part system – all files share this library):
 //   profile_screen.dart            ← this file (page + state + popup logic)
-//   profile_card_widgets.dart      ← user card, avatar badge, stats pill
 //   profile_nav_widgets.dart       ← bottom nav pill
 //   profile_popup_widgets.dart     ← shared micro-widgets used inside popups
 //   profile_settings_widgets.dart  ← settings section, badge toggle, account buttons
-//   profile_past_events_widgets.dart ← past events button, rows, fallback image
 
 // ─── dart / flutter imports ───────────────────────────────────────────────────
 
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 // ─── app service imports ──────────────────────────────────────────────────────
 
-import '../../views/widgets/vez_glass.dart';
 import '../../services/auth_service.dart';
 import '../../services/getters_service.dart';
 import '../../services/haptic_service.dart';
@@ -52,18 +48,16 @@ import '../../views/widgets/vez_popup.dart';
 import '../auth/login_screen.dart';
 import '../event_creation/create_event_screen.dart';
 import '../notifications_screen.dart';
+import 'profile_event_helpers.dart';
+import 'profile_shared_widgets.dart';
 
 // ─── part files (share this library namespace) ────────────────────────────────
 
-part 'profile_card_widgets.dart';
 part 'profile_nav_widgets.dart';
 part 'profile_popup_widgets.dart';
 part 'profile_settings_widgets.dart';
-part 'profile_past_events_widgets.dart';
 
 // ─── constants ────────────────────────────────────────────────────────────────
-
-const double kBlurValue = 5.0;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // profile page
@@ -87,16 +81,16 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   // ── controllers & services ─────────────────────────────────────────────────
 
-  final TextEditingController _searchController    = TextEditingController();
-  final TextEditingController _usernameCtrl        = TextEditingController();
-  final TextEditingController _passwordCtrl        = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _usernameCtrl = TextEditingController();
+  final TextEditingController _passwordCtrl = TextEditingController();
   final TextEditingController _currentPasswordCtrl = TextEditingController();
   final TextEditingController _confirmPasswordCtrl = TextEditingController();
-  final TextEditingController _deleteAccountCtrl   = TextEditingController();
-  final TextEditingController _cityAkaNameCtrl     = TextEditingController();
-  final TextEditingController _bioCtrl             = TextEditingController();
+  final TextEditingController _deleteAccountCtrl = TextEditingController();
+  final TextEditingController _cityAkaNameCtrl = TextEditingController();
+  final TextEditingController _bioCtrl = TextEditingController();
 
-  final ImagePicker    _picker = ImagePicker();
+  final ImagePicker _picker = ImagePicker();
   final RemoteDbService _remote = RemoteDbService();
 
   late final GetDBService _dbGet;
@@ -104,25 +98,25 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ── user data state ────────────────────────────────────────────────────────
 
-  String _profilePhoto          = '';
-  String _username              = '';
-  String _city                  = '';
-  String _cityAkaName           = '';
-  String _bio                   = '';
-  int    _numFollowers          = 0;
-  int    _numFollowing          = 0;
-  int    _numParticipatedEvents = 0;
+  String _profilePhoto = '';
+  String _username = '';
+  String _city = '';
+  String _cityAkaName = '';
+  String _bio = '';
+  int _numFollowers = 0;
+  int _numParticipatedEvents = 0;
+  int _numEventLikesReceived = 0;
 
-  List<Map<String, dynamic>> _pastCreatedEvents     = const [];
+  List<Map<String, dynamic>> _pastCreatedEvents = const [];
   List<Map<String, dynamic>> _pastParticipatedEvents = const [];
 
   // ── ui flags ───────────────────────────────────────────────────────────────
 
-  bool   _showBadge            = true;
-  bool   _showPassword         = false;
-  bool   _showCurrentPassword  = false;
-  bool   _showConfirmPassword  = false;
-  File?  _newProfileImage;
+  bool _showBadge = true;
+  bool _showPassword = false;
+  bool _showCurrentPassword = false;
+  bool _showConfirmPassword = false;
+  File? _newProfileImage;
   String? _popupError;
 
   // ── static data: supported languages ──────────────────────────────────────
@@ -216,7 +210,6 @@ class _ProfilePageState extends State<ProfilePage> {
     final results = await Future.wait([
       _dbGet.getFullUserData(),
       _dbGet.getFollowersCount(),
-      _dbGet.getFollowing(),
       _dbGet.getExpiredCreatedEvents(),
       _dbGet.getExpiredParticipatedEvents(),
     ]);
@@ -224,31 +217,41 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!mounted) return;
 
     // extract positional results from Future.wait
-    final userData        = results[0] as Map<String, dynamic>?;
-    final followersCount  = results[1] as int;
-    final followingList   = results[2] as List<Map<String, dynamic>>;
-    final pastCreated     = results[3] as List<Map<String, dynamic>>;
+    final userData         = results[0] as Map<String, dynamic>?;
+    final followersCount   = results[1] as int;
+    final pastCreated      = results[3] as List<Map<String, dynamic>>;
     final pastParticipated = results[4] as List<Map<String, dynamic>>;
+    final pastEvents = ProfileEventHelpers.mergePastEvents(
+      pastCreated,
+      pastParticipated,
+    );
+    final bool dbBadgeEnabled = (userData?['category_badge'] as bool?) ?? true;
+    final bool canShowCategoryBadge = pastEvents.isNotEmpty;
+
+    if (userData != null && !canShowCategoryBadge && dbBadgeEnabled) {
+      await _dbSet.updateUserData('category_badge', false);
+    }
+    if (!mounted) return;
 
     setState(() {
-      _profilePhoto  = (userData?['profile_photo'] as String?)?.trim() ?? '';
-      _username      = userData?['username']   as String? ?? 'Username';
-      _city          = userData?['city']        as String? ?? StringRes.at('city');
+      _profilePhoto = (userData?['profile_photo'] as String?)?.trim() ?? '';
+      _username = userData?['username'] as String? ?? 'Username';
+      _city = userData?['city'] as String? ?? StringRes.at('city');
 
-      final akaName  = userData?['city_aka_name'] as String?;
-      _cityAkaName   = akaName?.trim().isNotEmpty == true ? '$akaName • ' : '';
+      final akaName = userData?['city_aka_name'] as String?;
+      _cityAkaName = akaName?.trim().isNotEmpty == true ? '$akaName • ' : '';
 
-      _bio           = userData?['bio'] as String? ?? StringRes.at('bio');
+      _bio = userData?['bio'] as String? ?? StringRes.at('bio');
 
-      // category_badge is stored as Bool in db
-      _showBadge     = userData?['category_badge'] as bool? ?? true;
+      // category_badge is stored as Bool in db, but requires at least one event.
+      _showBadge = canShowCategoryBadge && dbBadgeEnabled;
 
-      // num_participated_events is derived from list length (not a db column)
-      _numParticipatedEvents = pastParticipated.length;
+      // Count both hosted and guest past events.
+      _numParticipatedEvents = pastEvents.length;
 
-      _numFollowers          = followersCount;
-      _numFollowing          = followingList.length;
-      _pastCreatedEvents     = pastCreated;
+      _numFollowers           = followersCount;
+      _numEventLikesReceived  = 0; // todo: this will calculated in future
+      _pastCreatedEvents      = pastCreated;
       _pastParticipatedEvents = pastParticipated;
     });
   }
@@ -261,13 +264,26 @@ class _ProfilePageState extends State<ProfilePage> {
     Navigator.pop(context, completed);
   }
 
+  List<Map<String, dynamic>> get _pastEvents =>
+      ProfileEventHelpers.mergePastEvents(
+        _pastCreatedEvents,
+        _pastParticipatedEvents,
+      );
+
+  bool get _canShowCategoryBadge => _pastEvents.isNotEmpty;
+
+  bool get _effectiveShowBadge => _canShowCategoryBadge && _showBadge;
+
+  String get _categoryBadgeIconPath =>
+      ProfileEventHelpers.mostParticipatedCategoryIcon(_pastEvents);
+
   // ── profile save ───────────────────────────────────────────────────────────
 
   /// commits username, aka-name, bio, badge, and optional photo to the db.
   Future<void> saveUserProfileData(StateSetter setPopupState) async {
-    final String uName   = _usernameCtrl.text.trim();
+    final String uName = _usernameCtrl.text.trim();
     final String akaName = _cityAkaNameCtrl.text.trim();
-    final String bio     = _bioCtrl.text.trim();
+    final String bio = _bioCtrl.text.trim();
 
     if (uName != _username && uName.length >= 4) {
       final int res = await _dbSet.updateUserData('username', uName);
@@ -280,7 +296,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     _dbSet.updateUserData('city_aka_name', akaName);
     _dbSet.updateUserData('bio', bio);
-    _dbSet.updateUserData('category_badge', _showBadge);
+    _dbSet.updateUserData('category_badge', _effectiveShowBadge);
 
     if (_newProfileImage != null) {
       final String? url = await _remote.uploadProfilePhoto(
@@ -296,7 +312,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() {
       _cityAkaName = akaName;
-      _bio         = bio;
+      _bio = bio;
     });
   }
 
@@ -342,10 +358,10 @@ class _ProfilePageState extends State<ProfilePage> {
     _deleteAccountCtrl.clear();
     _cityAkaNameCtrl.clear();
     _bioCtrl.clear();
-    _showPassword        = false;
+    _showPassword = false;
     _showCurrentPassword = false;
     _showConfirmPassword = false;
-    _popupError          = null;
+    _popupError = null;
   }
 
   // ── account actions ────────────────────────────────────────────────────────
@@ -353,10 +369,12 @@ class _ProfilePageState extends State<ProfilePage> {
   /// validates fields and triggers the secure password update flow.
   Future<void> _handlePasswordChange(StateSetter setPopupState) async {
     final String currentPassword = _currentPasswordCtrl.text;
-    final String newPassword     = _passwordCtrl.text;
+    final String newPassword = _passwordCtrl.text;
     final String confirmPassword = _confirmPasswordCtrl.text;
 
-    if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+    if (currentPassword.isEmpty ||
+        newPassword.isEmpty ||
+        confirmPassword.isEmpty) {
       setPopupState(() => _popupError = StringRes.at('complete_all_fields'));
       return;
     }
@@ -394,7 +412,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _handleAccountDeletion(StateSetter setPopupState) async {
     final String typedUsername = _deleteAccountCtrl.text.trim();
     if (typedUsername != _username) {
-      setPopupState(() => _popupError = StringRes.at('username_confirm_failed'));
+      setPopupState(
+        () => _popupError = StringRes.at('username_confirm_failed'),
+      );
       return;
     }
 
@@ -436,73 +456,9 @@ class _ProfilePageState extends State<ProfilePage> {
   // ── date formatting ────────────────────────────────────────────────────────
 
   /// formats a raw ISO date string to dd/mm/yyyy - hh:mm local time.
-  String _formatPastEventDate(String raw) {
-    final date = DateTime.tryParse(raw)?.toLocal();
-    if (date == null) return '';
-    String two(int v) => v.toString().padLeft(2, '0');
-    return '${two(date.day)}/${two(date.month)}/${date.year}'
-        ' - ${two(date.hour)}:${two(date.minute)}';
-  }
-
   // ── popup builders ─────────────────────────────────────────────────────────
 
   /// opens a scrollable list of archived past events in a popup.
-  void _showPastEventsPopup(String title, List<Map<String, dynamic>> events) {
-    VezPopup.show(
-      context: context,
-      width: MediaQuery.of(context).size.width * 0.86,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.65,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _PastEventsPopupHeader(title: title, count: events.length),
-              const SizedBox(height: 16),
-              if (events.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 28),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.hourglass_empty_rounded,
-                        color: Colors.white54,
-                        size: 34,
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Nessun Evento',
-                        style: TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.only(bottom: 4),
-                    itemCount: events.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) => _PastEventRow(
-                      event: events[index],
-                      date: _formatPastEventDate(
-                        events[index]['date_event']?.toString() ?? '',
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   /// opens the full settings panel (language, display prefs, account actions).
   void _showSettingsPopup(double s) {
     VezPopup.show(
@@ -623,8 +579,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 iconPath: 'assets/icons/profile_page/general_settings.png',
                 child: _BadgeToggleRow(
                   s: s,
-                  value: _showBadge,
+                  value: _effectiveShowBadge,
+                  enabled: _canShowCategoryBadge,
                   onChanged: (val) {
+                    if (!_canShowCategoryBadge) return;
                     HapticService.selection();
                     setPopupState(() => _showBadge = val);
                     setState(() => _showBadge = val);
@@ -709,9 +667,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// opens the edit-profile popup (avatar, username, aka-name, bio).
   void _showEditProfilePopup(double s) {
-    _usernameCtrl.text    = _username;
+    _usernameCtrl.text = _username;
     _cityAkaNameCtrl.text = _cityAkaName.replaceAll(' • ', '');
-    _bioCtrl.text         = _bio;
+    _bioCtrl.text = _bio;
 
     VezPopup.show(
       context: context,
@@ -851,7 +809,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 onChanged: (_) => setPopupState(() => _popupError = null),
                 suffixIcon: _PasswordVisibilityToggle(
                   visible: _showPassword,
-                  onTap: () => setPopupState(() => _showPassword = !_showPassword),
+                  onTap: () =>
+                      setPopupState(() => _showPassword = !_showPassword),
                 ),
               ),
 
@@ -927,8 +886,9 @@ class _ProfilePageState extends State<ProfilePage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
-                  StringRes.at('delete_account_confirm_message')
-                      .replaceAll('{username}', _username),
+                  StringRes.at(
+                    'delete_account_confirm_message',
+                  ).replaceAll('{username}', _username),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white70,
@@ -964,12 +924,9 @@ class _ProfilePageState extends State<ProfilePage> {
               // confirm (red) / cancel buttons
               _ConfirmCancelRow(
                 s: s,
-                confirmEnabled:
-                    _deleteAccountCtrl.text.trim() == _username,
-                confirmColor:
-                    const Color.fromARGB(128, 255, 49, 49),
-                confirmBorder:
-                    const Color.fromARGB(204, 255, 49, 49),
+                confirmEnabled: _deleteAccountCtrl.text.trim() == _username,
+                confirmColor: const Color.fromARGB(128, 255, 49, 49),
+                confirmBorder: const Color.fromARGB(204, 255, 49, 49),
                 onConfirm: () async {
                   HapticService.emphasis();
                   await _handleAccountDeletion(setPopupState);
@@ -1011,16 +968,15 @@ class _ProfilePageState extends State<ProfilePage> {
         itemCount: _languages.length,
         separatorBuilder: (_, _) => _PopupDivider(width: pw),
         itemBuilder: (context, i) {
-          final String code     = _languages[i]['code']!;
-          final String name     = _languages[i]['name']!;
+          final String code = _languages[i]['code']!;
+          final String name = _languages[i]['name']!;
           final String iconPath = _languages[i]['icon']!;
           final bool isSelected = StringRes.locale == code;
 
           return GestureDetector(
             onTap: () async {
               final navigator = Navigator.of(context);
-              final int res =
-                  await _dbSet.updateUserData('language', code);
+              final int res = await _dbSet.updateUserData('language', code);
 
               if (res == 200 || res == 204) {
                 HapticService.selection();
@@ -1032,10 +988,7 @@ class _ProfilePageState extends State<ProfilePage> {
               if (navigator.canPop()) navigator.pop();
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Row(
                 children: [
                   Image.asset(
@@ -1050,8 +1003,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                   const Spacer(),
@@ -1076,11 +1030,10 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final double sw = MediaQuery.of(context).size.width;
-    final double s  = (sw / 390).clamp(0.8, 1.2);
+    final double s = (sw / 390).clamp(0.8, 1.2);
 
     return VezPageLayout(
       // ── top navbar ─────────────────────────────────────────────────────────
-
       searchController: _searchController,
       searchHint: StringRes.at('search'),
 
@@ -1093,7 +1046,7 @@ class _ProfilePageState extends State<ProfilePage> {
       },
 
       // right: edit icon → opens edit-profile popup
-      filterIconPath:  'assets/icons/event/edit.png',
+      filterIconPath: 'assets/icons/event/edit.png',
       isFilterSelected: false,
       onFilterTap: () {
         HapticService.emphasis();
@@ -1102,7 +1055,6 @@ class _ProfilePageState extends State<ProfilePage> {
       onFilterSelected: null,
 
       // ── bottom navbar ──────────────────────────────────────────────────────
-
       bottomNavBar: _BottomNavPill(
         s: s,
         activeIndex: -1,
@@ -1112,7 +1064,6 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
 
       // ── zone-2 body: scrollable profile content ────────────────────────────
-
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -1124,14 +1075,15 @@ class _ProfilePageState extends State<ProfilePage> {
             // user info card
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 5 * s),
-              child: _UserCard(
-                s: s,
+              child: ProfileInfoCard(
+                scale: s,
                 profilePhoto: _profilePhoto,
                 username: _username,
                 cityAkaName: _cityAkaName,
                 city: _city,
                 bio: _bio,
-                showBadge: _showBadge,
+                showBadge: _effectiveShowBadge,
+                categoryBadgeIconPath: _categoryBadgeIconPath,
               ),
             ),
 
@@ -1140,13 +1092,17 @@ class _ProfilePageState extends State<ProfilePage> {
             // stats pill
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 50 * s),
-              child: _StatsPill(
-                s: s,
-                numFollowers: _numFollowers,
-                numEvents: _numParticipatedEvents,
-                numFollowing: _numFollowing,
+              child: ProfileStatsPill(
+                scale: s,
+                followers: _numFollowers,
+                events: _numParticipatedEvents,
+                likes: _numEventLikesReceived,
               ),
             ),
+
+            SizedBox(height: 18 * s),
+
+            ProfilePastEventsGrid(events: _pastEvents, scale: s),
 
             SizedBox(height: 120 * s),
           ],

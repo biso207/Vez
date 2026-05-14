@@ -28,6 +28,8 @@
 - [x] Handle expired events after the event date has passed:
   - [x] Show expired events in the dashboard
   - [x] Remove expired events from carousels ("Invites", "Yours", "Nearby")
+- [ ] Change default background image during event creation
+- [x] Set the max length of the event title to 20 chars
 
 ## Profile & Settings
 - [x] Improve the profile page UI
@@ -48,18 +50,16 @@
 - [x] Remove the "Add Guests" button from public event previews
 - [x] Set "Invites" events as the primary section on the Home Page
 - [x] Add automatic refresh on the Home Page every X seconds
-- [ ] Improve the "Nearby" filter
 
 ---
 
 # New Features & Implementations
 
 ## Business Accounts
-- [ ] Improve and complete venue account creation for:
-  - pubs
-  - bars
-  - restaurants
-  - other venues
+- [x] Improve and complete venue account creation
+- [ ] Complete the Profile Page for the venue with:
+  - [ ] Details about the venue
+  - [ ] Social Media platforms and Website links
 
 ## Social Features
 - [x] Allow invited users to see other invited users for a specific event
@@ -71,9 +71,6 @@
   - [x] attended events count
   - [x] received likes count on owned events
   - [x] display any user's profile when clicking their profile picture
-- [ ] Implement "Circles" for private events
-  - [ ] Circles management UI (creation, editing, user management)
-  - [ ] Circles selection during private event creation
 
 ## Profile & Account Management
 - [x] Add profile deletion
@@ -81,7 +78,9 @@
   - ban
   - suspension
   - not_verified
-- [ ] Display the event category badge based on the user's most attended event category
+- [x] Display the event category badge based on the user's most attended event category
+- [x] Not display the event category badge if the user has 0 past events
+- [x] Lock the category badge toggle in settings when the category badge is disabled
 
 ## Architecture & Standardization
 - [x] Create a standard inside `vez_page_layout`
@@ -92,6 +91,15 @@
 
 # 2nd Task List — Deadline: June 1st
 
+---
+
+# Bug Fixes
+- [ ] Find a better spot for the event delete button, now it appears under the bottom navbar in some devices.
+
+---
+
+# Event Architecture and UI Improvements
+
 ## Event Role Management
 - [x] Implement the "Co-Host" role (max. 5 per event)
 - [x] Co-Host permissions:
@@ -100,19 +108,47 @@
   - view participant list
 - [x] Restrict Co-Host permissions (NO event editing, NO event deletion)
 
-## Expired Event UI
-- [ ] Correctly retrieve the event category and type
-- [ ] Complete the expired event UI in the "Past Events" dashboard
+## ## Event Creation & Event UI
+- [x] Correctly retrieve the event category and type for the events in the user dashboard
+- [x] Complete the expired event UI in the "Past Events" dashboard
+- [ ] Improve the Map general UI in the location setting during the event creation
 
 ## Event Modification System
 - [ ] Distinguish critical and non-critical changes
 - [ ] Implement "Soft Lock"
 
+## Event Transparency
+- [ ] Show "Last Updated"
+- [ ] Implement Change Log
+- [ ] Add UI badges for modifications
+
+## Event Page
+- [ ] Create the "Event Page" to display detailed information about selected events:
+  - [ ] Google Maps deep link (opens Google Maps)
+  - [ ] Improved RSVP clarity
+  - [ ] Dedicated details section
+
+---
+
+# New Features & Implementations
+
+## Advanced Search Button
+- [ ] Implement the advanced "Search" filter:
+  - [ ] Dedicated UI when clicked the "search box" in the top navbar
+  - [ ] Complete research across the whole app ecosystem
+  - [ ] Research based on usernames, venues name, events names, events locations, etc.
+  - [ ] Sections in the dedicated UI for Users (friends, following, all), Events & Venues
+  - [ ] Possibility to interact with the results in the dedicated UI
+
+## 'Circles' Feature
+- [ ] Implement "Circles" for "Private" events
+  - [ ] Circles management UI (creation, editing, user management)
+  - [ ] Circles selection during "Private" event creation
+
 ## RSVP & Deadline System
 - [ ] Implement "Response Deadline" (Time X)
-- [ ] Automatic deadline calculation based on event distance
-- [ ] Allow manual override by the Host
-- [ ] Handle "Maybe" status after expiration
+- [ ] Allow manual "Response Deadline" by the Host
+- [ ] Handle "Maybe" status after expiration by setting the status as "Not Going"
 - [ ] Add event deadline countdown UI
 
 ## Last-Minute Changes
@@ -126,29 +162,23 @@
 - [ ] Add participation reconfirmation button
 - [ ] Highlight modifications
 
-## Event Transparency
-- [ ] Show "Last Updated"
-- [ ] Implement Change Log
-- [ ] Add UI badges for modifications
-
 ## Real UX Improvements
-- [ ] Add Google Maps deep links in the event page
-- [ ] Add direct navigation
-- [ ] Improve RSVP clarity
 - [ ] Improve Home Page auto-update system
 
 ## Nearby & Discovery
+- [ ] Improve the range distance filter
 - [ ] Improve nearby events ranking
 - [ ] Add advanced filters
 - [ ] Improve search
-- [ ] Create a map showing all events in the searched area
+- [ ] Create a map showing all events in the "Nearby" area
 
-## Event Page
-- [ ] Create the "Event Page" to display detailed information about selected events:
-  - [ ] Google Maps deep link
-  - [ ] Direct navigation
-  - [ ] Improved RSVP clarity
-  - [ ] Dedicated details section
+## Venue Verification System
+- [ ] Implement venue verification request system
+- [ ] Manual review process for venue accounts
+- [ ] Add verification badge for approved venues
+- [ ] Prevent fake business accounts and spam
+- [ ] Require additional business information for verification
+- [ ] Add moderation tools for suspicious venue activity
 
 ---
 
@@ -158,11 +188,11 @@
 - [ ] Define the system
 - [ ] Create achievements list
 - [ ] Automatic assignment
-- [ ] Profile UI
+- [ ] Archived badges shown in the profile
 - [ ] Database saving
 
 ## Attendance Verification
-- [ ] Define check-in method
+- [ ] Define check attendance method
 - [ ] Save attendance status
 - [ ] Implement anti-fake system
 - [ ] Show attendance in profile
@@ -171,7 +201,6 @@
 ## Reputation System
 - [ ] Event ratings
 - [ ] Host ratings
-- [ ] Last-minute modification penalties
 - [ ] Host badges
 
 ## Post-Event Features
@@ -182,10 +211,49 @@
 ## UI Improvements
 - [ ] Dark / Light Mode switch
 
+## Age Restriction & Safety System
+- [ ] Define minimum platform age requirements
+- [ ] Add optional event age restriction system:
+  - [ ] All Ages
+  - [ ] 16+
+  - [ ] 18+
+- [ ] Add age restriction badges inside event previews
+- [ ] Add age restriction banner inside event pages
+- [ ] Add filtering system for restricted events
+- [ ] Limit event visibility based on user age settings
+- [ ] Add warnings for adult or sensitive events
+- [ ] Add moderation checks for restricted event categories
+
+## Content & User Generated Media
+- [ ] Define user responsibility for uploaded backgrounds and images
+- [ ] Add copyright disclaimer for uploaded content
+- [ ] Add image reporting system
+- [ ] Add automatic NSFW / unsafe image moderation research
+- [ ] Add content moderation flow for reported media
+
+## Legal & GDPR Compliance
+- [ ] Create Terms & Conditions
+- [ ] Create Privacy Policy
+- [ ] Add legal acceptance checkbox during signup
+- [ ] Add Terms & Conditions page inside settings
+- [ ] Add Privacy Policy page inside settings
+- [ ] Add account deletion policy section
+- [ ] Add support / legal contact email
+- [ ] Specify how user data is collected, stored and processed
+- [ ] Specify Supabase infrastructure and EU server location
+- [ ] Define user responsibilities for uploaded content
+- [ ] Define prohibited content and platform violations
+- [ ] Define Host responsibilities for created events
+- [ ] Define moderation and suspension policies
+- [ ] Add report system for users and events
+- [ ] Add content removal management system
+
 ---
 
-Luca Bisognin — Technical Lead  
+Luca Bisognin — Software & Design Team Lead
 Bologna, Italy — May 14, 2026
 
 Vez — Social Event Platform  
 Designed and developed by Outly
+
+---

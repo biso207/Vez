@@ -82,59 +82,64 @@ class _SettingsSection extends StatelessWidget {
 class _BadgeToggleRow extends StatelessWidget {
   final double s;
   final bool value;
+  final bool enabled;
   final ValueChanged<bool> onChanged;
 
   const _BadgeToggleRow({
     required this.s,
     required this.value,
+    this.enabled = true,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // badge preview icon
-        Container(
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(51, 6, 0, 92),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color.fromARGB(128, 0, 10, 218),
-              width: 2,
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: Row(
+        children: [
+          // badge preview icon
+          Container(
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(51, 6, 0, 92),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color.fromARGB(128, 0, 10, 218),
+                width: 2,
+              ),
             ),
-          ),
-          padding: const EdgeInsets.all(5),
-          child: const ImageIcon(
-            AssetImage('assets/icons/categories/hang_out.png'),
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-        SizedBox(width: 12 * s),
-
-        // label
-        Expanded(
-          child: Text(
-            StringRes.at('category_badge'),
-            style: const TextStyle(
+            padding: const EdgeInsets.all(5),
+            child: const ImageIcon(
+              AssetImage('assets/icons/categories/hang_out.png'),
               color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+              size: 20,
             ),
           ),
-        ),
+          SizedBox(width: 12 * s),
 
-        // toggle switch
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: Colors.green,
-          activeTrackColor: Colors.white,
-          inactiveThumbColor: Colors.red,
-          inactiveTrackColor: Colors.white24,
-        ),
-      ],
+          // label
+          Expanded(
+            child: Text(
+              StringRes.at('category_badge'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          // toggle switch
+          Switch(
+            value: enabled && value,
+            onChanged: enabled ? onChanged : null,
+            activeThumbColor: Colors.green,
+            activeTrackColor: Colors.white,
+            inactiveThumbColor: Colors.red,
+            inactiveTrackColor: Colors.white24,
+          ),
+        ],
+      ),
     );
   }
 }

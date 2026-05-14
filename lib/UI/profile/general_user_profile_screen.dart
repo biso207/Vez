@@ -14,6 +14,7 @@ import '../notifications_screen.dart';
 import 'general_user_profile_controller.dart';
 import 'general_user_profile_widgets.dart';
 import 'profile_screen.dart';
+import 'profile_shared_widgets.dart';
 
 /// displays the profile page for a non-local user.
 class GeneralUserProfilePage extends StatefulWidget {
@@ -197,7 +198,7 @@ class _GeneralUserProfilePageState extends State<GeneralUserProfilePage> {
           SizedBox(height: 130 * scale),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 5 * scale),
-            child: GeneralUserInfoCard(
+            child: ProfileInfoCard(
               scale: scale,
               profilePhoto: profile.profilePhoto,
               username: profile.username,
@@ -205,17 +206,18 @@ class _GeneralUserProfilePageState extends State<GeneralUserProfilePage> {
               city: profile.city,
               bio: profile.bio,
               showBadge: profile.showBadge,
+              categoryBadgeIconPath: profile.categoryBadgeIconPath,
               showFriendBadge: profile.relation == GeneralUserRelation.friends,
             ),
           ),
           SizedBox(height: 16 * scale),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 50 * scale),
-            child: GeneralStatsPill(
+            child: ProfileStatsPill(
               scale: scale,
               followers: profile.followersCount,
               events: profile.participatedEventsCount,
-              following: profile.followingCount,
+              likes: profile.eventLikesReceivedCount,
             ),
           ),
           SizedBox(height: 18 * scale),
@@ -226,10 +228,8 @@ class _GeneralUserProfilePageState extends State<GeneralUserProfilePage> {
               onTap: _toggleFollowUser,
             ),
           ),
-          SizedBox(
-            height: 18 * scale,
-          ),
-          GeneralPastEventsGrid(events: profile.pastEvents, scale: scale),
+          SizedBox(height: 18 * scale),
+          ProfilePastEventsGrid(events: profile.pastEvents, scale: scale),
           SizedBox(height: 130 * scale),
         ],
       ),

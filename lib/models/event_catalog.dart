@@ -9,10 +9,7 @@ class EventCatalog {
     {'name': 'gaming', 'icon': 'assets/icons/categories/gaming.png'},
     {'name': 'hang_out', 'icon': 'assets/icons/categories/hang_out.png'},
     {'name': 'journey', 'icon': 'assets/icons/categories/journey.png'},
-    {
-      'name': 'kids_and_family',
-      'icon': 'assets/icons/categories/kids_and_family.png',
-    },
+    {'name': 'kids_and_family', 'icon': 'assets/icons/categories/kids_and_family.png',},
     {'name': 'museum', 'icon': 'assets/icons/categories/museum.png'},
     {'name': 'outdoor', 'icon': 'assets/icons/categories/outdoor.png'},
     {'name': 'party', 'icon': 'assets/icons/categories/party.png'},

@@ -6,6 +6,7 @@ import '../../models/general_user_profile.dart';
 import '../../services/getters_service.dart';
 import '../../services/setters_service.dart';
 import '../../services/translation_service.dart';
+import 'profile_event_helpers.dart';
 
 /// manages profile data and follow actions for a viewed user.
 class GeneralUserProfileController extends ChangeNotifier {
@@ -36,7 +37,6 @@ class GeneralUserProfileController extends ChangeNotifier {
     final results = await Future.wait([
       _viewedGet.getFullUserData(),
       _viewedGet.getFollowersCount(),
-      _viewedGet.getFollowing(),
       _viewedGet.getExpiredCreatedEvents(),
       _viewedGet.getExpiredParticipatedEvents(),
       _localGet.getFollowing(),
@@ -52,11 +52,14 @@ class GeneralUserProfileController extends ChangeNotifier {
     }
 
     final followersCount = results[1] as int;
-    final followingRows = results[2] as List<Map<String, dynamic>>;
-    final createdEvents = results[3] as List<Map<String, dynamic>>;
-    final participatedEvents = results[4] as List<Map<String, dynamic>>;
-    final localFollowing = results[5] as List<Map<String, dynamic>>;
-    final localFollowers = results[6] as List<Map<String, dynamic>>;
+    final createdEvents = results[2] as List<Map<String, dynamic>>;
+    final participatedEvents = results[3] as List<Map<String, dynamic>>;
+    final localFollowing = results[4] as List<Map<String, dynamic>>;
+    final localFollowers = results[5] as List<Map<String, dynamic>>;
+    final pastEvents = ProfileEventHelpers.mergePastEvents(
+      createdEvents,
+      participatedEvents,
+    );
 
     final followingIds = localFollowing
         .map((row) => (row['following_id'] ?? '').toString())
@@ -86,12 +89,17 @@ class GeneralUserProfileController extends ChangeNotifier {
       city: (userData['city'] ?? StringRes.at('city')).toString(),
       cityAkaName: akaName.isNotEmpty ? '$akaName • ' : '',
       bio: (userData['bio'] ?? StringRes.at('bio')).toString(),
-      showBadge: userData['category_badge'] as bool? ?? true,
+      showBadge: pastEvents.isNotEmpty
+          ? (userData['category_badge'] as bool?) ?? true
+          : false,
+      categoryBadgeIconPath: ProfileEventHelpers.mostParticipatedCategoryIcon(
+        pastEvents,
+      ),
       followersCount: followersCount,
-      followingCount: followingRows.length,
-      participatedEventsCount: participatedEvents.length,
+      participatedEventsCount: pastEvents.length,
+      eventLikesReceivedCount: 0,
       relation: relation,
-      pastEvents: [...createdEvents, ...participatedEvents],
+      pastEvents: pastEvents,
     );
 
     isLoading = false;

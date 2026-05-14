@@ -13,9 +13,10 @@ class GeneralUserProfile {
     required this.cityAkaName,
     required this.bio,
     required this.showBadge,
+    required this.categoryBadgeIconPath,
     required this.followersCount,
-    required this.followingCount,
     required this.participatedEventsCount,
+    required this.eventLikesReceivedCount,
     required this.relation,
     required this.pastEvents,
   });
@@ -27,9 +28,10 @@ class GeneralUserProfile {
   final String cityAkaName;
   final String bio;
   final bool showBadge;
+  final String categoryBadgeIconPath;
   final int followersCount;
-  final int followingCount;
   final int participatedEventsCount;
+  final int eventLikesReceivedCount;
   final GeneralUserRelation relation;
   final List<Map<String, dynamic>> pastEvents;
 
@@ -46,9 +48,10 @@ class GeneralUserProfile {
       cityAkaName: cityAkaName,
       bio: bio,
       showBadge: showBadge,
+      categoryBadgeIconPath: categoryBadgeIconPath,
       followersCount: followersCount ?? this.followersCount,
-      followingCount: followingCount,
       participatedEventsCount: participatedEventsCount,
+      eventLikesReceivedCount: eventLikesReceivedCount,
       relation: relation ?? this.relation,
       pastEvents: pastEvents,
     );
