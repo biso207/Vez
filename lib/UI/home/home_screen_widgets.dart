@@ -290,7 +290,7 @@ class EmptyEventsState extends StatelessWidget {
             ),
             SizedBox(height: 18 * s),
             Text(
-              title!,
+              title ?? '',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
