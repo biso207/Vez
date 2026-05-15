@@ -668,7 +668,7 @@ class _ByYouEventCard extends StatelessWidget {
                       _CardPillButton(
                         label: StringRes.at('add_guest'),
                         onTap: onAddGuestsTap,
-                        maxGuests: event.maxGuests!.toInt(),
+                        maxGuests: event.maxGuests?.toInt(),
                         goingGuests: event.guestCounts.going,
                       ),
                       SizedBox(height: 20 * s),
@@ -856,14 +856,16 @@ class _CardPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final int limit = maxGuests ?? 0;
+    final int going = goingGuests ?? 0;
+    final bool hasLimit = limit > 0;
+    final bool canAddGuests = !hasLimit || going < limit;
+
     return GestureDetector(
       onTap: () {
-        if (goingGuests! < maxGuests! || maxGuests == 0) {
-          HapticService.tap();
-          onTap?.call();
-        } else {
-          null;
-        }
+        if (!canAddGuests) return;
+        HapticService.tap();
+        onTap?.call();
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -872,23 +874,23 @@ class _CardPillButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
             decoration: BoxDecoration(
-              color: goingGuests! < maxGuests! || maxGuests == 0
-                  ? Color.fromARGB(51, 255, 255, 255)
-                  : Color.fromARGB(13, 255, 255, 255),
+              color: canAddGuests
+                  ? const Color.fromARGB(51, 255, 255, 255)
+                  : const Color.fromARGB(13, 255, 255, 255),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: goingGuests! < maxGuests! || maxGuests == 0
-                    ? Color.fromARGB(128, 255, 255, 255)
-                    : Color.fromARGB(26, 255, 255, 255),
+                color: canAddGuests
+                    ? const Color.fromARGB(128, 255, 255, 255)
+                    : const Color.fromARGB(26, 255, 255, 255),
                 width: 2,
               ),
             ),
             child: Text(
               label,
               style: TextStyle(
-                color: goingGuests! < maxGuests! || maxGuests == 0
-                    ? Color.fromARGB(255, 255, 255, 255)
-                    : Color.fromARGB(51, 255, 255, 255),
+                color: canAddGuests
+                    ? const Color.fromARGB(255, 255, 255, 255)
+                    : const Color.fromARGB(51, 255, 255, 255),
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
