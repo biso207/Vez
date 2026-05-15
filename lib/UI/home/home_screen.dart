@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../models/account_type.dart';
 import 'home_controller.dart';
 import 'home_event.dart';
 import 'home_filters.dart';
@@ -68,7 +69,7 @@ class _HomePageState extends State<HomePage> {
 
   late int _filterIndex;
 
-  bool get _isVenueAccount => UserSession().accountType == 'venue';
+  bool get _isVenueAccount => UserSession().accountType == AccountType.venue;
 
   //
   //   used for: initializing controllers and loading initial page data.
