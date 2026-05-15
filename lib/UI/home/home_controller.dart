@@ -79,24 +79,39 @@ class HomeController extends ChangeNotifier {
     isLoadingEvents = true;
     _notify();
 
-    final List<Map<String, dynamic>> createdEvents = await _db.getCreatedEvents();
+    final List<Map<String, dynamic>> createdEvents = await _db
+        .getCreatedEvents();
     final List<Map<String, dynamic>> cohostEvents = await _db.getCohostEvents();
-    final List<Map<String, dynamic>> invitedEvents = await _db.getInvitedEvents();
+    final List<Map<String, dynamic>> invitedEvents = await _db
+        .getInvitedEvents();
     _discoverableEvents = await _db.getDiscoverableEvents();
 
     // mapping the events
-    final List<HomeEventCardData> byYou = _mapEvents(createdEvents, EventType.byYou);
-    final List<HomeEventCardData> invited = _mapEvents(invitedEvents, EventType.invited);
+    final List<HomeEventCardData> byYou = _mapEvents(
+      createdEvents,
+      EventType.byYou,
+    );
+    final List<HomeEventCardData> invited = _mapEvents(
+      invitedEvents,
+      EventType.invited,
+    );
 
-    final List<HomeEventCardData> cohostsAsInvites = _mapEvents(cohostEvents, EventType.invited);
+    final List<HomeEventCardData> cohostsAsInvites = _mapEvents(
+      cohostEvents,
+      EventType.invited,
+    );
 
     // CoHost and standard Guest invites all together
-    final List<HomeEventCardData> combinedInvited = [...invited, ...cohostsAsInvites]
-      ..sort((a, b) => a.rawDateEvent.compareTo(b.rawDateEvent));
+    final List<HomeEventCardData> combinedInvited = [
+      ...invited,
+      ...cohostsAsInvites,
+    ]..sort((a, b) => a.rawDateEvent.compareTo(b.rawDateEvent));
 
     eventsByType = {
       // in "By You" only events in which the user is the host
-      EventType.byYou: byYou.where((e) => e.creatorUserId == _db.userID).toList(),
+      EventType.byYou: byYou
+          .where((e) => e.creatorUserId == _db.userID)
+          .toList(),
       EventType.cohost: const [], // empty to save the enum
       EventType.invited: combinedInvited,
       EventType.nearby: _buildNearbyEvents(),
@@ -402,8 +417,8 @@ class HomeController extends ChangeNotifier {
       locationPrecise: _asBool(place['is_precise']),
       latitude: _asDouble(place['latitude']),
       longitude: _asDouble(place['longitude']),
-      maxGuests: (rawEvent['max_participants'] as num?)?.toInt(),
-      price: (rawEvent['price'] as num?)?.toInt(),
+      maxGuests: _asInt(rawEvent['max_participants']),
+      price: _asInt(rawEvent['price']),
       guestCounts: guestCounts,
       guests: guests,
       distanceKm: distanceKm,
@@ -525,6 +540,12 @@ class HomeController extends ChangeNotifier {
   double? _asDouble(dynamic value) {
     if (value is num) return value.toDouble();
     if (value is String) return double.tryParse(value.trim());
+    return null;
+  }
+
+  int? _asInt(dynamic value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
     return null;
   }
 
